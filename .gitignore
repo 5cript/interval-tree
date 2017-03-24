@@ -1,0 +1,9 @@
+obj/*
+bin/*
+*.depend
+*_build_log.html
+*.layout
+*.save-failed
+__history/
+*.cbp
+main.cpp
