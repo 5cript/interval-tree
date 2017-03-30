@@ -5,6 +5,9 @@
 #include <cstdio>
 #include <stdexcept>
 #include <iterator>
+#include <type_traits>
+
+#include <iostream>
 
 namespace lib_interval_tree
 {
@@ -57,6 +60,12 @@ namespace lib_interval_tree
     template <typename numerical_type, typename interval_type>
     class node;
 
+    template <typename node_type, typename owner_type>
+    class basic_interval_tree_iterator;
+
+    template <typename node_type>
+    class const_interval_tree_iterator;
+
     template <typename node_type>
     class interval_tree_iterator;
 //############################################################################################################
@@ -90,9 +99,9 @@ namespace lib_interval_tree
         /**
          *  Returns if both intervals equal.
          */
-        bool operator==(interval const& other)
+        bool operator==(interval const& other) const
         {
-            return low_ == other.low_ && high_ == other.high;
+            return low_ == other.low_ && high_ == other.high_;
         }
 
         /**
@@ -188,7 +197,10 @@ namespace lib_interval_tree
 
     public:
         friend interval_tree <numerical_type, typename interval_type::interval_kind>;
-        friend interval_tree_iterator <node <value_type, interval_type>>;
+        friend basic_interval_tree_iterator <node <numerical_type, interval_type>,
+                                             interval_tree <numerical_type, typename interval_type::interval_kind> const*>;
+        friend basic_interval_tree_iterator <node <numerical_type, interval_type>,
+                                             interval_tree <numerical_type, typename interval_type::interval_kind>*>;
 
         template <typename node_type, typename interval_type__>
         friend void insert_node(std::unique_ptr <node_type>* parent, std::unique_ptr <node_type>& root, interval_type__ ival)
@@ -209,52 +221,6 @@ namespace lib_interval_tree
                 root->max_ = ival.high();
         }
 
-        template <typename numerical_type_, typename interval_type__>
-        friend std::unique_ptr <node <numerical_type_, interval_type__> >& assign(
-            std::unique_ptr <node <numerical_type_, interval_type__> >& lhs,
-            std::unique_ptr <node <numerical_type_, interval_type__> >& rhs
-        ) noexcept
-        {
-            if (!lhs || &lhs == &rhs || lhs.get() == rhs.get())
-                return lhs;
-
-            if (!rhs)
-            {
-                lhs.reset();
-                return lhs;
-            }
-
-            bool wasLeft = false;
-            bool wasRight = false;
-
-            // avoid destruction of left & right
-            auto* left = lhs->left_.release();
-            if (rhs.get() == nullptr)
-                wasLeft = true;
-
-            auto* right = lhs->right_.release();
-            if (rhs.get() == nullptr && !wasLeft)
-                wasRight = true;
-
-            // release right and set left.
-            if (!wasLeft && !wasRight)
-                lhs.reset(rhs.release());
-            if (wasLeft)
-                lhs.reset(left);
-            if (wasRight)
-                lhs.reset(right);
-
-            // reinstate left and right
-            if (lhs)
-            {
-                if (!wasLeft)
-                    lhs->left_.reset(left);
-                if (!wasRight)
-                    lhs->right_.reset(right);
-            }
-            return lhs;
-        }
-
     public:
         node(std::unique_ptr <node>* parent, interval_type interval)
             : interval_{std::move(interval)}
@@ -263,6 +229,11 @@ namespace lib_interval_tree
             , left_{}
             , right_{}
         {
+        }
+
+        ~node()
+        {
+            int A = 0;
         }
 
         interval_type interval() const
@@ -276,6 +247,12 @@ namespace lib_interval_tree
         }
 
     private:
+        void set_interval(interval_type const& ival)
+        {
+            interval_ = ival;
+        }
+
+    private:
         interval_type interval_;
         value_type max_;
         std::unique_ptr <node>* parent_;
@@ -283,8 +260,8 @@ namespace lib_interval_tree
         std::unique_ptr <node> right_;
     };
 //############################################################################################################
-    template <typename node_type>
-    class interval_tree_iterator : public std::forward_iterator_tag
+    template <typename node_type, typename owner_type>
+    class basic_interval_tree_iterator : public std::forward_iterator_tag
     {
     public:
         friend interval_tree <typename node_type::interval_type::value_type, typename node_type::interval_type::interval_kind>;
@@ -292,11 +269,17 @@ namespace lib_interval_tree
         using tree_type = interval_tree <typename node_type::interval_type::value_type, typename node_type::interval_type::interval_kind>;
         using value_type = node_type;
 
-    public:
-        constexpr interval_tree_iterator(interval_tree_iterator const&) = default;
-        constexpr interval_tree_iterator& operator=(interval_tree_iterator const&) = default;
+        using node_ptr_t = typename std::conditional <
+            std::is_const <typename std::remove_pointer <owner_type>::type>::value,
+            std::unique_ptr <node_type> const*,
+            std::unique_ptr <node_type>*
+        >::type;
 
-        interval_tree_iterator& operator++()
+    public:
+        constexpr basic_interval_tree_iterator(basic_interval_tree_iterator const&) = default;
+        constexpr basic_interval_tree_iterator& operator=(basic_interval_tree_iterator const&) = default;
+
+        basic_interval_tree_iterator& operator++()
         {
             if (!node_ || !*node_)
             {
@@ -332,23 +315,90 @@ namespace lib_interval_tree
             return *this;
         }
 
-        interval_tree_iterator operator++(int)
+
+        basic_interval_tree_iterator operator++(int)
         {
-            interval_tree_iterator cpy = *this;
+            basic_interval_tree_iterator cpy = *this;
             operator++();
             return cpy;
         }
 
-        bool operator!=(interval_tree_iterator const& other)
+        bool operator!=(basic_interval_tree_iterator const& other) const
         {
             return node_ != other.node_;
         }
 
-        bool operator==(interval_tree_iterator const& other)
+        bool operator==(basic_interval_tree_iterator const& other) const
         {
             return node_ == other.node_;
         }
 
+    protected:
+        basic_interval_tree_iterator(node_ptr_t node, owner_type owner)
+            : node_{node}
+            , owner_{owner}
+        {
+        }
+
+    protected:
+        node_ptr_t node_;
+        owner_type owner_;
+    };
+//############################################################################################################
+    template <typename node_type>
+    class const_interval_tree_iterator
+        : public basic_interval_tree_iterator <node_type,
+                                               interval_tree <typename node_type::interval_type::value_type,
+                                                              typename node_type::interval_type::interval_kind> const*>
+    {
+    public:
+        using tree_type = interval_tree <typename node_type::interval_type::value_type,
+                                         typename node_type::interval_type::interval_kind>;
+        using iterator_base = basic_interval_tree_iterator <node_type, tree_type const*>;
+        using value_type = typename iterator_base::value_type;
+        using iterator_base::node_;
+
+        friend tree_type;
+
+    public:
+        typename value_type::interval_type operator*() const
+        {
+            if (node_ && *node_)
+                return (*node_)->interval();
+            else
+                throw std::out_of_range("interval_tree_iterator out of bounds");
+        }
+
+        value_type const* operator->() const
+        {
+            if (!node_)
+                return nullptr;
+            return (*node_).get();
+        }
+
+    private:
+        const_interval_tree_iterator(std::unique_ptr <node_type> const* node, tree_type const* owner)
+            : basic_interval_tree_iterator <node_type, tree_type const*> {node, owner}
+        {
+        }
+    };
+//############################################################################################################
+    template <typename node_type>
+    class interval_tree_iterator
+        : public basic_interval_tree_iterator <node_type,
+                                               interval_tree <typename node_type::interval_type::value_type,
+                                                              typename node_type::interval_type::interval_kind>*>
+    {
+    public:
+        using tree_type = interval_tree <typename node_type::interval_type::value_type,
+                                         typename node_type::interval_type::interval_kind>;
+        using iterator_base = basic_interval_tree_iterator <node_type, tree_type*>;
+        using value_type = typename iterator_base::value_type;
+        using iterator_base::node_;
+
+        friend tree_type;
+
+    public:
         typename value_type::interval_type operator*() const
         {
             if (node_ && *node_)
@@ -366,32 +416,45 @@ namespace lib_interval_tree
 
     private:
         interval_tree_iterator(std::unique_ptr <node_type>* node, tree_type* owner)
-            : node_{node}
-            , owner_{owner}
+            : basic_interval_tree_iterator <node_type, tree_type*> {node, owner}
         {
         }
-
-    private:
-        std::unique_ptr <node_type>* node_;
-        tree_type* owner_;
     };
 //############################################################################################################
     template <typename numerical_type = default_interval_value_type, typename interval_kind = right_open>
     class interval_tree
     {
     public:
-        friend interval_tree_iterator <node <numerical_type, interval <numerical_type, interval_kind>>>;
+        friend basic_interval_tree_iterator <node <numerical_type, interval <numerical_type, interval_kind>>,
+                                             interval_tree <numerical_type, interval_kind> const*>;
+        friend basic_interval_tree_iterator <node <numerical_type, interval <numerical_type, interval_kind>>,
+                                             interval_tree <numerical_type, interval_kind>*>;
 
     public:
         using value_type = numerical_type;
         using interval_type = interval <value_type, interval_kind>;
         using node_type = node <value_type, interval_type>;
         using iterator = interval_tree_iterator <node_type>;
+        using const_iterator = const_interval_tree_iterator <node_type>;
 
         interval_tree()
             : root_{}
         {
         }
+
+        interval_tree(interval_tree const& other)
+            : root_{}
+        {
+            operator=(other);
+        }
+
+        interval_tree& operator=(interval_tree const& other)
+        {
+            for (auto i = other.begin(), e = other.end(); i != e; ++i)
+                insert(i->interval());
+            return *this;
+        }
+
 
         /**
          *  Inserts an interval into the tree.
@@ -406,7 +469,7 @@ namespace lib_interval_tree
             if (!iter.node_)
                 throw std::out_of_range("cannot erase end iterator");
 
-            std::unique_ptr <node_type>* x = nullptr;
+            //std::unique_ptr <node_type>* x = nullptr;
             std::unique_ptr <node_type>* y = iter.node_;
 
             if (!iter->left_ && !iter->right_)
@@ -422,6 +485,55 @@ namespace lib_interval_tree
                 else
                     iter.node_->reset();
             }
+            else if (iter->right_ && iter->left_)
+            {
+                y = minimum(&iter->right_);
+                /*
+                x = &(*y)->right_;
+                if ((*y)->parent_ == iter.node_)
+                    (*x)->parent_ = y;
+                else
+                {
+                    transplant(y, &(*y)->right_);
+                    std::swap((*y)->right_, iter->right_);
+                    //iter->right_.reset();
+                    (*y)->right_->parent_ = y;
+                }
+                transplant(iter.node_, y);
+                std::swap((*y)->left_, iter->left_);
+                iter->left_.reset();
+                (*y)->left_->parent_ = y;
+                */
+
+                auto assign = [](std::unique_ptr <node_type>& lhs, std::unique_ptr <node_type>& rhs) noexcept {
+                    lhs->left_.reset(rhs->left_.release());
+                    lhs->right_.reset(rhs->right_.release());
+                    lhs->interval_ = rhs->interval_;
+                };
+
+                if ((*y)->parent_ != iter.node_)
+                {
+                    transplant(y, &(*y)->right_);
+                    std::swap((*y)->right_, *iter.node_);
+                    //(*y)->right_ = iter.node_;
+                    //assign((*y)->right_, *iter.node_);
+                    //(*y)->right_->parent_ = y;
+                }
+                transplant(iter.node_, y);
+                if ((*y)->left_)
+                {
+                    std::swap((*y)->left_, (*iter.node_)->left_);
+                }
+                else
+                {
+                    (*y)->left_.reset((*iter.node_)->left_.release());
+                }
+                //(*y)->left_ = iter.node_->left_;
+                //assign((*y)->left_, (*iter.node_)->left_);
+                (*y)->left_->parent_ = y;
+
+                // (*y)->color = iter->color_;
+            }
             else if (iter->right_)
             {
                 //x = &iter->right_;
@@ -432,56 +544,12 @@ namespace lib_interval_tree
                 //x = &iter->left_;
                 transplant(iter.node_, &iter->left_);
             }
-            else
-            {
-                y = minimum(&iter->right_);
-                //x = &(*y)->right_;
-                /*
-                if ((*y)->parent_ == iter.node_)
-                    (*x)->parent_ = y;
-                else
-                {
-                    transplant(y, &(*y)->right_);
-                    (*y)->right_.reset(iter->right_.release());
-                    (*y)->right_->parent_ = y;
-                }
-                transplant(iter.node_, y);
-                (*y)->left_.reset(iter->left_.release());
-                (*y)->left_->parent_ = y;
-                */
-                if ((*y)->parent_ != iter.node_)
-                {
-                    transplant(y, &(*y)->right_);
-                    assign((*y)->right_, iter->right_);
-                    (*y)->right_->parent_ = y;
-                }
-                transplant(iter.node_, y);
-                assign((*y)->left_, iter->left_);
-                (*y)->left_->parent_ = y;
-                // (*y)->color = iter->color_;
-            }
             //iter.node_->release();
 
             // if (y orig color == black)
             // RB-DELETE-FIXUP(x)
 
             return begin();
-
-            /*
-            auto former_node_max = iter.node_->max_;
-
-            auto* parent = iter.node_->parent_;
-
-            if (parent->right_ && iter.node_ == parent->right_.get())
-                parent->right_.reset();
-            if (parent->left_ && iter.node_ == parent->left_.get())
-                parent->left_.reset();
-
-            if (parent->max_ == former_node_max)
-                recalculate_max(parent);
-
-            return {parent, this};
-            */
         }
 
         /**
@@ -507,22 +575,18 @@ namespace lib_interval_tree
          */
         void deoverlap()
         {
-            interval_tree temp;
+            interval_tree temp = *this;
 
-            for (auto ival = begin(); ival != end();)
+            for (auto i = begin(), e = end(); i != e; ++i)
             {
-                auto fres = overlap_find_i(ival);
-                if (fres != end())
+                auto f = overlap_find_i(i);
+                if (f != end())
                 {
-                    auto merged = fres->interval().join(*ival);
-                    ival = erase(fres);
+                    auto merged = f->interval().join(*i);
                     temp.insert(merged);
+                    i->set_interval(merged);
                 }
-                else
-                    ++ival;
             }
-
-            *this = std::move(temp);
         }
 
         iterator begin()
@@ -541,11 +605,28 @@ namespace lib_interval_tree
         {
             return {nullptr, this};
         }
+
+        const_iterator begin() const
+        {
+            if (!root_)
+                return {nullptr, this};
+
+            auto* iter = &root_;
+
+            while ((*iter)->left_)
+                iter = &(*iter)->left_;
+
+            return const_iterator{iter, this};
+        }
+        const_iterator end() const
+        {
+            return const_iterator{nullptr, this};
+        }
     private:
         iterator overlap_find_i(iterator node)
         {
             auto* ptr = &root_;
-            while (ptr->get() && (!node->interval().overlaps((*ptr)->interval()) || ptr->get() == node.operator->()))
+            while (*ptr && (!node->interval().overlaps((*ptr)->interval()) || ptr->get() == node.operator->()))
             {
                 if ((*ptr)->left_ && (*ptr)->left_->max() >= node->interval().low())
                     ptr = &(*ptr)->left_;
@@ -583,23 +664,28 @@ namespace lib_interval_tree
             */
         }
 
+        // set v inplace of u.
         void transplant(std::unique_ptr <node_type>* u, std::unique_ptr <node_type>* v)
         {
             auto* up = (*u)->parent_;
             if (up == nullptr) // u is root
             {
-                assign(root_, *v);
+                std::swap(root_, *v);
+                if (root_->left_)
+                    root_->left_->parent_ = &root_;
+                if (root_->right_)
+                    root_->right_->parent_ = &root_;
                 root_->parent_ = nullptr;
             }
             else if (u == &(*up)->left_) // u is left branch
             {
                 //(*up)->left_.reset(released);
-                assign((*up)->left_, *v);
+                std::swap((*up)->left_, *v);
                 (*up)->left_->parent_ = up;
             }
             else // u is right branch
             {
-                assign((*up)->right_, *v);
+                std::swap((*up)->right_, *v);
                 (*up)->right_->parent_ = up;
             }
         }
