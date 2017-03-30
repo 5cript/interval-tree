@@ -191,7 +191,7 @@ namespace lib_interval_tree
         friend interval_tree_iterator <node <value_type, interval_type>>;
 
         template <typename node_type, typename interval_type__>
-        friend void insert_node(node_type* parent, std::unique_ptr <node_type>& root, interval_type__ ival)
+        friend void insert_node(std::unique_ptr <node_type>* parent, std::unique_ptr <node_type>& root, interval_type__ ival)
         {
             if (!root)
             {
@@ -201,16 +201,62 @@ namespace lib_interval_tree
 
             auto root_begin = root->interval().low();
             if (ival.low() < root_begin)
-                insert_node(root.get(), root->left_, ival);
+                insert_node(&root, root->left_, ival);
             else
-                insert_node(root.get(), root->right_, ival);
+                insert_node(&root, root->right_, ival);
 
             if (root->max_ < ival.high())
                 root->max_ = ival.high();
         }
 
+        template <typename numerical_type_, typename interval_type__>
+        friend std::unique_ptr <node <numerical_type_, interval_type__> >& assign(
+            std::unique_ptr <node <numerical_type_, interval_type__> >& lhs,
+            std::unique_ptr <node <numerical_type_, interval_type__> >& rhs
+        ) noexcept
+        {
+            if (!lhs || &lhs == &rhs || lhs.get() == rhs.get())
+                return lhs;
+
+            if (!rhs)
+            {
+                lhs.reset();
+                return lhs;
+            }
+
+            bool wasLeft = false;
+            bool wasRight = false;
+
+            // avoid destruction of left & right
+            auto* left = lhs->left_.release();
+            if (rhs.get() == nullptr)
+                wasLeft = true;
+
+            auto* right = lhs->right_.release();
+            if (rhs.get() == nullptr && !wasLeft)
+                wasRight = true;
+
+            // release right and set left.
+            if (!wasLeft && !wasRight)
+                lhs.reset(rhs.release());
+            if (wasLeft)
+                lhs.reset(left);
+            if (wasRight)
+                lhs.reset(right);
+
+            // reinstate left and right
+            if (lhs)
+            {
+                if (!wasLeft)
+                    lhs->left_.reset(left);
+                if (!wasRight)
+                    lhs->right_.reset(right);
+            }
+            return lhs;
+        }
+
     public:
-        node(node* parent, interval_type interval)
+        node(std::unique_ptr <node>* parent, interval_type interval)
             : interval_{std::move(interval)}
             , max_{interval.high()}
             , parent_{parent}
@@ -232,7 +278,7 @@ namespace lib_interval_tree
     private:
         interval_type interval_;
         value_type max_;
-        node* parent_;
+        std::unique_ptr <node>* parent_;
         std::unique_ptr <node> left_;
         std::unique_ptr <node> right_;
     };
@@ -252,34 +298,37 @@ namespace lib_interval_tree
 
         interval_tree_iterator& operator++()
         {
-            if (!node_)
+            if (!node_ || !*node_)
             {
-                node_ = owner_->root_.get();
+                node_ = &owner_->root_;
 
-                if (!node_)
+                if (!node_ || !*node_)
                     return *this;
 
-                while(node_->left_)
-                    node_ = node_->left_.get();
+                while((*node_)->left_)
+                    node_ = &(*node_)->left_;
             }
 
-            if (node_->right_)
+            if ((*node_)->right_)
             {
-                node_ = node_->right_.get();
+                node_ = &(*node_)->right_;
 
-                while (node_->left_)
-                    node_ = node_->left_.get();
+                while ((*node_)->left_)
+                    node_ = &(*node_)->left_;
             }
             else
             {
-                auto* parent = node_->parent_;
-                while (parent != nullptr && node_ == parent->right_.get())
+                auto* parent = (*node_)->parent_;
+                while (parent != nullptr && node_ == &(*parent)->right_)
                 {
                     node_ = parent;
-                    parent = parent->parent_;
+                    parent = (*parent)->parent_;
                 }
                 node_ = parent;
             }
+            if (node_ && !*node_)
+                node_ = nullptr;
+
             return *this;
         }
 
@@ -302,27 +351,29 @@ namespace lib_interval_tree
 
         typename value_type::interval_type operator*() const
         {
-            if (node_)
-                return node_->interval();
+            if (node_ && *node_)
+                return (*node_)->interval();
             else
                 throw std::out_of_range("interval_tree_iterator out of bounds");
         }
 
-        value_type const* operator->() const
+        value_type* operator->()
         {
-            return node_;
+            if (!node_)
+                return nullptr;
+            return (*node_).get();
         }
 
     private:
-        interval_tree_iterator(node_type* node, tree_type const* owner)
+        interval_tree_iterator(std::unique_ptr <node_type>* node, tree_type* owner)
             : node_{node}
             , owner_{owner}
         {
         }
 
     private:
-        node_type* node_;
-        tree_type const* owner_;
+        std::unique_ptr <node_type>* node_;
+        tree_type* owner_;
     };
 //############################################################################################################
     template <typename numerical_type = default_interval_value_type, typename interval_kind = right_open>
@@ -347,23 +398,80 @@ namespace lib_interval_tree
          */
         void insert(interval_type const& ival)
         {
-            insert_node((node_type*)nullptr, root_, ival);
+            insert_node(static_cast <std::unique_ptr <node_type>*> (nullptr), root_, ival);
         }
 
-        iterator erase(iterator const& iter)
+        iterator erase(iterator iter)
         {
             if (!iter.node_)
                 throw std::out_of_range("cannot erase end iterator");
 
-            if (iter.node_ == root_.get())
-            {
-                root_.reset();
-                return end();
-            }
+            std::unique_ptr <node_type>* x = nullptr;
+            std::unique_ptr <node_type>* y = iter.node_;
 
+            if (!iter->left_ && !iter->right_)
+            {
+                auto* parent = (*iter.node_)->parent_;
+                if (parent)
+                {
+                    if (&(*parent)->left_ == iter.node_)
+                        (*parent)->left_.reset();
+                    else
+                        (*parent)->right_.reset();
+                }
+                else
+                    iter.node_->reset();
+            }
+            else if (iter->right_)
+            {
+                //x = &iter->right_;
+                transplant(iter.node_, &iter->right_);
+            }
+            else if (iter->left_)
+            {
+                //x = &iter->left_;
+                transplant(iter.node_, &iter->left_);
+            }
+            else
+            {
+                y = minimum(&iter->right_);
+                //x = &(*y)->right_;
+                /*
+                if ((*y)->parent_ == iter.node_)
+                    (*x)->parent_ = y;
+                else
+                {
+                    transplant(y, &(*y)->right_);
+                    (*y)->right_.reset(iter->right_.release());
+                    (*y)->right_->parent_ = y;
+                }
+                transplant(iter.node_, y);
+                (*y)->left_.reset(iter->left_.release());
+                (*y)->left_->parent_ = y;
+                */
+                if ((*y)->parent_ != iter.node_)
+                {
+                    transplant(y, &(*y)->right_);
+                    assign((*y)->right_, iter->right_);
+                    (*y)->right_->parent_ = y;
+                }
+                transplant(iter.node_, y);
+                assign((*y)->left_, iter->left_);
+                (*y)->left_->parent_ = y;
+                // (*y)->color = iter->color_;
+            }
+            //iter.node_->release();
+
+            // if (y orig color == black)
+            // RB-DELETE-FIXUP(x)
+
+            return begin();
+
+            /*
             auto former_node_max = iter.node_->max_;
 
             auto* parent = iter.node_->parent_;
+
             if (parent->right_ && iter.node_ == parent->right_.get())
                 parent->right_.reset();
             if (parent->left_ && iter.node_ == parent->left_.get())
@@ -373,28 +481,59 @@ namespace lib_interval_tree
                 recalculate_max(parent);
 
             return {parent, this};
+            */
         }
 
-        iterator overlap_find(interval_type const& ival) const
+        /**
+         *  Finds the first interval that overlaps with ival.
+         *
+         *  @param ival The interval to find an overlap for within the tree.
+         */
+        iterator overlap_find(interval_type const& ival)
         {
-            auto* ptr = root_.get();
-            while (ptr && !ival.overlaps(ptr->interval()))
+            auto* ptr = &root_;
+            while (*ptr && !ival.overlaps((*ptr)->interval()))
             {
-                if (ptr->left_ && ptr->left_->max() >= ival.low())
-                    ptr = ptr->left_.get();
+                if ((*ptr)->left_ && (*ptr)->left_->max() >= ival.low())
+                    ptr = &(*ptr)->left_;
                 else
-                    ptr = ptr->right_.get();
+                    ptr = &(*ptr)->right_;
             }
             return iterator{ptr, this};
         }
 
+        /**
+         *  Merges all overlapping intervals by erasing overlapping intervals and reinserting the merged interval.
+         */
+        void deoverlap()
+        {
+            interval_tree temp;
+
+            for (auto ival = begin(); ival != end();)
+            {
+                auto fres = overlap_find_i(ival);
+                if (fres != end())
+                {
+                    auto merged = fres->interval().join(*ival);
+                    ival = erase(fres);
+                    temp.insert(merged);
+                }
+                else
+                    ++ival;
+            }
+
+            *this = std::move(temp);
+        }
+
         iterator begin()
         {
-            node_type* iter = root_.get();
+            if (!root_)
+                return {nullptr, this};
 
-            if (root_)
-                while (iter->left_)
-                    iter = iter->left_.get();
+            auto* iter = &root_;
+
+            while ((*iter)->left_)
+                iter = &(*iter)->left_;
 
             return{iter, this};
         }
@@ -403,16 +542,90 @@ namespace lib_interval_tree
             return {nullptr, this};
         }
     private:
-        void recalculate_max(node_type* reacalculation_root)
+        iterator overlap_find_i(iterator node)
         {
-            auto p = reacalculation_root;
-            while (p && p->max_ <= reacalculation_root->max_)
+            auto* ptr = &root_;
+            while (ptr->get() && (!node->interval().overlaps((*ptr)->interval()) || ptr->get() == node.operator->()))
             {
-                if (p->left_ && p->left_->max_ < p->max_)
-                    p->max_ = p->left_->max_;
-                else if (p->right_ && p->right_->max_ < p->max_)
-                    p->max_ = p->right_->max_;
-                p = p->parent_;
+                if ((*ptr)->left_ && (*ptr)->left_->max() >= node->interval().low())
+                    ptr = &(*ptr)->left_;
+                else
+                    ptr = &(*ptr)->right_;
+            }
+            if (!ptr->get())
+                return {nullptr, this};
+            return {ptr, this};
+        }
+
+        bool is_descendant(iterator par, iterator desc)
+        {
+            auto p = desc->parent_;
+            for (; p && p != par.node_; p = (*p)->parent_) {}
+            return p != nullptr;
+        }
+
+        void left_rotate(std::unique_ptr <node_type>* x)
+        {
+            /*
+            auto* y = &(*x)->right_;
+            std::swap((*x)->right_, (*y)->left_);
+            if ((*y)->left_)
+                (*y)->left_->parent_ = x->node_;
+            (*y)->parent_ = (*x)->parent_;
+            if ((*x)->parent_ == nullptr)
+                std::swap(root_, *y);
+            else if (x->node_ == (*x)->parent_->left_.get())
+                std::swap((*x)->parent_->left_, *y);
+            else
+                std::swap((*x)->parent_->right, *y);
+            std::swap((*y)->left_, *x);
+            x->parent_ = y->get();
+            */
+        }
+
+        void transplant(std::unique_ptr <node_type>* u, std::unique_ptr <node_type>* v)
+        {
+            auto* up = (*u)->parent_;
+            if (up == nullptr) // u is root
+            {
+                assign(root_, *v);
+                root_->parent_ = nullptr;
+            }
+            else if (u == &(*up)->left_) // u is left branch
+            {
+                //(*up)->left_.reset(released);
+                assign((*up)->left_, *v);
+                (*up)->left_->parent_ = up;
+            }
+            else // u is right branch
+            {
+                assign((*up)->right_, *v);
+                (*up)->right_->parent_ = up;
+            }
+        }
+
+        std::unique_ptr <node_type>* minimum(std::unique_ptr <node_type>* x) const
+        {
+            while ((*x)->left_)
+                x = &(*x)->left_;
+            return x;
+        }
+
+        iterator minimum(node_type* x) const
+        {
+            return minimum({x, this});
+        }
+
+        void recalculate_max(std::unique_ptr <node_type>* reacalculation_root)
+        {
+            auto* p = reacalculation_root;
+            while ((*p) && (*p)->max_ <= (*reacalculation_root)->max_)
+            {
+                if ((*p)->left_ && (*p)->left_->max_ < (*p)->max_)
+                    (*p)->max_ = (*p)->left_->max_;
+                else if (p->right_ && p->right_->max_ < (*p)->max_)
+                    (*p)->max_ = (*p)->right_->max_;
+                p = (*p)->parent_;
             }
         }
 
