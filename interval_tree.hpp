@@ -454,8 +454,8 @@ private:
 
         ~interval_tree()
         {
-            for (auto i = std::begin(*this); i != std::end(*this);)
-                i = erase(i);
+            //for (auto i = std::begin(*this); i != std::end(*this);)
+            //    i = erase(i);
         }
 
         interval_tree(interval_tree const& other)
@@ -511,17 +511,16 @@ private:
             auto next = iter; next++;
 
             node_type* y = iter.node_;
+            node_type* x = nullptr;
+
+            auto y_orig_color = y->color_;
 
             if (!iter->left_ && !iter->right_)
             {
                 if (!y->is_root())
-                {
-                    // some leaf
                     y->kill();
-                }
                 else
                 {
-                    // is root
                     delete iter.node_;
                     root_ = nullptr;
                     return {nullptr, this};
@@ -530,7 +529,11 @@ private:
             else if (iter->right_ && iter->left_)
             {
                 y = minimum(iter->right_);
-                if (y->parent_ != iter.node_)
+                x = y->right_;
+                y_orig_color = y->color_;
+                if (y->parent_ == iter.node_)
+                    x->parent_ = y;
+                else
                 {
                     transplant(y, y->right_);
                     y->right_ = iter.node_->right_;
@@ -539,18 +542,23 @@ private:
                 transplant(iter.node_, y);
                 y->left_ = iter.node_->left_;
                 y->left_->parent_ = y;
+                y->color_ = iter.node_->color_;
                 delete iter.node_;
             }
             else if (iter->right_)
             {
+                x = iter->right_;
                 transplant(iter.node_, iter->right_);
                 delete iter.node_;
             }
             else if (iter->left_)
             {
+                x = iter->left_;
                 transplant(iter.node_, iter->left_);
                 delete iter.node_;
             }
+            if (y_orig_color == rb_color::black)
+                erase_fixup(x);
 
             return next;
         }
@@ -800,6 +808,79 @@ private:
                 }
             }
             root_->color_ = rb_color::black;
+        }
+
+        void erase_fixup(node_type* x)
+        {
+            while (x != root_ && x->color_ == rb_color::black)
+            {
+                if (x == x->parent_->left_)
+                {
+                    node_type* w = x->parent_->right_;
+                    if (w->color_ == rb_color::red)
+                    {
+                        w->color_ = rb_color::black;
+                        x->parent_->color_ = rb_color::red;
+                        left_rotate(x->parent_);
+                        w = x->parent_->right_;
+                    }
+                    if (!w->left_ || !w->right_)
+                        return;
+                    if (w->left_->color_ == rb_color::black && w->right_->color_ == rb_color::black)
+                    {
+                        w->color_ = rb_color::red;
+                        x = x->parent_;
+                    }
+                    else
+                    {
+                        if (w->right_->color_ == rb_color::black)
+                        {
+                            w->left_->color_ = rb_color::black;
+                            w->color_ = rb_color::red;
+                            right_rotate(w);
+                            w = x->parent_->right_;
+                        }
+                        w->color_ = x->parent_->color_;
+                        x->parent_->color_ = rb_color::black;
+                        w->right_->color_ = rb_color::black;
+                        left_rotate(x->parent_);
+                        x = root_;
+                    }
+                }
+                else
+                {
+                    node_type* w = x->parent_->left_;
+                    if (w->color_ == rb_color::red)
+                    {
+                        w->color_ = rb_color::black;
+                        x->parent_->color_ = rb_color::red;
+                        left_rotate(x->parent_);
+                        w = x->parent_->left_;
+                    }
+                    if (!w->right_ || !w->left_)
+                        return;
+                    if (w->right_->color_ == rb_color::black && w->left_->color_ == rb_color::black)
+                    {
+                        w->color_ = rb_color::red;
+                        x = x->parent_;
+                    }
+                    else
+                    {
+                        if (w->left_->color_ == rb_color::black)
+                        {
+                            w->right_->color_ = rb_color::black;
+                            w->color_ = rb_color::red;
+                            right_rotate(w);
+                            w = x->parent_->left_;
+                        }
+                        w->color_ = x->parent_->color_;
+                        x->parent_->color_ = rb_color::black;
+                        w->left_->color_ = rb_color::black;
+                        left_rotate(x->parent_);
+                        x = root_;
+                    }
+                }
+            }
         }
 
 #ifdef PUBLICIZE

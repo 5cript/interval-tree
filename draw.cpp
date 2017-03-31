@@ -90,7 +90,7 @@ namespace lib_interval_tree
         return getNodeBounds().getWidth() / 2. + margin * 2.;
     }
 //#####################################################################################################################
-    void drawNode(Cairo::DrawContext* ctx, defnode const* node, double x, double y)
+    void drawNode(Cairo::DrawContext* ctx, defnode const* node, double x, double y, bool drawPointers)
     {
         auto caption = Cairo::Text(
             ctx,
@@ -100,31 +100,40 @@ namespace lib_interval_tree
             {"Arial", 18, CAIRO_FONT_WEIGHT_BOLD}
         );
 
-        auto ptr = Cairo::Text(
+        auto max = Cairo::Text(
             ctx,
             0,
             0,
             //pointerString(node),
             std::to_string(node->max_),
+            {"Arial", 12}
+        );
+
+        auto ptr = Cairo::Text(
+            ctx,
+            0,
+            0,
+            pointerString(node),
             {"Arial", 10}
         );
 
         auto actualCaptionBounds = caption.calculateBounds(blackPen);
         auto nodeCaptionBounds = getNodeBounds();
         auto bounds = nodeCaptionBounds;
+        auto maxBounds = max.calculateBounds(ptrPen);
         auto ptrBounds = ptr.calculateBounds(ptrPen);
 
         nodeCaptionBounds.setWidth(bounds.getWidth() - 30.);
-        nodeCaptionBounds.setHeight(bounds.getWidth() - ptrBounds.getHeight() - 5.);
+        nodeCaptionBounds.setHeight(bounds.getWidth() - maxBounds.getHeight() - 5.);
 
         double circleX = x;
         double circleY = y;
         double circleRadius = getNodeRadius();
 
-        while (ptrBounds.getWidth() > circleRadius * 2 && caption.getFont().size > 6)
+        while (maxBounds.getWidth() > circleRadius * 2 && caption.getFont().size > 6)
         {
             caption.getFont().size--;
-            ptrBounds = ptr.calculateBounds(ptrPen);
+            maxBounds = max.calculateBounds(ptrPen);
         }
 
         Cairo::Arc circle {
@@ -149,19 +158,28 @@ namespace lib_interval_tree
             break;
         }
 
-        caption.move(circleX - actualCaptionBounds.getWidth() / 2., circleY - actualCaptionBounds.getHeight() / 2. - ptrBounds.getHeight());
+        caption.move(circleX - actualCaptionBounds.getWidth() / 2., circleY - actualCaptionBounds.getHeight() / 2. - maxBounds.getHeight());
 
         if (node->color_ != rb_color::black)
             caption.draw(nodeCaptionPen);
         else
             caption.draw(Cairo::Colors::White);
 
-        ptr.move(circleX - ptrBounds.getWidth() / 2., circleY - ptrBounds.getHeight() / 2. + 10.);
+        max.move(circleX - maxBounds.getWidth() / 2., circleY - maxBounds.getHeight() / 2. + 10.);
+        ptr.move(circleX - ptrBounds.getWidth() / 2., circleY - ptrBounds.getHeight() / 2. + 10. + maxBounds.getHeight() + margin);
 
         if (node->color_ != rb_color::red)
-            ptr.draw(ptrPen);
+            max.draw(ptrPen);
         else
-            ptr.draw(Cairo::Colors::Yellow);
+            max.draw(Cairo::Colors::Yellow);
+
+        if (drawPointers)
+        {
+            if (node->color_ != rb_color::red)
+                ptr.draw(Cairo::RGB{0xFF, 0x55, 0x55});
+            else
+                ptr.draw(Cairo::Colors::Yellow);
+        }
     }
 //---------------------------------------------------------------------------------------------------------------------
     TreeGrid createGrid(deftree const& tree)
@@ -255,7 +273,7 @@ namespace lib_interval_tree
         return grid;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void drawGrid(Cairo::DrawContext* ctx, TreeGrid const& grid, bool drawEmpty)
+    void drawGrid(Cairo::DrawContext* ctx, TreeGrid const& grid, bool drawPointers, bool drawEmpty)
     {
         auto nodeRadius = getNodeRadius();
         auto cellSize = nodeRadius * 2. + gridMargin;
@@ -296,7 +314,7 @@ namespace lib_interval_tree
                 if (cell)
                 {
                     auto* node = cell.get().node;
-                    drawNode(ctx, node, nodeX(x), nodeY(y));
+                    drawNode(ctx, node, nodeX(x), nodeY(y), drawPointers);
                 }
                 else if (drawEmpty)
                 {
@@ -306,7 +324,7 @@ namespace lib_interval_tree
                         nodeY(y),
                         nodeRadius
                     };
-                    circle.draw(blackPen, ptrPen);
+                    circle.draw(blackPen, Cairo::Colors::White);
 
                 }
                 ++x;

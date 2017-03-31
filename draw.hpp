@@ -35,27 +35,27 @@ namespace lib_interval_tree
         int yMax = 0;
     };
 //#####################################################################################################################
-    void drawNode(Cairo::DrawContext* ctx, defnode const* node, double x, double y);
+    void drawNode(Cairo::DrawContext* ctx, defnode const* node, double x, double y, bool drawPointers);
 //---------------------------------------------------------------------------------------------------------------------
     template <typename NodeT>
-    void drawNode(Cairo::DrawContext* ctx, interval_tree_iterator <NodeT> const& iter, double x, double y)
+    void drawNode(Cairo::DrawContext* ctx, interval_tree_iterator <NodeT> const& iter, double x, double y, bool drawPointers)
     {
-        drawNode(ctx, iter.node_, x, y);
+        drawNode(ctx, iter.node_, x, y, drawPointers);
     }
 //---------------------------------------------------------------------------------------------------------------------
     TreeGrid createGrid(deftree const& tree);
 //---------------------------------------------------------------------------------------------------------------------
-    void drawGrid(Cairo::DrawContext* ctx, TreeGrid const& grid, bool drawEmpty = false);
+    void drawGrid(Cairo::DrawContext* ctx, TreeGrid const& grid, bool drawPointers, bool drawEmpty = false);
 //---------------------------------------------------------------------------------------------------------------------
     Cairo::Surface createSurface(TreeGrid const& grid);
 //---------------------------------------------------------------------------------------------------------------------
     template <typename... List>
-    void drawTree(std::string const& fileName, lib_interval_tree::interval_tree <List...> const* tree)
+    void drawTree(std::string const& fileName, lib_interval_tree::interval_tree <List...> const* tree, bool drawPointers = false)
     {
         auto grid = createGrid(*tree);
         auto surface = createSurface(grid);
         Cairo::DrawContext ctx(&surface);
-        drawGrid(&ctx, grid);
+        drawGrid(&ctx, grid, drawPointers);
         surface.saveToFile(fileName);
     }
 //######################################################################################################
