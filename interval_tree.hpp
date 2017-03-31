@@ -252,6 +252,36 @@ namespace lib_interval_tree
             interval_ = ival;
         }
 
+        bool is_left() const noexcept
+        {
+            return this == parent_->left_;
+        }
+
+        bool is_right() const noexcept
+        {
+            return this == parent_->right_;
+        }
+
+        void kill() const noexcept
+        {
+            auto* parent = parent_;
+            if (is_left())
+            {
+                delete parent_->left_;
+                parent->left_ = nullptr;
+            }
+            else
+            {
+                delete parent_->right_;
+                parent->right_ = nullptr;
+            }
+        }
+
+        bool is_root() const noexcept
+        {
+            return !parent_;
+        }
+
     private:
         interval_type interval_;
         value_type max_;
@@ -468,19 +498,10 @@ namespace lib_interval_tree
 
             if (!iter->left_ && !iter->right_)
             {
-                auto* parent = iter.node_->parent_;
-                if (parent)
+                if (!y->is_root())
                 {
-                    if (parent->left_ == iter.node_)
-                    {
-                        delete parent->left_;
-                        parent->left_ = nullptr;
-                    }
-                    else
-                    {
-                        delete parent->right_;
-                        parent->right_ = nullptr;
-                    }
+                    // some leaf
+                    y->kill();
                 }
                 else
                 {
@@ -501,19 +522,21 @@ namespace lib_interval_tree
                 transplant(iter.node_, y);
                 y->left_ = iter.node_->left_;
                 y->left_->parent_ = y;
+                delete iter.node_;
                 //...
             }
             else if (iter->right_)
             {
                 //x = &iter->right_;
                 transplant(iter.node_, iter->right_);
+                delete iter.node_;
             }
             else if (iter->left_)
             {
                 //x = &iter->left_;
                 transplant(iter.node_, iter->left_);
+                delete iter.node_;
             }
-            //iter.node_->release();
 
             // if (y orig color == black)
             // RB-DELETE-FIXUP(x)
@@ -633,17 +656,20 @@ namespace lib_interval_tree
             */
         }
 
-        // set v inplace of u.
+        /**
+         *  Set v inplace of u. Does not delete u.
+         *  Creates orphaned nodes. A transplant call must be succeeded by delete calls.
+         */
         void transplant(node_type* u, node_type* v)
         {
+            if (v)
+                v->parent_ = u->parent_;
             if (!u->parent_)
                 root_ = v;
-            else if (u == u->parent_->left_)
+            else if (u->is_left())
                 u->parent_->left_ = v;
             else
                 u->parent_->right_ = v;
-            if (v)
-                v->parent_ = u->parent_;
         }
 
         node_type* minimum(node_type* x) const
