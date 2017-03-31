@@ -522,7 +522,7 @@ namespace lib_interval_tree
                 transplant(iter.node_, y);
                 y->left_ = iter.node_->left_;
                 y->left_->parent_ = y;
-                delete iter.node_;
+                //delete iter.node_;
                 //...
             }
             else if (iter->right_)
@@ -577,6 +577,7 @@ namespace lib_interval_tree
                     auto merged = f->interval().join(*i);
                     temp.insert(merged);
                     i->set_interval(merged);
+                    i = erase(f);
                 }
             }
         }
@@ -618,14 +619,14 @@ namespace lib_interval_tree
         iterator overlap_find_i(iterator node)
         {
             auto* ptr = root_;
-            while (*ptr && (!node->interval().overlaps(ptr->interval()) || ptr->get() == node.operator->()))
+            while (ptr && (!node->interval().overlaps(ptr->interval()) || ptr == node.node_))
             {
                 if (ptr->left_ && ptr->left_->max() >= node->interval().low())
                     ptr = ptr->left_;
                 else
                     ptr = ptr->right_;
             }
-            if (!ptr->get())
+            if (!ptr)
                 return {nullptr, this};
             return {ptr, this};
         }
@@ -662,14 +663,13 @@ namespace lib_interval_tree
          */
         void transplant(node_type* u, node_type* v)
         {
-            if (v)
-                v->parent_ = u->parent_;
-            if (!u->parent_)
+            if (u->is_root())
                 root_ = v;
             else if (u->is_left())
                 u->parent_->left_ = v;
             else
                 u->parent_->right_ = v;
+            v->parent_ = u->parent_;
         }
 
         node_type* minimum(node_type* x) const
