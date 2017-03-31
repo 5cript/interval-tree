@@ -107,6 +107,14 @@ namespace lib_interval_tree
         }
 
         /**
+         *  Returns if both intervals are different.
+         */
+        bool operator!=(interval const& other) const
+        {
+            return low_ != other.low_ || high_ != other.high_;
+        }
+
+        /**
          *  Returns the lower bound of the interval
          */
         value_type low() const
@@ -532,13 +540,13 @@ private:
                 if (y->parent_ != iter.node_)
                 {
                     transplant(y, y->right_);
-                    y->right_ = iter.node_;
+                    y->right_ = iter.node_->right_;
                     y->right_->parent_ = y;
                 }
                 transplant(iter.node_, y);
                 y->left_ = iter.node_->left_;
                 y->left_->parent_ = y;
-                //delete iter.node_;
+                delete iter.node_;
                 //...
             }
             else if (iter->right_)
@@ -568,7 +576,25 @@ private:
         iterator overlap_find(interval_type const& ival)
         {
             auto* ptr = root_;
-            while (*ptr && !ival.overlaps(ptr->interval()))
+            while (ptr && !ival.overlaps(ptr->interval()))
+            {
+                if (ptr->left_ && ptr->left_->max() >= ival.low())
+                    ptr = ptr->left_;
+                else
+                    ptr = ptr->right_;
+            }
+            return iterator{ptr, this};
+        }
+
+        /**
+         *  Finds the first exact match.
+         *
+         *  @param ival The interval to find an exact match for within the tree.
+         */
+        iterator find(interval_type const& ival)
+        {
+            auto* ptr = root_;
+            while (ptr && ival != ptr->interval())
             {
                 if (ptr->left_ && ptr->left_->max() >= ival.low())
                     ptr = ptr->left_;
