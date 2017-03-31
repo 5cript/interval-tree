@@ -9,6 +9,8 @@
 
 #include <iostream>
 
+#define PUBLICIZE
+
 namespace lib_interval_tree
 {
 //############################################################################################################
@@ -183,7 +185,11 @@ namespace lib_interval_tree
             return {std::min(low_, other.low_), std::max(high_, other.high_)};
         }
 
+#ifdef PUBLICIZE
+    public:
+#else
     private:
+#endif // PUBLICIZE
         value_type low_;
         value_type high_;
     };
@@ -246,12 +252,6 @@ namespace lib_interval_tree
             return max_;
         }
 
-    private:
-        void set_interval(interval_type const& ival)
-        {
-            interval_ = ival;
-        }
-
         bool is_left() const noexcept
         {
             return this == parent_->left_;
@@ -260,6 +260,17 @@ namespace lib_interval_tree
         bool is_right() const noexcept
         {
             return this == parent_->right_;
+        }
+
+        bool is_root() const noexcept
+        {
+            return !parent_;
+        }
+
+private:
+        void set_interval(interval_type const& ival)
+        {
+            interval_ = ival;
         }
 
         void kill() const noexcept
@@ -277,12 +288,11 @@ namespace lib_interval_tree
             }
         }
 
-        bool is_root() const noexcept
-        {
-            return !parent_;
-        }
-
+#ifdef PUBLICIZE
+    public:
+#else
     private:
+#endif // PUBLICIZE
         interval_type interval_;
         value_type max_;
         node* parent_;
@@ -361,6 +371,8 @@ namespace lib_interval_tree
             return node_ == other.node_;
         }
 
+        ~basic_interval_tree_iterator() = default;
+
     protected:
         basic_interval_tree_iterator(node_ptr_t node, owner_type owner)
             : node_{node}
@@ -368,7 +380,11 @@ namespace lib_interval_tree
         {
         }
 
+#ifdef PUBLICIZE
+    public:
+#else
     protected:
+#endif // PUBLICIZE
         node_ptr_t node_;
         owner_type owner_;
     };
@@ -692,7 +708,11 @@ namespace lib_interval_tree
             }
         }
 
+#ifdef PUBLICIZE
+    public:
+#else
     private:
+#endif // PUBLICIZE
         node_type* root_;
     };
 //############################################################################################################
