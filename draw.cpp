@@ -1,8 +1,10 @@
 #include "draw.hpp"
 
+#include "interval_tree.hpp"
+
 #include "cairo-wrap/cairo_wrap.hpp"
 
-#include <iostream>
+#include <string>
 #include <sstream>
 #include <iomanip>
 
@@ -42,7 +44,7 @@ namespace lib_interval_tree
     std::string pointerString(void const* ptr)
     {
         std::stringstream sstr;
-        sstr << "0x" << reinterpret_cast <NumericalPointerEquivalent<sizeof(void*)>::type> (ptr);
+        sstr << "0x" << std::hex << reinterpret_cast <NumericalPointerEquivalent<sizeof(void*)>::type> (ptr);
         return sstr.str();
     }
 //---------------------------------------------------------------------------------------------------------------------
@@ -102,7 +104,8 @@ namespace lib_interval_tree
             ctx,
             0,
             0,
-            pointerString(node),
+            //pointerString(node),
+            std::to_string(node->max_),
             {"Arial", 10}
         );
 
@@ -130,13 +133,35 @@ namespace lib_interval_tree
             circleY,
             circleRadius
         };
-        circle.draw(blackPen, whitePen);
+        switch (node->color_)
+        {
+        case (rb_color::red):
+            circle.draw(blackPen, Cairo::Colors::Red);
+            break;
+        case (rb_color::black):
+            circle.draw(blackPen, Cairo::Colors::Black);
+            break;
+        case (rb_color::fail):
+            circle.draw(blackPen, Cairo::Colors::White);
+            break;
+        case (rb_color::double_black):
+            circle.draw(blackPen, Cairo::Colors::Gray);
+            break;
+        }
 
         caption.move(circleX - actualCaptionBounds.getWidth() / 2., circleY - actualCaptionBounds.getHeight() / 2. - ptrBounds.getHeight());
-        caption.draw(nodeCaptionPen);
+
+        if (node->color_ != rb_color::black)
+            caption.draw(nodeCaptionPen);
+        else
+            caption.draw(Cairo::Colors::White);
 
         ptr.move(circleX - ptrBounds.getWidth() / 2., circleY - ptrBounds.getHeight() / 2. + 10.);
-        ptr.draw(ptrPen);
+
+        if (node->color_ != rb_color::red)
+            ptr.draw(ptrPen);
+        else
+            ptr.draw(Cairo::Colors::Yellow);
     }
 //---------------------------------------------------------------------------------------------------------------------
     TreeGrid createGrid(deftree const& tree)
@@ -214,7 +239,6 @@ namespace lib_interval_tree
 
         for (auto& i : gridPoints)
         {
-            std::cout << "[" << i.y << "][" << i.x + -grid.xMin << "]\n";
             std::pair <int, int> parentCoords = {-1, -1};
             for (auto const& j : gridPoints)
             {
