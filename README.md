@@ -82,7 +82,7 @@ Removes all intervals from `ival` and produces a tree that contains the remainin
 `ival` is expected to encompass the entire interval range.
 
 **Returns**: A new interval_tree containing the gaps.
-### After punching
+### After punching (with [0, 50])
 ![AfterPunch](https://cloud.githubusercontent.com/assets/6238896/24613645/2dbf72e8-1889-11e7-813f-6d16fe0ad327.png)
 
 ---
