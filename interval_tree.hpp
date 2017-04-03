@@ -266,7 +266,7 @@ private:
 
     public:
         constexpr basic_interval_tree_iterator(basic_interval_tree_iterator const&) = default;
-        constexpr basic_interval_tree_iterator& operator=(basic_interval_tree_iterator const&) = default;
+        basic_interval_tree_iterator& operator=(basic_interval_tree_iterator const&) = default;
 
         bool operator!=(basic_interval_tree_iterator const& other) const
         {
