@@ -844,7 +844,7 @@ private:
                 else
                 {
                     node_type* y = z->parent_->parent_->left_;
-                    if (y->color_ == rb_color::red)
+                    if (y && y->color_ == rb_color::red)
                     {
                         z->parent_->color_ = rb_color::black;
                         y->color_ = rb_color::black;
@@ -860,7 +860,7 @@ private:
                         }
                         z->parent_->color_ = rb_color::black;
                         z->parent_->parent_->color_ = rb_color::red;
-                        right_rotate(z->parent_->parent_);
+                        left_rotate(z->parent_->parent_);
                     }
                 }
             }
