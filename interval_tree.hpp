@@ -41,7 +41,7 @@ namespace lib_interval_tree
         /**
          *  Constructs an interval. low MUST be smaller than high.
          */
-#ifndef SAVE_INTERVALS
+#ifndef INTERVAL_TREE_SAFE_INTERVALS
         interval(value_type low, value_type high)
             : low_{low}
             , high_{high}
@@ -493,7 +493,7 @@ private:
         /**
          *  Inserts an interval into the tree.
          */
-        void insert(interval_type const& ival)
+        iterator insert(interval_type const& ival)
         {
             node_type* z = new node_type(nullptr, ival);
             node_type* y = nullptr;
@@ -517,6 +517,7 @@ private:
 
             insert_fixup(z);
             recalculate_max(z);
+            return {z, this};
         }
 
         /**
@@ -643,7 +644,7 @@ private:
             return {nullptr, this};
         }
 
-        const_iterator begin() const
+        const_iterator cbegin() const
         {
             if (!root_)
                 return {nullptr, this};
@@ -655,9 +656,17 @@ private:
 
             return const_iterator{iter, this};
         }
-        const_iterator end() const
+        const_iterator cend() const
         {
             return const_iterator{nullptr, this};
+        }
+        const_iterator begin() const
+        {
+            return cbegin();
+        }
+        const_iterator end() const
+        {
+            return cend();
         }
 
     private:
