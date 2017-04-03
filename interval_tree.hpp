@@ -614,7 +614,7 @@ private:
         /**
          *  Merges all overlapping intervals by erasing overlapping intervals and reinserting the merged interval.
          */
-        void deoverlap()
+        interval_tree& deoverlap()
         {
             for (auto i = begin(), e = end(); i != e;)
             {
@@ -630,6 +630,48 @@ private:
                 else
                     ++i;
             }
+            return *this;
+        }
+
+        /**
+         *  Only works with deoverlapped trees.
+         *  Creates an interval tree that contains all gaps between the intervals as intervals.
+         */
+        interval_tree punch() const
+        {
+            if (empty())
+                return {};
+            auto min = std::begin(*this)->interval().low();
+            auto max = root_->max_;
+            punch({min, max});
+        }
+
+        /**
+         *  Only works with deoverlapped trees.
+         *  Removes all intervals from the given interval and produces a tree that contains the remaining intervals.
+         *  This is basically the other punch overload with ival = [tree_lowest, tree_highest]
+         */
+        interval_tree punch(interval_type const& ival)
+        {
+            if (empty())
+                return {};
+
+            interval_tree result;
+            auto i = std::begin(*this);
+            if (ival.low() < i->interval().low())
+                result.insert({i->interval().low(), ival.low()});
+
+            for (auto e = std::end(*this); i != e; ++i)
+            {
+                auto next = i; ++next;
+                if (next != e)
+                    result.insert({i->interval().high(), next->interval().low()});
+            }
+
+            if (ival.high() > root_->max_)
+                result.insert({root_->max_, ival.high()});
+
+            return result;
         }
 
         iterator begin()
@@ -672,6 +714,14 @@ private:
         const_iterator end() const
         {
             return cend();
+        }
+
+        /**
+         *  Returns wether or not the tree is empty
+         */
+        bool empty() const noexcept
+        {
+            return root_ == nullptr;
         }
 
     private:

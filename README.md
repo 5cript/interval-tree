@@ -1,6 +1,7 @@
 # interval-tree
 
 A C++ header only interval tree implementation, which takes a red black tree as its base to inhibit degeneration to linked lists.
+Methods only work (make mathematical sense) with closed intervals (FIXME).
 
 ## How an interval tree looks like:
 ![ExampleTree](https://cloud.githubusercontent.com/assets/6238896/24608762/36422d7c-1878-11e7-9c5c-a45bdcd6e187.png)
@@ -67,9 +68,39 @@ Finds the first interval in the interval tree that overlaps the given interval.
 **Returns**: An iterator to the found element, or std::end(tree).
 
 ---
-### void deoverlap()
+### interval_tree& deoverlap()
 Merges all overlapping intervals within the tree. After calling deoverlap, the tree will only contain disjoint intervals.
 
-**Returns**: nothing
+**Returns**: *this
 ### After deoverlap
 ![AfterDeoverlap](https://cloud.githubusercontent.com/assets/6238896/24608766/3f41d5e4-1878-11e7-809e-7e26837a0f61.png)
+
+---
+### interval_tree punch(interval_type const& ival)
+Removes all intervals from `ival` and produces a tree that contains the remaining intervals.
+**The tree must be deoverlapped, or the result is undefined.**
+`ival` is expected to encompass the entire interval range.
+
+**Returns**: A new interval_tree containing the gaps.
+
+---
+### bool empty() const noexcept
+Returns whether or not the tree is empty.
+
+**Returns**: Is this tree empty?
+
+---
+### iterator begin()
+Returns the iterator of the interval with the lowest lower_bound.
+
+**Returns**: Is this tree empty?
+
+---
+### iterator end()
+Returns a past the end iterator.
+
+**Returns**: Is this tree empty?
+### After punching
+![AfterPunch](https://cloud.githubusercontent.com/assets/6238896/24613645/2dbf72e8-1889-11e7-813f-6d16fe0ad327.png)
+
+---
