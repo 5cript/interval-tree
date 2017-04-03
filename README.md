@@ -82,6 +82,13 @@ Removes all intervals from `ival` and produces a tree that contains the remainin
 `ival` is expected to encompass the entire interval range.
 
 **Returns**: A new interval_tree containing the gaps.
+### After punching
+![AfterPunch](https://cloud.githubusercontent.com/assets/6238896/24613645/2dbf72e8-1889-11e7-813f-6d16fe0ad327.png)
+
+---
+### interval_tree punch()
+Same as punch(interval_type const& ival), but with ival = [lowest_lower_bound, highest_upper_bound], resulting in only
+the gaps between existing intervals.
 
 ---
 ### bool empty() const noexcept
@@ -100,7 +107,5 @@ Returns the iterator of the interval with the lowest lower_bound.
 Returns a past the end iterator.
 
 **Returns**: Is this tree empty?
-### After punching
-![AfterPunch](https://cloud.githubusercontent.com/assets/6238896/24613645/2dbf72e8-1889-11e7-813f-6d16fe0ad327.png)
 
 ---
