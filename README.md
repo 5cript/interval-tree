@@ -13,7 +13,9 @@ A C++ header only interval tree implementation, which takes a red black tree as 
 
 int main()
 {
-  interval_tree<> tree;
+  using namespace lib_interval_tree;
+
+  interval_tree<int> tree;
 
   tree.insert({16, 21});
   tree.insert({8, 9});
