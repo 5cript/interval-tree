@@ -844,7 +844,7 @@ private:
                 y->max_ = std::max(y->left_->max_, y->right_->max_);
             else if (y->left_)
                 y->max_ = y->left_->max_;
-            else if (x->right_)
+            else if (y->right_)
                 y->max_ = y->right_->max_;
             else
                 y->max_ = y->interval_.high_;
@@ -877,7 +877,7 @@ private:
                 if (z->parent_ == z->parent_->parent_->left_)
                 {
                     node_type* y = z->parent_->parent_->right_;
-                    if (y->color_ == rb_color::red)
+                    if (y && y->color_ == rb_color::red)
                     {
                         z->parent_->color_ = rb_color::black;
                         y->color_ = rb_color::black;
@@ -911,7 +911,7 @@ private:
                         if (z->is_left())
                         {
                             z = z->parent_;
-                            left_rotate(z);
+                            right_rotate(z);
                         }
                         z->parent_->color_ = rb_color::black;
                         z->parent_->parent_->color_ = rb_color::red;
