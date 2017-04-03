@@ -643,7 +643,7 @@ private:
                 return {};
             auto min = std::begin(*this)->interval().low();
             auto max = root_->max_;
-            punch({min, max});
+            return punch({min, max});
         }
 
         /**
