@@ -1,10 +1,73 @@
 # interval-tree
-(UTTERLY BROKEN)
 
-A C++ header only interval tree implementation (that does not abide red, black tree properties).
+A C++ header only interval tree implementation, which takes a red black tree as its base to inhibit degeneration to linked lists.
 
-Not firmly tested and written quickly and dirtyly.
+## How an interval tree looks like:
+![ExampleTree](https://cloud.githubusercontent.com/assets/6238896/24608762/36422d7c-1878-11e7-9c5c-a45bdcd6e187.png)
 
-You might not want to use this.
+## Example
+```C++
+#define INTERVAL_TREE_SAFE_INTERVALS // makes sure that upper_bound > lower_bound (by swapping if neccessary), but is slower. Will become an assert if left out.
+// #include "draw.hpp" // to draw tree. this is not header only anymore.
+#include "interval_tree.hpp"
 
-iterators invalidate on erase and insert.
+int main()
+{
+  interval_tree<> tree;
+
+  tree.insert({16, 21});
+  tree.insert({8, 9});
+  tree.insert({25, 30});
+  tree.insert({5, 8});
+  tree.insert({15, 23});
+  tree.insert({17, 19});
+  tree.insert({26, 26});
+  tree.insert({0, 3});
+  tree.insert({6, 10});
+  tree.insert({19, 20});
+
+  tree.deoverlap();
+}
+```
+
+## Members
+### iterator insert(interval_type const& ival)
+Adds an interval into the tree. 
+#### Parameters
+* `ival` An interval
+
+**Returns**: An iterator to the inserted element.
+
+---
+### iterator erase(iterator iter)
+Removes the interval given by iterator from the tree.
+(does not invalidate iterators).
+#### Parameters
+* `iter` A valid non-end iterator
+
+**Returns**: An iterator to the next element.
+
+---
+### iterator find(interval_type const& ival)
+Finds the first interval in the interval tree that has an exact match.
+**WARNING**: There is no special handling for floats.
+#### Parameters
+* `ival` The interval to find.
+
+**Returns**: An iterator to the found element, or std::end(tree).
+
+---
+### iterator overlap_find(interval_type const& ival)
+Finds the first interval in the interval tree that overlaps the given interval.
+#### Parameters
+* `ival` The interval to find an overlap for.
+
+**Returns**: An iterator to the found element, or std::end(tree).
+
+---
+### void deoverlap()
+Merges all overlapping intervals within the tree. After calling deoverlap, the tree will only contain disjoint intervals.
+
+**Returns**: nothing
+### After deoverlap
+![AfterDeoverlap](https://cloud.githubusercontent.com/assets/6238896/24608766/3f41d5e4-1878-11e7-809e-7e26837a0f61.png)
