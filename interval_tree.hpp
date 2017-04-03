@@ -3,7 +3,7 @@
 #include "interval_tree_fwd.hpp"
 #include "interval_types.hpp"
 
-#include "draw.hpp"
+// #include "draw.hpp"
 
 #include <string>
 #include <memory>
@@ -32,6 +32,7 @@ namespace lib_interval_tree
     struct interval
     {
         friend node <numerical_type, interval <numerical_type, interval_kind_>>;
+        friend interval_tree <numerical_type, interval_kind_>;
 
     public:
         using value_type = numerical_type;
@@ -159,42 +160,20 @@ namespace lib_interval_tree
         value_type high_;
     };
 //############################################################################################################
-    template <typename numerical_type = default_interval_value_type, typename interval_type_ = interval <numerical_type, right_open>>
+    template <typename numerical_type = default_interval_value_type, typename interval_type_ = interval <numerical_type, closed>>
     class node
     {
+    private:
+        using node_type = node <numerical_type, interval_type_>;
+
     public:
         using interval_type = interval_type_;
         using value_type = numerical_type;
 
     public:
-        friend interval_tree <numerical_type, typename interval_type::interval_kind>;
-        friend basic_interval_tree_iterator <node <numerical_type, interval_type>,
-                                             interval_tree <numerical_type, typename interval_type::interval_kind> const*>;
-        friend basic_interval_tree_iterator <node <numerical_type, interval_type>,
-                                             interval_tree <numerical_type, typename interval_type::interval_kind>*>;
-
-        template <typename node_type, typename interval_type__>
-        friend void insert_node(node_type* parent, node_type*& root, interval_type__ ival)
-        //template <typename tree_type, typename node_type>
-        //friend void insert_node(tree_type* tree, node_type* z)
-        {
-            /*
-            if (!root)
-            {
-                root = new node(parent, ival);
-                return;
-            }
-
-            auto root_begin = root->interval().low();
-            if (ival.low() < root_begin)
-                insert_node(root, root->left_, ival);
-            else
-                insert_node(root, root->right_, ival);
-
-            if (root->max_ < ival.high())
-                root->max_ = ival.high();
-            */
-        }
+        friend lib_interval_tree::interval_tree <numerical_type, typename interval_type::interval_kind>;
+        friend lib_interval_tree::const_interval_tree_iterator <node <numerical_type, interval_type> >;
+        friend lib_interval_tree::interval_tree_iterator <node <numerical_type, interval_type> >;
 
     public:
         node(node* parent, interval_type interval)
@@ -289,9 +268,54 @@ private:
         constexpr basic_interval_tree_iterator(basic_interval_tree_iterator const&) = default;
         constexpr basic_interval_tree_iterator& operator=(basic_interval_tree_iterator const&) = default;
 
-        basic_interval_tree_iterator& operator++()
+        bool operator!=(basic_interval_tree_iterator const& other) const
         {
-            if (!node_ )
+            return node_ != other.node_;
+        }
+
+        bool operator==(basic_interval_tree_iterator const& other) const
+        {
+            return node_ == other.node_;
+        }
+
+        virtual ~basic_interval_tree_iterator() = default;
+
+    protected:
+        basic_interval_tree_iterator(node_ptr_t node, owner_type owner)
+            : node_{node}
+            , owner_{owner}
+        {
+        }
+
+#ifdef PUBLICIZE
+    public:
+#else
+    protected:
+#endif // PUBLICIZE
+        node_ptr_t node_;
+        owner_type owner_;
+    };
+//############################################################################################################
+    template <typename node_type>
+    class const_interval_tree_iterator
+        : public basic_interval_tree_iterator <node_type,
+                                               interval_tree <typename node_type::interval_type::value_type,
+                                                              typename node_type::interval_type::interval_kind> const*>
+    {
+    public:
+        using tree_type = interval_tree <typename node_type::interval_type::value_type,
+                                         typename node_type::interval_type::interval_kind>;
+        using iterator_base = basic_interval_tree_iterator <node_type, tree_type const*>;
+        using value_type = typename iterator_base::value_type;
+        using iterator_base::node_;
+        using iterator_base::owner_;
+
+        friend tree_type;
+
+    public:
+        const_interval_tree_iterator& operator++()
+        {
+            if (!node_)
             {
                 node_ = owner_->root_;
 
@@ -323,58 +347,13 @@ private:
             return *this;
         }
 
-
-        basic_interval_tree_iterator operator++(int)
+        const_interval_tree_iterator operator++(int)
         {
-            basic_interval_tree_iterator cpy = *this;
+            const_interval_tree_iterator cpy = *this;
             operator++();
             return cpy;
         }
 
-        bool operator!=(basic_interval_tree_iterator const& other) const
-        {
-            return node_ != other.node_;
-        }
-
-        bool operator==(basic_interval_tree_iterator const& other) const
-        {
-            return node_ == other.node_;
-        }
-
-        ~basic_interval_tree_iterator() = default;
-
-    protected:
-        basic_interval_tree_iterator(node_ptr_t node, owner_type owner)
-            : node_{node}
-            , owner_{owner}
-        {
-        }
-
-#ifdef PUBLICIZE
-    public:
-#else
-    protected:
-#endif // PUBLICIZE
-        node_ptr_t node_;
-        owner_type owner_;
-    };
-//############################################################################################################
-    template <typename node_type>
-    class const_interval_tree_iterator
-        : public basic_interval_tree_iterator <node_type,
-                                               interval_tree <typename node_type::interval_type::value_type,
-                                                              typename node_type::interval_type::interval_kind> const*>
-    {
-    public:
-        using tree_type = interval_tree <typename node_type::interval_type::value_type,
-                                         typename node_type::interval_type::interval_kind>;
-        using iterator_base = basic_interval_tree_iterator <node_type, tree_type const*>;
-        using value_type = typename iterator_base::value_type;
-        using iterator_base::node_;
-
-        friend tree_type;
-
-    public:
         typename value_type::interval_type operator*() const
         {
             if (node_)
@@ -407,10 +386,52 @@ private:
         using iterator_base = basic_interval_tree_iterator <node_type, tree_type*>;
         using value_type = typename iterator_base::value_type;
         using iterator_base::node_;
+        using iterator_base::owner_;
 
         friend tree_type;
 
     public:
+        interval_tree_iterator& operator++()
+        {
+            if (!node_)
+            {
+                node_ = owner_->root_;
+
+                if (!node_)
+                    return *this;
+
+                while(node_->left_)
+                    node_ = node_->left_;
+            }
+
+            if (node_->right_)
+            {
+                node_ = node_->right_;
+
+                while (node_->left_)
+                    node_ = node_->left_;
+            }
+            else
+            {
+                auto* parent = node_->parent_;
+                while (parent != nullptr && node_ == parent->right_)
+                {
+                    node_ = parent;
+                    parent = parent->parent_;
+                }
+                node_ = parent;
+            }
+
+            return *this;
+        }
+
+        interval_tree_iterator operator++(int)
+        {
+            interval_tree_iterator cpy = *this;
+            operator++();
+            return cpy;
+        }
+
         typename value_type::interval_type operator*() const
         {
             if (node_)
@@ -431,21 +452,19 @@ private:
         }
     };
 //############################################################################################################
-    template <typename numerical_type = default_interval_value_type, typename interval_kind = right_open>
+    template <typename numerical_type = default_interval_value_type, typename interval_kind = closed>
     class interval_tree
     {
-    public:
-        friend basic_interval_tree_iterator <node <numerical_type, interval <numerical_type, interval_kind>>,
-                                             interval_tree <numerical_type, interval_kind> const*>;
-        friend basic_interval_tree_iterator <node <numerical_type, interval <numerical_type, interval_kind>>,
-                                             interval_tree <numerical_type, interval_kind>*>;
-
     public:
         using value_type = numerical_type;
         using interval_type = interval <value_type, interval_kind>;
         using node_type = node <value_type, interval_type>;
         using iterator = interval_tree_iterator <node_type>;
         using const_iterator = const_interval_tree_iterator <node_type>;
+
+    public:
+        friend const_interval_tree_iterator <node_type>;
+        friend interval_tree_iterator <node_type>;
 
         interval_tree()
             : root_{}
@@ -454,8 +473,8 @@ private:
 
         ~interval_tree()
         {
-            //for (auto i = std::begin(*this); i != std::end(*this);)
-            //    i = erase(i);
+            for (auto i = std::begin(*this); i != std::end(*this);)
+                i = erase(i);
         }
 
         interval_tree(interval_tree const& other)
@@ -470,7 +489,6 @@ private:
                 insert(i->interval());
             return *this;
         }
-
 
         /**
          *  Inserts an interval into the tree.
@@ -498,6 +516,7 @@ private:
             z->color_ = rb_color::red;
 
             insert_fixup(z);
+            recalculate_max(z);
         }
 
         /**
@@ -508,57 +527,44 @@ private:
             if (!iter.node_)
                 throw std::out_of_range("cannot erase end iterator");
 
-            auto next = iter; next++;
+            auto next = iter;
+            ++next;
 
-            node_type* y = iter.node_;
-            node_type* x = nullptr;
+            node_type* y;
+            if (!iter.node_->left_ || !iter.node_->right_)
+                y = iter.node_;
+            else
+                y = successor(iter.node_);
 
-            auto y_orig_color = y->color_;
-
-            if (!iter->left_ && !iter->right_)
-            {
-                if (!y->is_root())
-                    y->kill();
-                else
-                {
-                    delete iter.node_;
-                    root_ = nullptr;
-                    return {nullptr, this};
-                }
-            }
-            else if (iter->right_ && iter->left_)
-            {
-                y = minimum(iter->right_);
+            node_type* x;
+            if (y->left_)
+                x = y->left_;
+            else
                 x = y->right_;
-                y_orig_color = y->color_;
-                if (y->parent_ == iter.node_)
-                    x->parent_ = y;
-                else
-                {
-                    transplant(y, y->right_);
-                    y->right_ = iter.node_->right_;
-                    y->right_->parent_ = y;
-                }
-                transplant(iter.node_, y);
-                y->left_ = iter.node_->left_;
-                y->left_->parent_ = y;
-                y->color_ = iter.node_->color_;
-                delete iter.node_;
-            }
-            else if (iter->right_)
+
+            if (x)
+                x->parent_ = y->parent_;
+
+            auto* x_parent = y->parent_;
+
+            if (!y->parent_)
+                root_ = x;
+            else if (y->is_left())
+                y->parent_->left_ = x;
+            else
+                y->parent_->right_ = x;
+
+            if (y != iter.node_)
             {
-                x = iter->right_;
-                transplant(iter.node_, iter->right_);
-                delete iter.node_;
+                iter.node_->interval_ = y->interval_;
+                iter.node_->max_ = y->max_;
+                recalculate_max(iter.node_);
             }
-            else if (iter->left_)
-            {
-                x = iter->left_;
-                transplant(iter.node_, iter->left_);
-                delete iter.node_;
-            }
-            if (y_orig_color == rb_color::black)
-                erase_fixup(x);
+
+            if (x && x->color_ == rb_color::red)
+                erase_fixup(x, x_parent, y->is_left());
+
+            delete y;
 
             return next;
         }
@@ -604,10 +610,9 @@ private:
          */
         void deoverlap()
         {
-            int counter = 0;
             for (auto i = begin(), e = end(); i != e;)
             {
-                drawTree(std::to_string(counter++) + ".png", this);
+                // drawTree(std::to_string(counter++) + ".png", this);
                 auto f = overlap_find_i(i);
                 if (f != end())
                 {
@@ -671,6 +676,19 @@ private:
             return {ptr, this};
         }
 
+        node_type* successor(node_type* node)
+        {
+            if (node->right_)
+                return minimum(node->right_);
+            auto* y = node->parent_;
+            while (y && node == y->right_)
+            {
+                node = y;
+                y = y->parent_;
+            }
+            return y;
+        }
+
         bool is_descendant(iterator par, iterator desc)
         {
             auto p = desc->parent_;
@@ -721,6 +739,21 @@ private:
 
             y->left_ = x;
             x->parent_ = y;
+
+            // max fixup
+            if (x->left_ && x->right_)
+                x->max_ = std::max(x->left_->max_, x->right_->max_);
+            else if (x->left_)
+                x->max_ = x->left_->max_;
+            else if (x->right_)
+                x->max_ = x->right_->max_;
+            else
+                x->max_ = x->interval_.high_;
+
+            if (y->right_)
+                y->max_ = std::max(y->right_->max_, x->max_);
+            else
+                y->max_ = x->max_;
         }
 
         void right_rotate(node_type* y)
@@ -741,6 +774,21 @@ private:
 
             x->right_ = y;
             y->parent_ = x;
+
+            // max fixup
+            if (y->left_ && y->right_)
+                y->max_ = std::max(y->left_->max_, y->right_->max_);
+            else if (y->left_)
+                y->max_ = y->left_->max_;
+            else if (x->right_)
+                y->max_ = y->right_->max_;
+            else
+                y->max_ = y->interval_.high_;
+
+            if (x->left_)
+                x->max_ = std::max(x->left_->max_, y->max_);
+            else
+                y->max_ = y->max_;
         }
 
         void recalculate_max(node_type* reacalculation_root)
@@ -748,9 +796,9 @@ private:
             auto* p = reacalculation_root;
             while (p && p->max_ <= reacalculation_root->max_)
             {
-                if (p->left_ && p->left_->max_ < p->max_)
+                if (p->left_ && p->left_->max_ > p->max_)
                     p->max_ = p->left_->max_;
-                else if (p->right_ && p->right_->max_ < p->max_)
+                if (p->right_ && p->right_->max_ > p->max_)
                     p->max_ = p->right_->max_;
                 p = p->parent_;
             }
@@ -810,26 +858,28 @@ private:
             root_->color_ = rb_color::black;
         }
 
-        void erase_fixup(node_type* x)
+        void erase_fixup(node_type* x, node_type* x_parent, bool y_is_left)
         {
             while (x != root_ && x->color_ == rb_color::black)
             {
-                if (x == x->parent_->left_)
+                node_type* w;
+                if (y_is_left)
                 {
-                    node_type* w = x->parent_->right_;
+                    w = x_parent->right_;
                     if (w->color_ == rb_color::red)
                     {
                         w->color_ = rb_color::black;
-                        x->parent_->color_ = rb_color::red;
-                        left_rotate(x->parent_);
-                        w = x->parent_->right_;
+                        x_parent->color_ = rb_color::red;
+                        left_rotate(x_parent);
+                        w = x_parent->right_;
                     }
-                    if (!w->left_ || !w->right_)
-                        return;
+
                     if (w->left_->color_ == rb_color::black && w->right_->color_ == rb_color::black)
                     {
                         w->color_ = rb_color::red;
-                        x = x->parent_;
+                        x = x_parent;
+                        x_parent = x->parent_;
+                        y_is_left = (x == x_parent->left_);
                     }
                     else
                     {
@@ -838,31 +888,36 @@ private:
                             w->left_->color_ = rb_color::black;
                             w->color_ = rb_color::red;
                             right_rotate(w);
-                            w = x->parent_->right_;
+                            w = x_parent->right_;
                         }
-                        w->color_ = x->parent_->color_;
-                        x->parent_->color_ = rb_color::black;
-                        w->right_->color_ = rb_color::black;
-                        left_rotate(x->parent_);
+
+                        w->color_ = x_parent->color_;
+                        x_parent->color_ = rb_color::black;
+                        if (w->right_)
+                            w->right_->color_ = rb_color::black;
+
+                        left_rotate(x_parent);
                         x = root_;
+                        x_parent = nullptr;
                     }
                 }
                 else
                 {
-                    node_type* w = x->parent_->left_;
+                    w = x_parent->left_;
                     if (w->color_ == rb_color::red)
                     {
                         w->color_ = rb_color::black;
-                        x->parent_->color_ = rb_color::red;
-                        left_rotate(x->parent_);
-                        w = x->parent_->left_;
+                        x_parent->color_ = rb_color::red;
+                        right_rotate(x_parent);
+                        w = x_parent->left_;
                     }
-                    if (!w->right_ || !w->left_)
-                        return;
+
                     if (w->right_->color_ == rb_color::black && w->left_->color_ == rb_color::black)
                     {
                         w->color_ = rb_color::red;
-                        x = x->parent_;
+                        x = x_parent;
+                        x_parent = x->parent_;
+                        y_is_left = (x == x_parent->left_);
                     }
                     else
                     {
@@ -870,17 +925,23 @@ private:
                         {
                             w->right_->color_ = rb_color::black;
                             w->color_ = rb_color::red;
-                            right_rotate(w);
-                            w = x->parent_->left_;
+                            left_rotate(w);
+                            w = x_parent->left_;
                         }
-                        w->color_ = x->parent_->color_;
-                        x->parent_->color_ = rb_color::black;
-                        w->left_->color_ = rb_color::black;
-                        left_rotate(x->parent_);
+
+                        w->color_ = x_parent->color_;
+                        x_parent->color_ = rb_color::black;
+                        if (w->left_)
+                            w->left_->color_ = rb_color::black;
+
+                        right_rotate(x_parent);
                         x = root_;
+                        x_parent = nullptr;
                     }
                 }
             }
+
+            x->color_ = rb_color::black;
         }
 
 #ifdef PUBLICIZE

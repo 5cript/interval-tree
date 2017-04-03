@@ -14,8 +14,8 @@
 namespace lib_interval_tree
 {
 //#####################################################################################################################
-    using defnode = node <int, interval <int, right_open>>;
-    using deftree = interval_tree <int, right_open>;
+    using defnode = node <int, interval <int, closed>>;
+    using deftree = interval_tree <int, closed>;
 //#####################################################################################################################
     struct TreeGridNode
     {

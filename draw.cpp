@@ -230,9 +230,15 @@ namespace lib_interval_tree
             }
             gridPoints.push_back({node, node->parent_, x, y});
 
-            if (node->left_)
+            if (node->left_ == node || node->right_ == node)
+            {
+                gridPoints.push_back({node, node->parent_, 10, 10});
+                return;
+            }
+
+            if (node->left_ && node->left_ != node)
                 deduceCoordinates(node->left_, x, y);
-            if (node->right_)
+            if (node->right_ && node->right_ != node)
                 deduceCoordinates(node->right_, x, y);
         };
 
