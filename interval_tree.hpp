@@ -46,7 +46,7 @@ namespace lib_interval_tree
             : low_{low}
             , high_{high}
         {
-            assert(low < high);
+            assert(low <= high);
         }
 #else
         interval(value_type low, value_type high)
