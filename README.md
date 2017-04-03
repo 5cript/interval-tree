@@ -30,6 +30,11 @@ int main()
   tree.insert({19, 20});
 
   tree.deoverlap();
+  
+  for (auto const& i : tree)
+  {
+    std::cout << "[" << i.low() << ", " << i.high() << "]\n";
+  }
 }
 ```
 
