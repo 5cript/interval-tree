@@ -651,7 +651,7 @@ private:
          *  Removes all intervals from the given interval and produces a tree that contains the remaining intervals.
          *  This is basically the other punch overload with ival = [tree_lowest, tree_highest]
          */
-        interval_tree punch(interval_type const& ival)
+        interval_tree punch(interval_type const& ival) const
         {
             if (empty())
                 return {};
