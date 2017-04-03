@@ -563,7 +563,12 @@ private:
             }
 
             if (x && x->color_ == rb_color::red)
-                erase_fixup(x, x_parent, y->is_left());
+            {
+                if (x_parent)
+                    erase_fixup(x, x_parent, y->is_left());
+                else
+                    x->color_ = rb_color::black;
+            }
 
             delete y;
 
@@ -844,7 +849,7 @@ private:
                 else
                 {
                     node_type* y = z->parent_->parent_->left_;
-                    if (y->color_ == rb_color::red)
+                    if (y && y->color_ == rb_color::red)
                     {
                         z->parent_->color_ = rb_color::black;
                         y->color_ = rb_color::black;
@@ -853,14 +858,14 @@ private:
                     }
                     else
                     {
-                        if (z == z->parent_->left_)
+                        if (z->is_left())
                         {
                             z = z->parent_;
                             left_rotate(z);
                         }
                         z->parent_->color_ = rb_color::black;
                         z->parent_->parent_->color_ = rb_color::red;
-                        right_rotate(z->parent_->parent_);
+                        left_rotate(z->parent_->parent_);
                     }
                 }
             }
