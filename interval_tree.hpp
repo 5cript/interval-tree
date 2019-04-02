@@ -59,17 +59,17 @@ namespace lib_interval_tree
         /**
          *  Returns if both intervals equal.
          */
-        bool operator==(interval const& other) const
+        friend bool operator==(interval const& lhs, interval const& other)
         {
-            return low_ == other.low_ && high_ == other.high_;
+            return lhs.low_ == other.low_ && lhs.high_ == other.high_;
         }
 
         /**
          *  Returns if both intervals are different.
          */
-        bool operator!=(interval const& other) const
+        friend bool operator!=(interval const& lhs, interval const& other)
         {
-            return low_ != other.low_ || high_ != other.high_;
+            return lhs.low_ != other.low_ || lhs.high_ != other.high_;
         }
 
         /**
@@ -597,18 +597,22 @@ private:
          *  Finds the first exact match.
          *
          *  @param ival The interval to find an exact match for within the tree.
+         *  @param compare A comparison function to use.
+         */
+        template <typename CompareFunctionT>
+        iterator find(interval_type const& ival, CompareFunctionT const& compare)
+        {
+            return iterator{find_i(root_, ival, compare), this};
+        }
+
+        /**
+         *  Finds the first exact match.
+         *
+         *  @param ival The interval to find an exact match for within the tree.
          */
         iterator find(interval_type const& ival)
         {
-            auto* ptr = root_;
-            while (ptr && ival != ptr->interval())
-            {
-                if (ptr->left_ && ptr->left_->max() >= ival.low())
-                    ptr = ptr->left_;
-                else
-                    ptr = ptr->right_;
-            }
-            return iterator{ptr, this};
+            return find(ival, [](auto const& lhs, auto const& rhs){return lhs == rhs;});
         }
 
         /**
@@ -725,6 +729,45 @@ private:
         }
 
     private:
+        template <typename ComparatorFunctionT>
+        node_type* find_i(node_type* ptr, interval_type const& ival, ComparatorFunctionT const& compare)
+        {
+            if (compare(ptr->interval(), ival))
+                return ptr;
+            else if (ptr->left_ && ival.high() <= ptr->left_->max())
+            {
+                // no right? can only continue left
+                if (!ptr->right_)
+                    return find_i(ptr->left_, ival, compare);
+
+                // upper bounds higher than what is contained right? continue left
+                if (ival.high() > ptr->right_->max())
+                    return find_i(ptr->left_, ival, compare);
+
+                auto* res = find_i(ptr->left_, ival, compare);
+                if (res == nullptr)
+                    return find_i(ptr->right_, ival, compare);
+                else
+                    return res;
+            }
+            else if (ptr->right_ && ival.high() <= ptr->right_->max())
+            {
+                if (!ptr->left_)
+                    return find_i(ptr->right_, ival, compare);
+
+                if (ival.high() > ptr->left_->max())
+                    return find_i(ptr->right_, ival, compare);
+
+                auto* res = find_i(ptr->right_, ival, compare);
+                if (res == nullptr)
+                    return find_i(ptr->left_, ival, compare);
+                else
+                    return res;
+            }
+            else
+                return nullptr;
+        }
+
         iterator overlap_find_i(iterator node)
         {
             auto* ptr = root_;

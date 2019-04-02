@@ -1,7 +1,7 @@
 # interval-tree
 
 A C++ header only interval tree implementation, which takes a red black tree as its base to inhibit degeneration to linked lists.
-Methods only work (make mathematical sense) with closed intervals (FIXME).
+Methods only work (make mathematical sense) with closed intervals.
 
 ## How an interval tree looks like:
 ![ExampleTree](https://cloud.githubusercontent.com/assets/6238896/24608762/36422d7c-1878-11e7-9c5c-a45bdcd6e187.png)
@@ -61,6 +61,16 @@ Finds the first interval in the interval tree that has an exact match.
 **WARNING**: There is no special handling for floats.
 #### Parameters
 * `ival` The interval to find.
+
+**Returns**: An iterator to the found element, or std::end(tree).
+
+---
+### iterator find(interval_type const& ival, CompareFunctionT const& compare)
+Finds the first interval in the interval tree that has the following statement evaluate to true: compare(ival, interval_in_tree);
+Allows for propper float comparisons.
+#### Parameters
+* `ival` The interval to find.
+* `compare` The compare function to compare intervals with.
 
 **Returns**: An iterator to the found element, or std::end(tree).
 

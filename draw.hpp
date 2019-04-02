@@ -50,12 +50,12 @@ namespace lib_interval_tree
     Cairo::Surface createSurface(TreeGrid const& grid);
 //---------------------------------------------------------------------------------------------------------------------
     template <typename... List>
-    void drawTree(std::string const& fileName, lib_interval_tree::interval_tree <List...> const* tree, bool drawPointers = false)
+    void drawTree(std::string const& fileName, lib_interval_tree::interval_tree <List...> const* tree, bool drawPointers = false, bool drawEmpty = false)
     {
         auto grid = createGrid(*tree);
         auto surface = createSurface(grid);
         Cairo::DrawContext ctx(&surface);
-        drawGrid(&ctx, grid, drawPointers);
+        drawGrid(&ctx, grid, drawPointers, drawEmpty);
         surface.saveToFile(fileName);
     }
 //######################################################################################################
