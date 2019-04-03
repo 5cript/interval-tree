@@ -9,3 +9,10 @@ __history/
 main.hpp
 main.cpp
 *.png
+
+tests/bin/*
+tests/build/*
+tests/obj/*
+tests/*.cbp
+tests/*.depend
+tests/*build_log.html

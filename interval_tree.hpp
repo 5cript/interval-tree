@@ -477,13 +477,15 @@ private:
         using node_type = node <value_type, interval_type>;
         using iterator = interval_tree_iterator <node_type>;
         using const_iterator = const_interval_tree_iterator <node_type>;
+        using size_type = long long;
 
     public:
         friend const_interval_tree_iterator <node_type>;
         friend interval_tree_iterator <node_type>;
 
         interval_tree()
-            : root_{}
+            : root_{nullptr}
+            , size_{0}
         {
         }
 
@@ -493,7 +495,8 @@ private:
         }
 
         interval_tree(interval_tree const& other)
-            : root_{}
+            : root_{nullptr}
+            , size_{0}
         {
             operator=(other);
         }
@@ -506,6 +509,8 @@ private:
 
             if (other.root_ != nullptr)
                 root_ = copyTreeImpl(other.root_, nullptr);
+
+            size_ = other.size_;
 
             return *this;
         }
@@ -546,6 +551,7 @@ private:
 
             insert_fixup(z);
             recalculate_max(z);
+            ++size_;
             return {z, this};
         }
 
@@ -621,7 +627,16 @@ private:
 
             delete y;
 
+            --size_;
             return next;
+        }
+
+        /**
+         *  Returns the size of the object.
+         */
+        size_type size() const
+        {
+            return size_;
         }
 
         /**
@@ -1194,6 +1209,7 @@ private:
     private:
 #endif // PUBLICIZE
         node_type* root_;
+        size_type size_;
     };
 //############################################################################################################
 }
