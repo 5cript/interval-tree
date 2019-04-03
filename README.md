@@ -66,6 +66,12 @@ Removes the interval given by iterator from the tree.
 **Returns**: An iterator to the next element.
 
 ---
+### size_type size() const
+Returns the amount of nodes in the tree.
+
+**Returns**: The amount of tree nodes.
+
+---
 ### iterator find(interval_type const& ival)
 Finds the first interval in the interval tree that has an exact match.
 **WARNING**: There is no special handling for floats.
