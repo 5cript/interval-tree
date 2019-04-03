@@ -38,6 +38,10 @@ int main()
 }
 ```
 
+## Compile & Run Testing
+Having googletest (find here on github) installed / built is a requirement to run the tests.
+Navigate into the tests folder and build the source using the CMakeLists. You might have to adapt the linker line for gtest, if you built it yourself and didn't install it into your system.
+
 ## Members
 ### iterator insert(interval_type const& ival)
 Adds an interval into the tree. 
