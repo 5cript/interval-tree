@@ -551,7 +551,7 @@ private:
 
         /**
          *  Inserts an interval into the tree if no other interval overlaps it.
-         *  Otherwise merge the interval with the one overlapping.
+         *  Otherwise merge the interval with the being overlapped.
          *
          *  @param ival The interval
          *  @param exclusive Exclude borders.

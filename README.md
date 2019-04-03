@@ -47,6 +47,16 @@ Adds an interval into the tree.
 **Returns**: An iterator to the inserted element.
 
 ---
+### iterator insert_overlap(interval_type const& ival)
+Inserts an interval into the tree if no other interval overlaps it.
+Otherwise merge the interval with the one being overlapped.
+#### Parameters
+* `ival` An interval
+* `exclusive` Exclude borders from overlap check. Defaults to false.
+
+**Returns**: An iterator to the inserted element.
+
+---
 ### iterator erase(iterator iter)
 Removes the interval given by iterator from the tree.
 (does not invalidate iterators).
@@ -75,10 +85,30 @@ Allows for propper float comparisons.
 **Returns**: An iterator to the found element, or std::end(tree).
 
 ---
-### iterator overlap_find(interval_type const& ival)
+### iterator find_next(iterator from, interval_type const& ival)
+Finds the next exact match INCLUDING from.
+#### Parameters
+* `from` The iterator to start from. (including this iterator!)
+* `ival` The interval to find.
+
+**Returns**: An iterator to the found element, or std::end(tree).
+
+---
+### iterator find_next(iterator from, interval_type const& ival, CompareFunctionT const& compare)
+Finds the next exact match INCLUDING from.
+#### Parameters
+* `from` The iterator to start from (including this iterator!)
+* `ival` The interval to find.
+* `compare` The compare function to compare intervals with.
+
+**Returns**: An iterator to the found element, or std::end(tree).
+
+---
+### iterator overlap_find(interval_type const& ival, bool exclusive)
 Finds the first interval in the interval tree that overlaps the given interval.
 #### Parameters
 * `ival` The interval to find an overlap for.
+* `exclusive` Exclude borders from overlap check. Defaults to false.
 
 **Returns**: An iterator to the found element, or std::end(tree).
 
@@ -89,6 +119,9 @@ Merges all overlapping intervals within the tree. After calling deoverlap, the t
 **Returns**: *this
 ### After deoverlap
 ![AfterDeoverlap](https://user-images.githubusercontent.com/6238896/55505612-c5a96c80-5653-11e9-81f8-28a8ae35a077.png)
+
+### interval_tree& deoverlap_copy()
+Same as deoverlap, but not inplace
 
 ---
 ### interval_tree punch(interval_type const& ival)
