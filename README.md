@@ -88,7 +88,7 @@ Merges all overlapping intervals within the tree. After calling deoverlap, the t
 
 **Returns**: *this
 ### After deoverlap
-![AfterDeoverlap](https://cloud.githubusercontent.com/assets/6238896/24608766/3f41d5e4-1878-11e7-809e-7e26837a0f61.png)
+![AfterDeoverlap](https://user-images.githubusercontent.com/6238896/55505612-c5a96c80-5653-11e9-81f8-28a8ae35a077.png)
 
 ---
 ### interval_tree punch(interval_type const& ival)
