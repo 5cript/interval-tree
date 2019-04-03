@@ -93,6 +93,14 @@ namespace lib_interval_tree
          */
         bool overlaps(value_type l, value_type h) const
         {
+            return low_ <= h && l <= high_;
+        }
+
+        /**
+         *  Returns whether the intervals overlap, excluding border.
+         */
+        bool overlaps_exclusive(value_type l, value_type h) const
+        {
             return low_ < h && l < high_;
         }
 
@@ -102,6 +110,14 @@ namespace lib_interval_tree
         bool overlaps(interval const& other) const
         {
             return overlaps(other.low_, other.high_);
+        }
+
+        /**
+         *  Returns whether the intervals overlap, excluding border.
+         */
+        bool overlaps_exclusive(interval const& other) const
+        {
+            return overlaps_exclusive(other.low_, other.high_);
         }
 
         /**
@@ -473,8 +489,7 @@ private:
 
         ~interval_tree()
         {
-            for (auto i = std::begin(*this); i != std::end(*this);)
-                i = erase(i);
+            clear();
         }
 
         interval_tree(interval_tree const& other)
@@ -483,11 +498,25 @@ private:
             operator=(other);
         }
 
+    public:
         interval_tree& operator=(interval_tree const& other)
         {
-            for (auto i = other.begin(), e = other.end(); i != e; ++i)
-                insert(i->interval());
+            if (!empty())
+                clear();
+
+            if (other.root_ != nullptr)
+                root_ = copyTreeImpl(other.root_, nullptr);
+
             return *this;
+        }
+
+        /**
+         *  Removes all from this tree.
+         */
+        void clear()
+        {
+            for (auto i = std::begin(*this); i != std::end(*this);)
+                i = erase(i);
         }
 
         /**
@@ -518,6 +547,26 @@ private:
             insert_fixup(z);
             recalculate_max(z);
             return {z, this};
+        }
+
+        /**
+         *  Inserts an interval into the tree if no other interval overlaps it.
+         *  Otherwise merge the interval with the one overlapping.
+         *
+         *  @param ival The interval
+         *  @param exclusive Exclude borders.
+         */
+        iterator insert_overlap(interval_type const& ival, bool exclusive = false)
+        {
+            auto iter = overlap_find(ival, exclusive);
+            if (iter == end())
+                return insert(ival);
+            else
+            {
+                auto merged = iter->interval().join(ival);
+                erase(iter);
+                return insert(merged);
+            }
         }
 
         /**
@@ -576,21 +625,57 @@ private:
         }
 
         /**
+         *  Finds the next exact match INCLUDING from.
+         *
+         *  @param from The iterator to search from INCLUSIVE!
+         *  @param ival The interval to find an exact match for within the tree.
+         *  @param compare A comparison function to use.
+         */
+        template <typename CompareFunctionT>
+        iterator find_next(iterator from, interval_type const& ival, CompareFunctionT const& compare)
+        {
+            if (root_ == nullptr)
+                return end();
+            return iterator{find_i(from.node_, ival, compare), this};
+        }
+
+        /**
+         *  Finds the next exact match INCLUDING from.
+         *
+         *  @param from The iterator to search from, INCLUSIVE!
+         *  @param ival The interval to find an exact match for within the tree.
+         *  @param compare A comparison function to use.
+         */
+        iterator find_next(iterator from, interval_type const& ival)
+        {
+            return find_next(from, ival, [](auto const& lhs, auto const& rhs){return lhs == rhs;});
+        }
+
+        /**
          *  Finds the first interval that overlaps with ival.
          *
          *  @param ival The interval to find an overlap for within the tree.
+         *  @param exclusive Exclude edges?
          */
-        iterator overlap_find(interval_type const& ival)
+        iterator overlap_find(interval_type const& ival, bool exclusive = false)
         {
-            auto* ptr = root_;
-            while (ptr && !ival.overlaps(ptr->interval()))
-            {
-                if (ptr->left_ && ptr->left_->max() >= ival.low())
-                    ptr = ptr->left_;
-                else
-                    ptr = ptr->right_;
-            }
-            return iterator{ptr, this};
+            if (root_ == nullptr)
+                return end();
+            return iterator{overlap_find_i(root_, ival, exclusive), this};
+        }
+
+        /**
+         *  Finds the next interval that overlaps with ival INCLUDING from.
+         *
+         *  @param from The iterator to start from, INCLUSIVE!
+         *  @param ival The interval to find an overlap for within the tree.
+         *  @param exclusive Exclude edges?
+         */
+        iterator overlap_find_next(iterator from, interval_type const& ival, bool exclusive = false)
+        {
+            if (root_ == nullptr)
+                return end();
+            return iterator{overlap_find_i(from.node_, ival, exclusive), this};
         }
 
         /**
@@ -602,6 +687,8 @@ private:
         template <typename CompareFunctionT>
         iterator find(interval_type const& ival, CompareFunctionT const& compare)
         {
+            if (root_ == nullptr)
+                return end();
             return iterator{find_i(root_, ival, compare), this};
         }
 
@@ -616,24 +703,23 @@ private:
         }
 
         /**
+         *  Deoverlaps the tree but returns it as a copy.
+         */
+        interval_tree deoverlap_copy()
+        {
+            interval_tree fresh;
+            for (auto i = begin(), e = end(); i != e; ++i)
+                fresh.insert_overlap(*i);
+
+            return fresh;
+        }
+
+        /**
          *  Merges all overlapping intervals by erasing overlapping intervals and reinserting the merged interval.
          */
         interval_tree& deoverlap()
         {
-            for (auto i = begin(), e = end(); i != e;)
-            {
-                // drawTree(std::to_string(counter++) + ".png", this);
-                auto f = overlap_find_i(i);
-                if (f != end())
-                {
-                    auto merged = f->interval().join(*i);
-                    i->set_interval(merged);
-                    erase(f);
-                    i = std::begin(*this);
-                }
-                else
-                    ++i;
-            }
+            *this = deoverlap_copy();
             return *this;
         }
 
@@ -729,58 +815,107 @@ private:
         }
 
     private:
+        node_type* copyTreeImpl(node_type* root, node_type* parent)
+        {
+            if (root)
+            {
+                auto* cpy = new node_type(parent, root->interval());
+                cpy->color_ = root->color_;
+                cpy->max_ = root->max_;
+                cpy->left_ = copyTreeImpl(root->left_, cpy);
+                cpy->right_ = copyTreeImpl(root->right_, cpy);
+                return cpy;
+            }
+            return nullptr;
+        };
+
         template <typename ComparatorFunctionT>
         node_type* find_i(node_type* ptr, interval_type const& ival, ComparatorFunctionT const& compare)
         {
             if (compare(ptr->interval(), ival))
                 return ptr;
-            else if (ptr->left_ && ival.high() <= ptr->left_->max())
+            else
+            {
+                if (ptr->left_ && ival.high() <= ptr->left_->max())
+                {
+                    // no right? can only continue left
+                    if (!ptr->right_)
+                        return find_i(ptr->left_, ival, compare);
+
+                    // upper bounds higher than what is contained right? continue left
+                    if (ival.high() > ptr->right_->max())
+                        return find_i(ptr->left_, ival, compare);
+
+                    auto* res = find_i(ptr->left_, ival, compare);
+                    if (res == nullptr)
+                        return find_i(ptr->right_, ival, compare);
+                    else
+                        return res;
+                }
+                if (ptr->right_ && ival.high() <= ptr->right_->max())
+                {
+                    if (!ptr->left_)
+                        return find_i(ptr->right_, ival, compare);
+
+                    if (ival.high() > ptr->left_->max())
+                        return find_i(ptr->right_, ival, compare);
+
+                    auto* res = find_i(ptr->right_, ival, compare);
+                    if (res == nullptr)
+                        return find_i(ptr->left_, ival, compare);
+                    else
+                        return res;
+                }
+                else
+                    return nullptr;
+            }
+        }
+
+        node_type* overlap_find_i(node_type* ptr, interval_type const& ival, bool exclusive)
+        {
+            if (exclusive)
+            {
+                if (ptr->interval().overlaps_exclusive(ival))
+                    return ptr;
+            }
+            else
+            {
+                if (ptr->interval().overlaps(ival))
+                    return ptr;
+            }
+
+            if (ptr->left_ && ptr->left_->max() >= ival.low())
             {
                 // no right? can only continue left
                 if (!ptr->right_)
-                    return find_i(ptr->left_, ival, compare);
+                    return overlap_find_i(ptr->left_, ival, exclusive);
 
                 // upper bounds higher than what is contained right? continue left
                 if (ival.high() > ptr->right_->max())
-                    return find_i(ptr->left_, ival, compare);
+                    return overlap_find_i(ptr->left_, ival, exclusive);
 
-                auto* res = find_i(ptr->left_, ival, compare);
+                auto* res = overlap_find_i(ptr->left_, ival, exclusive);
                 if (res == nullptr)
-                    return find_i(ptr->right_, ival, compare);
+                    return overlap_find_i(ptr->right_, ival, exclusive);
                 else
                     return res;
             }
-            else if (ptr->right_ && ival.high() <= ptr->right_->max())
+            if (ptr->right_ && ptr->right_->max() >= ival.low())
             {
                 if (!ptr->left_)
-                    return find_i(ptr->right_, ival, compare);
+                    return overlap_find_i(ptr->right_, ival, exclusive);
 
                 if (ival.high() > ptr->left_->max())
-                    return find_i(ptr->right_, ival, compare);
+                    return overlap_find_i(ptr->right_, ival, exclusive);
 
-                auto* res = find_i(ptr->right_, ival, compare);
+                auto* res = overlap_find_i(ptr->right_, ival, exclusive);
                 if (res == nullptr)
-                    return find_i(ptr->left_, ival, compare);
+                    return overlap_find_i(ptr->left_, ival, exclusive);
                 else
                     return res;
             }
             else
                 return nullptr;
-        }
-
-        iterator overlap_find_i(iterator node)
-        {
-            auto* ptr = root_;
-            while (ptr && (!node->interval().overlaps(ptr->interval()) || ptr == node.node_))
-            {
-                if (ptr->left_ && ptr->left_->max() >= node->interval().low())
-                    ptr = ptr->left_;
-                else
-                    ptr = ptr->right_;
-            }
-            if (!ptr)
-                return {nullptr, this};
-            return {ptr, this};
         }
 
         node_type* successor(node_type* node)
