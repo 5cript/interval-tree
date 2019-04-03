@@ -749,17 +749,19 @@ private:
             interval_tree result;
             auto i = std::begin(*this);
             if (ival.low() < i->interval().low())
-                result.insert({i->interval().low(), ival.low()});
+                result.insert({ival.low(), i->interval().low()});
 
-            for (auto e = std::end(*this); i != e; ++i)
+            for (auto e = end(); i != e; ++i)
             {
                 auto next = i; ++next;
                 if (next != e)
                     result.insert({i->interval().high(), next->interval().low()});
+                else
+                    break;
             }
 
-            if (ival.high() > root_->max_)
-                result.insert({root_->max_, ival.high()});
+            if (i != end() && i->interval().high() < ival.high())
+                result.insert({i->interval().high(), ival.high()});
 
             return result;
         }
