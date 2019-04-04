@@ -1,7 +1,6 @@
 # interval-tree
 
 A C++ header only interval tree implementation, which takes a red black tree as its base to inhibit degeneration to linked lists.
-Methods only work (make mathematical sense) with closed intervals.
 
 ## How an interval tree looks like:
 ![ExampleTree](https://cloud.githubusercontent.com/assets/6238896/24608762/36422d7c-1878-11e7-9c5c-a45bdcd6e187.png)
