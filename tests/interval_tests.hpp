@@ -81,6 +81,21 @@ TEST_F(IntervalTests, TestLimits)
     EXPECT_EQ(ival.high(), std::numeric_limits<types::value_type>::max());
 }
 
+TEST_F(IntervalTests, TestIntervalSize)
+{
+    auto ival = types::interval_type{0, 5};
+    EXPECT_EQ(ival.size(), 5);
+
+    auto ival2 = types::interval_type{-21, 5};
+    EXPECT_EQ(ival2.size(), 26);
+
+    auto ival3 = types::interval_type{-20, -5};
+    EXPECT_EQ(ival3.size(), 15);
+
+    auto ival4 = types::interval_type{100, 125};
+    EXPECT_EQ(ival4.size(), 25);
+}
+
 TEST_F(OverlapTests, ShallOverlapItself)
 {
     auto base = types::interval_type{0, 5};
@@ -212,7 +227,34 @@ TEST_F(ContainmentTests, ExpectIntervalNotWithinOther)
 TEST_F(DistanceTests, DistanceIsZeroOnOverlap)
 {
     auto base = types::interval_type{-35, 96};
-
     auto other = types::interval_type{-20, 600};
+    EXPECT_EQ(base - other, 0);
+}
+
+TEST_F(DistanceTests, DistanceLeftSide)
+{
+    auto base = types::interval_type{5, 10};
+    auto other = types::interval_type{0, 1};
+    EXPECT_EQ(base - other, 4);
+}
+
+TEST_F(DistanceTests, DistanceRightSide)
+{
+    auto base = types::interval_type{5, 10};
+    auto other = types::interval_type{15, 18};
+    EXPECT_EQ(base - other, 5);
+}
+
+TEST_F(DistanceTests, DistanceAdjacent)
+{
+    auto base = types::interval_type{5, 10};
+    auto other = types::interval_type{10, 18};
+    EXPECT_EQ(base - other, 0);
+}
+
+TEST_F(DistanceTests, DistanceAdjacent2)
+{
+    auto base = types::interval_type{5, 10};
+    auto other = types::interval_type{0, 5};
     EXPECT_EQ(base - other, 0);
 }

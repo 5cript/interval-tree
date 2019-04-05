@@ -169,11 +169,11 @@ namespace lib_interval_tree
             return {std::min(low_, other.low_), std::max(high_, other.high_)};
         }
 
-#ifdef PUBLICIZE
+#ifdef LIB_INTERVAL_TREE_PUBLICIZE
     public:
 #else
     private:
-#endif // PUBLICIZE
+#endif // LIB_INTERVAL_TREE_PUBLICIZE
         value_type low_;
         value_type high_;
     };
@@ -254,11 +254,11 @@ private:
             }
         }
 
-#ifdef PUBLICIZE
+#ifdef LIB_INTERVAL_TREE_PUBLICIZE
     public:
 #else
     private:
-#endif // PUBLICIZE
+#endif // LIB_INTERVAL_TREE_PUBLICIZE
         interval_type interval_;
         value_type max_;
         node* parent_;
@@ -305,11 +305,11 @@ private:
         {
         }
 
-#ifdef PUBLICIZE
+#ifdef LIB_INTERVAL_TREE_PUBLICIZE
     public:
 #else
     protected:
-#endif // PUBLICIZE
+#endif // LIB_INTERVAL_TREE_PUBLICIZE
         node_ptr_t node_;
         owner_type owner_;
     };
@@ -1205,11 +1205,11 @@ private:
             x->color_ = rb_color::black;
         }
 
-#ifdef PUBLICIZE
+#ifdef LIB_INTERVAL_TREE_PUBLICIZE
     public:
 #else
     private:
-#endif // PUBLICIZE
+#endif // LIB_INTERVAL_TREE_PUBLICIZE
         node_type* root_;
         size_type size_;
     };

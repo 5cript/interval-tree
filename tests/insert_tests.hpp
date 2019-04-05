@@ -28,8 +28,14 @@ TEST_F(InsertTests, InsertIntoEmpty2)
 
 TEST_F(InsertTests, InsertMultipleIntoEmpty)
 {
-    tree.insert({0, 16});
-    tree.insert({5, 13});
+    auto firstInterval = types::interval_type{0, 16};
+    auto secondInterval = types::interval_type{5, 13};
+
+    tree.insert(firstInterval);
+    tree.insert(secondInterval);
 
     EXPECT_EQ(tree.size(), 2);
+
+    EXPECT_EQ(*tree.begin(), firstInterval);
+    EXPECT_EQ(*(++tree.begin()), secondInterval);
 }
