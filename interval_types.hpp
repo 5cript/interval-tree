@@ -8,7 +8,7 @@ namespace lib_interval_tree
         template <typename numerical_type>
         static inline bool within(numerical_type b, numerical_type e, numerical_type p)
         {
-            return b < p <= e;
+            return (b < p) && (p <= e);
         }
     };
     // [)
@@ -17,7 +17,7 @@ namespace lib_interval_tree
         template <typename numerical_type>
         static inline bool within(numerical_type b, numerical_type e, numerical_type p)
         {
-            return b <= p < e;
+            return (b <= p) && (p < e);
         }
     };
     // []
@@ -26,7 +26,7 @@ namespace lib_interval_tree
         template <typename numerical_type>
         static inline bool within(numerical_type b, numerical_type e, numerical_type p)
         {
-            return b <= p <= e;
+            return (b <= p) && (p <= e);
         }
     };
     // ()
@@ -35,7 +35,7 @@ namespace lib_interval_tree
         template <typename numerical_type>
         static inline bool within(numerical_type b, numerical_type e, numerical_type p)
         {
-            return b < p < e;
+            return (b < p) && (p < e);
         }
     };
 }

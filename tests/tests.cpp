@@ -1,8 +1,10 @@
 #include "gtest/gtest.h"
 #include "../interval_tree.hpp"
+#include "typedefs.hpp"
 
 // following headers expect to be included after gtest headers and interval_tree
-#include "find_tests.hpp"
+#include "interval_tests.hpp"
+#include "insert_tests.hpp"
 
 int main(int argc, char** argv)
 {

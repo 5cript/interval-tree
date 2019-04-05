@@ -89,7 +89,8 @@ namespace lib_interval_tree
         }
 
         /**
-         *  Returns whether the intervals overlap
+         *  Returns whether the intervals overlap.
+         *  For when both intervals are closed.
          */
         bool overlaps(value_type l, value_type h) const
         {
@@ -98,6 +99,7 @@ namespace lib_interval_tree
 
         /**
          *  Returns whether the intervals overlap, excluding border.
+         *  For when at least one interval is open (l&r).
          */
         bool overlaps_exclusive(value_type l, value_type h) const
         {
@@ -125,7 +127,7 @@ namespace lib_interval_tree
          */
         bool within(value_type value) const
         {
-            return interval_kind::within(value);
+            return interval_kind::within(low_, high_, value);
         }
 
         /**
