@@ -34,7 +34,7 @@ public:
 
 TEST_F(IntervalTests, FailBadBorders)
 {
-    ASSERT_DEATH(({
+    EXPECT_DEATH(({
         [[maybe_unused]] auto ival = types::interval_type{1 BOOST_PP_COMMA() 0};
     }), "low <= high");
 }

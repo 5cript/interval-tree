@@ -1,3 +1,7 @@
+#include <ctime>
+#include <random>
+#include <cmath>
+
 class InsertTests
     : public ::testing::Test
 {
@@ -6,6 +10,8 @@ public:
 
 protected:
     lib_interval_tree::interval_tree <int> tree;
+    std::default_random_engine gen;
+    std::uniform_int_distribution <int> dist{-500, 500};
 };
 
 TEST_F(InsertTests, InsertIntoEmpty1)
@@ -38,4 +44,18 @@ TEST_F(InsertTests, InsertMultipleIntoEmpty)
 
     EXPECT_EQ(*tree.begin(), firstInterval);
     EXPECT_EQ(*(++tree.begin()), secondInterval);
+}
+
+TEST_F(InsertTests, TreeHeightHealthynessTest)
+{
+    const int amount = 1'000'000;
+
+    for (int i = 0; i != amount; ++i)
+        tree.insert(lib_interval_tree::make_safe_interval(dist(gen), dist(gen)));
+
+    auto maxHeight{0};
+    for (auto i = std::begin(tree); i != std::end(tree); ++i)
+        maxHeight = std::max(maxHeight, i->height());
+
+    EXPECT_LE(maxHeight, 2 * std::log2(amount + 1));
 }

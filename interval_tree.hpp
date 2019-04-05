@@ -178,6 +178,15 @@ namespace lib_interval_tree
         value_type high_;
     };
 //############################################################################################################
+    /**
+     *  Creates a safe interval that puts the lower bound left automatically.
+     */
+    template <typename numerical_type, typename interval_kind_ = closed>
+    interval <numerical_type, interval_kind_> make_safe_interval(numerical_type lhs, numerical_type rhs)
+    {
+        return interval <numerical_type, interval_kind_>{std::min(lhs, rhs), std::max(lhs, rhs)};
+    }
+//############################################################################################################
     template <typename numerical_type = default_interval_value_type, typename interval_type_ = interval <numerical_type, closed>>
     class node
     {
@@ -231,6 +240,18 @@ namespace lib_interval_tree
         bool is_root() const noexcept
         {
             return !parent_;
+        }
+
+        /**
+         *  Returns the height of the node in the tree. Where height = how many parents does it have.
+         *  The root has no parents and is therefor has height 0.
+         */
+        int height() const
+        {
+            int counter{0};
+            for (auto* p = parent_; p != nullptr; p = p->parent_)
+                ++counter;
+            return counter;
         }
 
 private:
