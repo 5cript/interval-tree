@@ -146,7 +146,7 @@ namespace lib_interval_tree
         {
             if (overlaps(other))
                 return 0;
-            if (high_ < other.low)
+            if (high_ < other.low_)
                 return other.low_ - high_;
             else
                 return low_ - other.high_;

@@ -25,6 +25,13 @@ public:
     using types = IntervalTypes <int>;
 };
 
+class DistanceTests
+    : public ::testing::Test
+{
+public:
+    using types = IntervalTypes <int>;
+};
+
 TEST_F(IntervalTests, FailBadBorders)
 {
     ASSERT_DEATH(({
@@ -188,6 +195,7 @@ TEST_F(ContainmentTests, ExpectIntervalWithinOther)
     EXPECT_EQ(base.within({-73, -23}), true);
     EXPECT_EQ(base.within({-100, -100}), true);
     EXPECT_EQ(base.within({100, 100}), true);
+    EXPECT_EQ(base.within({0, 0}), true);
 }
 
 TEST_F(ContainmentTests, ExpectIntervalNotWithinOther)
@@ -199,4 +207,12 @@ TEST_F(ContainmentTests, ExpectIntervalNotWithinOther)
     EXPECT_EQ(base.within({100, 102}), false);
     EXPECT_EQ(base.within({-200, -101}), false);
     EXPECT_EQ(base.within({200, 300}), false);
+}
+
+TEST_F(DistanceTests, DistanceIsZeroOnOverlap)
+{
+    auto base = types::interval_type{-35, 96};
+
+    auto other = types::interval_type{-20, 600};
+    EXPECT_EQ(base - other, 0);
 }
