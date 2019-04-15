@@ -1,3 +1,7 @@
+#pragma once
+
+#include "test_utility.hpp"
+
 #include <ctime>
 #include <random>
 #include <cmath>
@@ -54,11 +58,7 @@ TEST_F(InsertTests, TreeHeightHealthynessTest)
     for (int i = 0; i != amount; ++i)
         tree.insert(lib_interval_tree::make_safe_interval(distSmall(gen), distSmall(gen)));
 
-    auto maxHeight{0};
-    for (auto i = std::begin(tree); i != std::end(tree); ++i)
-        maxHeight = std::max(maxHeight, i->height());
-
-    EXPECT_LE(maxHeight, 2 * std::log2(amount + 1));
+    testTreeHeightHealth(tree);
 }
 
 TEST_F(InsertTests, MaxValueTest1)
@@ -68,15 +68,15 @@ TEST_F(InsertTests, MaxValueTest1)
     for (int i = 0; i != amount; ++i)
         tree.insert(lib_interval_tree::make_safe_interval(distSmall(gen), distSmall(gen)));
 
-    for (auto i = std::begin(tree); i != std::end(tree); ++i)
-    {
-        if (i->left())
-        {
-            EXPECT_LE(i->left()->max(), i->max());
-        }
-        if (i->right())
-        {
-            EXPECT_LE(i->right()->max(), i->max());
-        }
-    }
+    testMaxProperty(tree);
+}
+
+TEST_F(InsertTests, RBPropertyInsertTest)
+{
+    constexpr int amount = 1000;
+
+    for (int i = 0; i != amount; ++i)
+        tree.insert(lib_interval_tree::make_safe_interval(distSmall(gen), distSmall(gen)));
+
+    testRedBlackPropertyViolation(tree);
 }

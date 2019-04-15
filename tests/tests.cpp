@@ -7,6 +7,7 @@
 // following headers expect to be included after gtest headers and interval_tree
 #include "interval_tests.hpp"
 #include "insert_tests.hpp"
+#include "erase_tests.hpp"
 
 int main(int argc, char** argv)
 {

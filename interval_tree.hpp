@@ -352,7 +352,7 @@ private:
          */
         rb_color color() const
         {
-            return node_->color;
+            return node_->color();
         }
 
         typename tree_type::interval_type interval() const
@@ -544,6 +544,18 @@ private:
             interval_tree_iterator cpy = *this;
             operator++();
             return cpy;
+        }
+
+        /**
+         *  Returns an iterator to the parent of this node.
+         *  will equal std::end(tree) if there is no parent node.
+         */
+        interval_tree_iterator parent()
+        {
+            if (node_)
+                return {node_->parent_, owner_};
+            else
+                throw std::out_of_range("interval_tree_iterator out of bounds");
         }
 
         /**
