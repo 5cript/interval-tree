@@ -3,8 +3,6 @@
 #include "interval_tree_fwd.hpp"
 #include "interval_types.hpp"
 
-// #include "draw.hpp"
-
 #include <string>
 #include <memory>
 #include <cassert>
@@ -243,6 +241,38 @@ namespace lib_interval_tree
         }
 
         /**
+         *  Returns the color of the node.
+         */
+        rb_color color() const
+        {
+            return color_;
+        }
+
+        /**
+         *  Returns the parent node up the tree.
+         */
+        node const* parent() const
+        {
+            return parent_;
+        }
+
+        /**
+         *  Returns the left node (readonly).
+         */
+        node const* left() const
+        {
+            return left_;
+        }
+
+        /**
+         *  Returns the right node (readonly).
+         */
+        node const* right() const
+        {
+            return right_;
+        }
+
+        /**
          *  Returns the height of the node in the tree. Where height = how many parents does it have.
          *  The root has no parents and is therefor has height 0.
          */
@@ -315,6 +345,27 @@ private:
         bool operator==(basic_interval_tree_iterator const& other) const
         {
             return node_ == other.node_;
+        }
+
+        /**
+         *  Returns the max property of the node.
+         */
+        typename node_type::interval_type::value_type max() const
+        {
+            return node_->max();
+        }
+
+        /**
+         *  Returns the color of the node.
+         */
+        rb_color color() const
+        {
+            return node_->color;
+        }
+
+        typename tree_type::interval_type interval() const
+        {
+            return node_->interval();
         }
 
         virtual ~basic_interval_tree_iterator() = default;
@@ -401,6 +452,42 @@ private:
                 throw std::out_of_range("interval_tree_iterator out of bounds");
         }
 
+        /**
+         *  Returns an iterator to the parent of this node.
+         *  will equal std::end(tree) if there is no parent node.
+         */
+        const_interval_tree_iterator parent() const
+        {
+            if (node_)
+                return {node_->parent_, owner_};
+            else
+                throw std::out_of_range("interval_tree_iterator out of bounds");
+        }
+
+        /**
+         *  Continues down the left side of this node.
+         *  will equal std::end(tree) if there is no left node.
+         */
+        const_interval_tree_iterator left() const
+        {
+            if (node_)
+                return {node_->left_, owner_};
+            else
+                throw std::out_of_range("interval_tree_iterator out of bounds");
+        }
+
+        /**
+         *  Continues down the right side of this node.
+         *  will equal std::end(tree) if there is no right node.
+         */
+        const_interval_tree_iterator right() const
+        {
+            if (node_)
+                return {node_->right_, owner_};
+            else
+                throw std::out_of_range("interval_tree_iterator out of bounds");
+        }
+
         value_type const* operator->() const
         {
             return node_;
@@ -469,6 +556,30 @@ private:
             interval_tree_iterator cpy = *this;
             operator++();
             return cpy;
+        }
+
+        /**
+         *  Continues down the left side of this node.
+         *  will equal std::end(tree) if there is no left node.
+         */
+        interval_tree_iterator left()
+        {
+            if (node_)
+                return {node_->left_, owner_};
+            else
+                throw std::out_of_range("interval_tree_iterator out of bounds");
+        }
+
+        /**
+         *  Continues down the right side of this node.
+         *  will equal std::end(tree) if there is no right node.
+         */
+        interval_tree_iterator right()
+        {
+            if (node_)
+                return {node_->right_, owner_};
+            else
+                throw std::out_of_range("interval_tree_iterator out of bounds");
         }
 
         typename value_type::interval_type operator*() const
@@ -545,6 +656,22 @@ private:
         {
             for (auto i = std::begin(*this); i != std::end(*this);)
                 i = erase(i);
+        }
+
+        /**
+         *  Returns the root node from this tree.
+         */
+        iterator root()
+        {
+            return {root_, this};
+        }
+
+        /**
+         *  Returns the root node from this tree.
+         */
+        const_iterator root() const
+        {
+            return {root_, this};
         }
 
         /**

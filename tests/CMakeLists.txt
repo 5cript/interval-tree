@@ -13,6 +13,8 @@ if (NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
 	endif()
 endif()
 
+option(DRAW_EXAMPLES "Draws some examples in a subdirectory. run make_drawable.sh before this" OFF )
+
 # Project
 project(tree-tests)
 
@@ -23,6 +25,14 @@ file(GLOB sources "*.cpp")
 add_executable(tree-tests ${sources})
 
 target_link_libraries(tree-tests gtest)
+
+# Options
+if(DRAW_EXAMPLES)
+	target_compile_definitions(tree-tests PRIVATE -DINTERVAL_TREE_DO_DRAWINGS=1)	
+	find_library(LCAIRO_WRAP NAMES cairo-wrap PATHS "cairo-wrap/build" STATIC)	
+	target_link_libraries(tree-tests LCAIRO_WRAP cairo)
+	target_include_directories(tree-tests .)
+endif()
 
 # Compiler Options
 set(DEBUG_OPTIONS -fexecptions -g -Wall -pedantic-errors -pedantic)

@@ -48,7 +48,7 @@ TEST_F(InsertTests, InsertMultipleIntoEmpty)
 
 TEST_F(InsertTests, TreeHeightHealthynessTest)
 {
-    const int amount = 1'000'000;
+    constexpr int amount = 100'000;
 
     for (int i = 0; i != amount; ++i)
         tree.insert(lib_interval_tree::make_safe_interval(dist(gen), dist(gen)));
@@ -58,4 +58,30 @@ TEST_F(InsertTests, TreeHeightHealthynessTest)
         maxHeight = std::max(maxHeight, i->height());
 
     EXPECT_LE(maxHeight, 2 * std::log2(amount + 1));
+}
+
+TEST_F(InsertTests, MaxValueTest1)
+{
+    tree.insert(types::interval_type{-51, 11});
+    tree.insert(types::interval_type{26, 68});
+    tree.insert(types::interval_type{11, 100});
+    tree.insert(types::interval_type{-97, 65});
+    tree.insert(types::interval_type{-85, 18});
+    tree.insert(types::interval_type{-31, -20});
+    tree.insert(types::interval_type{-91, -6});
+    tree.insert(types::interval_type{-17, 71});
+    tree.insert(types::interval_type{-58, 37});
+    tree.insert(types::interval_type{-50, -1});
+    tree.insert(types::interval_type{11, 61});
+    tree.insert(types::interval_type{6, 74});
+    tree.insert(types::interval_type{13, 78});
+    tree.insert(types::interval_type{-83, -62});
+    tree.insert(types::interval_type{-80, 93});
+    tree.insert(types::interval_type{-2, 84});
+    tree.insert(types::interval_type{-62, -18});
+    tree.insert(types::interval_type{-96, -53});
+    tree.insert(types::interval_type{56, 91});
+    tree.insert(types::interval_type{37, 79});
+
+    EXPECT_EQ(tree.root()->max(), 100);
 }
