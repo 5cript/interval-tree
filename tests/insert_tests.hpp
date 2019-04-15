@@ -11,7 +11,8 @@ public:
 protected:
     lib_interval_tree::interval_tree <int> tree;
     std::default_random_engine gen;
-    std::uniform_int_distribution <int> dist{-500, 500};
+    std::uniform_int_distribution <int> distSmall{-500, 500};
+    std::uniform_int_distribution <int> distLarge{-50000, 50000};
 };
 
 TEST_F(InsertTests, InsertIntoEmpty1)
@@ -51,7 +52,7 @@ TEST_F(InsertTests, TreeHeightHealthynessTest)
     constexpr int amount = 100'000;
 
     for (int i = 0; i != amount; ++i)
-        tree.insert(lib_interval_tree::make_safe_interval(dist(gen), dist(gen)));
+        tree.insert(lib_interval_tree::make_safe_interval(distSmall(gen), distSmall(gen)));
 
     auto maxHeight{0};
     for (auto i = std::begin(tree); i != std::end(tree); ++i)
@@ -62,26 +63,20 @@ TEST_F(InsertTests, TreeHeightHealthynessTest)
 
 TEST_F(InsertTests, MaxValueTest1)
 {
-    tree.insert(types::interval_type{-51, 11});
-    tree.insert(types::interval_type{26, 68});
-    tree.insert(types::interval_type{11, 100});
-    tree.insert(types::interval_type{-97, 65});
-    tree.insert(types::interval_type{-85, 18});
-    tree.insert(types::interval_type{-31, -20});
-    tree.insert(types::interval_type{-91, -6});
-    tree.insert(types::interval_type{-17, 71});
-    tree.insert(types::interval_type{-58, 37});
-    tree.insert(types::interval_type{-50, -1});
-    tree.insert(types::interval_type{11, 61});
-    tree.insert(types::interval_type{6, 74});
-    tree.insert(types::interval_type{13, 78});
-    tree.insert(types::interval_type{-83, -62});
-    tree.insert(types::interval_type{-80, 93});
-    tree.insert(types::interval_type{-2, 84});
-    tree.insert(types::interval_type{-62, -18});
-    tree.insert(types::interval_type{-96, -53});
-    tree.insert(types::interval_type{56, 91});
-    tree.insert(types::interval_type{37, 79});
+    constexpr int amount = 100'000;
 
-    EXPECT_EQ(tree.root()->max(), 100);
+    for (int i = 0; i != amount; ++i)
+        tree.insert(lib_interval_tree::make_safe_interval(distSmall(gen), distSmall(gen)));
+
+    for (auto i = std::begin(tree); i != std::end(tree); ++i)
+    {
+        if (i->left())
+        {
+            EXPECT_LE(i->left()->max(), i->max());
+        }
+        if (i->right())
+        {
+            EXPECT_LE(i->right()->max(), i->max());
+        }
+    }
 }
