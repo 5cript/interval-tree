@@ -1139,18 +1139,18 @@ private:
 
             // max fixup
             if (x->left_ && x->right_)
-                x->max_ = std::max(x->max_, std::max(x->left_->max_, x->right_->max_));
+                x->max_ = std::max(x->interval_.high_, std::max(x->left_->max_, x->right_->max_));
             else if (x->left_)
-                x->max_ = std::max(x->max_, x->left_->max_);
+                x->max_ = std::max(x->interval_.high_, x->left_->max_);
             else if (x->right_)
-                x->max_ = std::max(x->max_, x->right_->max_);
+                x->max_ = std::max(x->interval_.high_, x->right_->max_);
             else
                 x->max_ = x->interval_.high_;
 
             if (y->right_)
-                y->max_ = std::max(y->max_, std::max(y->right_->max_, x->max_));
+                y->max_ = std::max(y->interval_.high_, std::max(y->right_->max_, x->max_));
             else
-                y->max_ = std::max(y->max_, x->max_);
+                y->max_ = std::max(y->interval_.high_, x->max_);
         }
 
         void right_rotate(node_type* y)
@@ -1174,18 +1174,18 @@ private:
 
             // max fixup
             if (y->left_ && y->right_)
-                y->max_ = std::max(y->max_, std::max(y->left_->max_, y->right_->max_));
+                y->max_ = std::max(y->interval_.high_, std::max(y->left_->max_, y->right_->max_));
             else if (y->left_)
-                y->max_ = std::max(y->max_, y->left_->max_);
+                y->max_ = std::max(y->interval_.high_, y->left_->max_);
             else if (y->right_)
-                y->max_ = std::max(y->max_, y->right_->max_);
+                y->max_ = std::max(y->interval_.high_, y->right_->max_);
             else
                 y->max_ = y->interval_.high_;
 
             if (x->left_)
-                x->max_ = std::max(x->max_, std::max(x->left_->max_, y->max_));
+                x->max_ = std::max(x->interval_.high_, std::max(x->left_->max_, y->max_));
             else
-                x->max_ = std::max(x->max_, y->max_);
+                x->max_ = std::max(x->interval_.high_, y->max_);
         }
 
         void recalculate_max(node_type* reacalculation_root)
