@@ -673,9 +673,10 @@ private:
         /**
          *  Inserts an interval into the tree.
          */
-        iterator insert(interval_type const& ival)
+        template <typename IntervalType = interval_type>
+        iterator insert(IntervalType&& ival)
         {
-            node_type* z = new node_type(nullptr, ival);
+            node_type* z = new node_type(nullptr, std::forward <IntervalType&&> (ival));
             node_type* y = nullptr;
             node_type* x = root_;
             while (x)
@@ -708,9 +709,10 @@ private:
          *  @param ival The interval
          *  @param exclusive Exclude borders.
          */
-        iterator insert_overlap(interval_type const& ival, bool exclusive = false)
+        template <typename IntervalType = interval_type>
+        iterator insert_overlap(IntervalType&& ival, bool exclusive = false)
         {
-            auto iter = overlap_find(ival, exclusive);
+            auto iter = overlap_find(std::forward <IntervalType&&> (ival), exclusive);
             if (iter == end())
                 return insert(ival);
             else

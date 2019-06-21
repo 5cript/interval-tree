@@ -16,7 +16,7 @@ namespace lib_interval_tree
 {
     namespace
     {
-        using int_tree_for_draw = interval_tree <int, closed>;
+        using int_tree_for_draw = interval_tree <interval<int, closed>>;
         using int_tree_iterator = int_tree_for_draw::iterator;
         using const_int_tree_iterator = int_tree_for_draw::const_iterator;
 
