@@ -15,7 +15,8 @@ int main()
 {
   using namespace lib_interval_tree;
 
-  interval_tree<int> tree;
+  // interval_tree <interval <int>>;
+  interval_tree_t <int> tree;
 
   tree.insert({16, 21});
   tree.insert({8, 9});
