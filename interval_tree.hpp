@@ -26,11 +26,11 @@ namespace lib_interval_tree
 //############################################################################################################
     using default_interval_value_type = int;
 //############################################################################################################
-    template <typename numerical_type, typename interval_kind_>
+    template <typename numerical_type, typename interval_kind_ = closed>
     struct interval
     {
         friend node <numerical_type, interval <numerical_type, interval_kind_>>;
-        friend interval_tree <numerical_type, interval_kind_>;
+        //friend interval_tree <numerical_type, interval_kind_>;
 
     public:
         using value_type = numerical_type;
@@ -192,7 +192,7 @@ namespace lib_interval_tree
         using value_type = numerical_type;
 
     public:
-        friend lib_interval_tree::interval_tree <numerical_type, typename interval_type::interval_kind>;
+        friend lib_interval_tree::interval_tree <interval_type>;
         friend lib_interval_tree::const_interval_tree_iterator <node <numerical_type, interval_type> >;
         friend lib_interval_tree::interval_tree_iterator <node <numerical_type, interval_type> >;
 
@@ -314,9 +314,9 @@ private:
     class basic_interval_tree_iterator : public std::forward_iterator_tag
     {
     public:
-        friend interval_tree <typename node_type::interval_type::value_type, typename node_type::interval_type::interval_kind>;
+        friend interval_tree <typename node_type::interval_type>;
 
-        using tree_type = interval_tree <typename node_type::interval_type::value_type, typename node_type::interval_type::interval_kind>;
+        using tree_type = interval_tree <typename node_type::interval_type>;
         using value_type = node_type;
 
         using node_ptr_t = typename std::conditional <
@@ -377,12 +377,10 @@ private:
     template <typename node_type>
     class const_interval_tree_iterator
         : public basic_interval_tree_iterator <node_type,
-                                               interval_tree <typename node_type::interval_type::value_type,
-                                                              typename node_type::interval_type::interval_kind> const*>
+                                               interval_tree <typename node_type::interval_type> const*>
     {
     public:
-        using tree_type = interval_tree <typename node_type::interval_type::value_type,
-                                         typename node_type::interval_type::interval_kind>;
+        using tree_type = interval_tree <typename node_type::interval_type>;
         using iterator_base = basic_interval_tree_iterator <node_type, tree_type const*>;
         using value_type = typename iterator_base::value_type;
         using iterator_base::node_;
@@ -491,12 +489,10 @@ private:
     template <typename node_type>
     class interval_tree_iterator
         : public basic_interval_tree_iterator <node_type,
-                                               interval_tree <typename node_type::interval_type::value_type,
-                                                              typename node_type::interval_type::interval_kind>*>
+                                               interval_tree <typename node_type::interval_type>*>
     {
     public:
-        using tree_type = interval_tree <typename node_type::interval_type::value_type,
-                                         typename node_type::interval_type::interval_kind>;
+        using tree_type = interval_tree <typename node_type::interval_type>;
         using iterator_base = basic_interval_tree_iterator <node_type, tree_type*>;
         using value_type = typename iterator_base::value_type;
         using iterator_base::node_;
@@ -602,12 +598,12 @@ private:
         }
     };
 //############################################################################################################
-    template <typename numerical_type = default_interval_value_type, typename interval_kind = closed>
+    template <typename IntervalT = interval <int, closed>>
     class interval_tree
     {
     public:
-        using value_type = numerical_type;
-        using interval_type = interval <value_type, interval_kind>;
+        using interval_type = IntervalT;
+        using value_type = typename interval_type::value_type;
         using node_type = node <value_type, interval_type>;
         using iterator = interval_tree_iterator <node_type>;
         using const_iterator = const_interval_tree_iterator <node_type>;
@@ -685,7 +681,7 @@ private:
             while (x)
             {
                 y = x;
-                if (z->interval_.low_ < x->interval_.low_)
+                if (z->interval_.low() < x->interval_.low())
                     x = x->left_;
                 else
                     x = x->right_;
@@ -693,7 +689,7 @@ private:
             z->parent_ = y;
             if (!y)
                 root_ = z;
-            else if (z->interval_.low_ < y->interval_.low_)
+            else if (z->interval_.low() < y->interval_.low())
                 y->left_ = z;
             else
                 y->right_ = z;
@@ -1151,18 +1147,18 @@ private:
 
             // max fixup
             if (x->left_ && x->right_)
-                x->max_ = std::max(x->interval_.high_, std::max(x->left_->max_, x->right_->max_));
+                x->max_ = std::max(x->interval_.high(), std::max(x->left_->max_, x->right_->max_));
             else if (x->left_)
-                x->max_ = std::max(x->interval_.high_, x->left_->max_);
+                x->max_ = std::max(x->interval_.high(), x->left_->max_);
             else if (x->right_)
-                x->max_ = std::max(x->interval_.high_, x->right_->max_);
+                x->max_ = std::max(x->interval_.high(), x->right_->max_);
             else
-                x->max_ = x->interval_.high_;
+                x->max_ = x->interval_.high();
 
             if (y->right_)
-                y->max_ = std::max(y->interval_.high_, std::max(y->right_->max_, x->max_));
+                y->max_ = std::max(y->interval_.high(), std::max(y->right_->max_, x->max_));
             else
-                y->max_ = std::max(y->interval_.high_, x->max_);
+                y->max_ = std::max(y->interval_.high(), x->max_);
         }
 
         void right_rotate(node_type* y)
@@ -1186,18 +1182,18 @@ private:
 
             // max fixup
             if (y->left_ && y->right_)
-                y->max_ = std::max(y->interval_.high_, std::max(y->left_->max_, y->right_->max_));
+                y->max_ = std::max(y->interval_.high(), std::max(y->left_->max_, y->right_->max_));
             else if (y->left_)
-                y->max_ = std::max(y->interval_.high_, y->left_->max_);
+                y->max_ = std::max(y->interval_.high(), y->left_->max_);
             else if (y->right_)
-                y->max_ = std::max(y->interval_.high_, y->right_->max_);
+                y->max_ = std::max(y->interval_.high(), y->right_->max_);
             else
-                y->max_ = y->interval_.high_;
+                y->max_ = y->interval_.high();
 
             if (x->left_)
-                x->max_ = std::max(x->interval_.high_, std::max(x->left_->max_, y->max_));
+                x->max_ = std::max(x->interval_.high(), std::max(x->left_->max_, y->max_));
             else
-                x->max_ = std::max(x->interval_.high_, y->max_);
+                x->max_ = std::max(x->interval_.high(), y->max_);
         }
 
         void recalculate_max(node_type* reacalculation_root)

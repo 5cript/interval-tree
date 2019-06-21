@@ -13,7 +13,7 @@ public:
     using types = IntervalTypes <int>;
 
 protected:
-    lib_interval_tree::interval_tree <int> tree;
+    IntervalTypes <int>::tree_type tree;
     std::default_random_engine gen;
     std::uniform_int_distribution <int> distSmall{-500, 500};
     std::uniform_int_distribution <int> distLarge{-50000, 50000};

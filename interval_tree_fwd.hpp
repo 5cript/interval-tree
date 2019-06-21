@@ -5,7 +5,7 @@ namespace lib_interval_tree
     template <typename numerical_type, typename interval_kind_>
     struct interval;
 
-    template <typename numerical_type, typename interval_kind>
+    template <typename IntervalT>
     class interval_tree;
 
     template <typename numerical_type, typename interval_type>

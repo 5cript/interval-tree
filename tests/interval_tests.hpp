@@ -34,9 +34,12 @@ public:
 
 TEST_F(IntervalTests, FailBadBorders)
 {
-    EXPECT_DEATH(({
+    auto f = []()
+    {
         [[maybe_unused]] auto ival = types::interval_type{1 BOOST_PP_COMMA() 0};
-    }), "low <= high");
+    };
+
+    EXPECT_DEATH(f(), "low <= high");
 }
 
 TEST_F(IntervalTests, ShallCreateInterval)
