@@ -709,10 +709,9 @@ private:
          *  @param ival The interval
          *  @param exclusive Exclude borders.
          */
-        template <typename IntervalType = interval_type>
-        iterator insert_overlap(IntervalType&& ival, bool exclusive = false)
+        iterator insert_overlap(interval_type const& ival, bool exclusive = false)
         {
-            auto iter = overlap_find(std::forward <IntervalType&&> (ival), exclusive);
+            auto iter = overlap_find(ival, exclusive);
             if (iter == end())
                 return insert(ival);
             else
