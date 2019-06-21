@@ -29,9 +29,6 @@ namespace lib_interval_tree
     template <typename numerical_type, typename interval_kind_ = closed>
     struct interval
     {
-        friend node <numerical_type, interval <numerical_type, interval_kind_>>;
-        //friend interval_tree <numerical_type, interval_kind_>;
-
     public:
         using value_type = numerical_type;
         using interval_kind = interval_kind_;
