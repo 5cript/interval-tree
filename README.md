@@ -158,12 +158,12 @@ Returns whether or not the tree is empty.
 ### iterator begin()
 Returns the iterator of the interval with the lowest lower_bound.
 
-**Returns**: Is this tree empty?
+**Returns**: begin iterator.
 
 ---
 ### iterator end()
 Returns a past the end iterator.
 
-**Returns**: Is this tree empty?
+**Returns**: past the end iterator.
 
 ---
