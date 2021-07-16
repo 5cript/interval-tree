@@ -40,6 +40,15 @@ TEST_F(OverlapFindTests, WillFindOverlapWithRootIfTouching)
     EXPECT_EQ(tree.overlap_find({7, 9}), std::begin(tree));
 }
 
+TEST_F(OverlapFindTests, WillNotFindOverlapIfNothingOverlaps)
+{
+    tree.insert({ 0, 5 });
+    tree.insert({ 5, 10 });
+    tree.insert({ 10, 15 });
+    tree.insert({ 15, 20 });
+    EXPECT_EQ(tree.overlap_find({77, 99}), std::end(tree));
+}
+
 TEST_F(OverlapFindTests, WillFindMultipleOverlaps)
 {
     tree.insert({ 0, 5 });
