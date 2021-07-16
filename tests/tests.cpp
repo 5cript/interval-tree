@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 
 #include "../interval_tree.hpp"
 #include "typedefs.hpp"
@@ -8,6 +9,8 @@
 #include "interval_tests.hpp"
 #include "insert_tests.hpp"
 #include "erase_tests.hpp"
+#include "find_tests.hpp"
+#include "overlap_find_tests.hpp"
 
 int main(int argc, char** argv)
 {

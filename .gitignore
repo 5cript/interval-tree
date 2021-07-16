@@ -9,6 +9,7 @@ __history/
 main.hpp
 main.cpp
 *.png
+.vscode
 
 tests/bin/*
 tests/build/*

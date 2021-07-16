@@ -3,7 +3,7 @@
 #include "interval_types.hpp"
 #include "interval_tree.hpp"
 
-#include "cairo-wrap/cairo_wrap.hpp"
+#include <cairo-wrap/cairo_wrap.hpp>
 
 #include <string>
 #include <sstream>
