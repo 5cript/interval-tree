@@ -81,6 +81,8 @@ Creates an interval where the borders are sorted so the lower border is the firs
     - [bool empty() const noexcept](#bool-empty-const-noexcept)
     - [iterator begin()](#iterator-begin)
     - [iterator end()](#iterator-end)
+    - [iterator cbegin()](#iterator-cbegin)
+    - [iterator cend()](#iterator-cend)
 
 ### iterator insert(interval_type const& ival)
 Adds an interval into the tree. 
@@ -233,7 +235,7 @@ Merges all overlapping intervals within the tree. After calling deoverlap, the t
 ### After deoverlap
 ![AfterDeoverlap](https://user-images.githubusercontent.com/6238896/55505612-c5a96c80-5653-11e9-81f8-28a8ae35a077.png)
 
-### interval_tree& deoverlap_copy()
+### interval_tree deoverlap_copy()
 Same as deoverlap, but not inplace
 
 ---
@@ -268,6 +270,18 @@ Returns the iterator of the interval with the lowest lower_bound.
 Returns a past the end iterator.
 
 **Returns**: past the end iterator.
+
+---
+### iterator cbegin()
+Returns the const_iterator of the interval with the lowest lower_bound.
+
+**Returns**: begin iterator.
+
+---
+### iterator cend()
+Returns a past the end const_iterator.
+
+**Returns**: past the end const_iterator.
 
 ---
 
