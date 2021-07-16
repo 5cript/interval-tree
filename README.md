@@ -2,6 +2,14 @@
 
 A C++ header only interval tree implementation, which takes a red black tree as its base to inhibit degeneration to linked lists.
 
+- [Interval Tree](#interval-tree)
+  - [How an interval tree looks like:](#how-an-interval-tree-looks-like)
+  - [Example](#example)
+  - [Compile & Run Testing](#compile--run-testing)
+  - [Free Functions](#free-functions)
+  - [Members of IntervalTree<Interval>](#members-of-intervaltreeinterval)
+  - [Members of Interval](#members-of-interval)
+
 ## How an interval tree looks like:
 ![ExampleTree](https://cloud.githubusercontent.com/assets/6238896/24608762/36422d7c-1878-11e7-9c5c-a45bdcd6e187.png)
 
