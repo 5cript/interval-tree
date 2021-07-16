@@ -262,6 +262,7 @@ Returns a past the end iterator.
 ---
 
 ## Members of Interval
+___You can implement your own interval if you provide all the same functions.___
 
   - [Members of Interval](#members-of-interval)
     - [using value_type](#using-value_type)
@@ -280,7 +281,6 @@ Returns a past the end iterator.
     - [value_type size() const](#value_type-size-const)
     - [interval join(interval const& other) const](#interval-joininterval-const-other-const)
 
-You can implement your own interval if you provide all the same functions.
 ### using value_type
 The underlying interval numerical type
 ### using interval_kind
