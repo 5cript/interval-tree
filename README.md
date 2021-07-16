@@ -47,6 +47,45 @@ Navigate into the tests folder and build the source using the CMakeLists. You mi
 Creates an interval where the borders are sorted so the lower border is the first one.
 
 ## Members of IntervalTree<Interval>
+
+  - [Members of IntervalTree<Interval>](#members-of-intervaltreeinterval)
+    - [iterator insert(interval_type const& ival)](#iterator-insertinterval_type-const-ival)
+      - [Parameters](#parameters)
+    - [iterator insert_overlap(interval_type const& ival)](#iterator-insert_overlapinterval_type-const-ival)
+      - [Parameters](#parameters-1)
+    - [iterator erase(iterator iter)](#iterator-eraseiterator-iter)
+      - [Parameters](#parameters-2)
+    - [size_type size() const](#size_type-size-const)
+    - [(const)iterator find(interval_type const& ival)](#constiterator-findinterval_type-const-ival)
+      - [Parameters](#parameters-3)
+    - [(const)iterator find(interval_type const& ival, CompareFunctionT const& compare)](#constiterator-findinterval_type-const-ival-comparefunctiont-const-compare)
+      - [Parameters](#parameters-4)
+    - [(const)iterator find_all(interval_type const& ival, OnFindFunctionT const& on_find)](#constiterator-find_allinterval_type-const-ival-onfindfunctiont-const-on_find)
+      - [Parameters](#parameters-5)
+      - [Example](#example-1)
+    - [(const)iterator find_all(interval_type const& ival, OnFindFunctionT const& on_find, CompareFunctionT const& compare)](#constiterator-find_allinterval_type-const-ival-onfindfunctiont-const-on_find-comparefunctiont-const-compare)
+      - [Parameters](#parameters-6)
+    - [(const)iterator find_next_in_subtree(iterator from, interval_type const& ival)](#constiterator-find_next_in_subtreeiterator-from-interval_type-const-ival)
+      - [Parameters](#parameters-7)
+    - [(const)iterator find_next(iterator from, interval_type const& ival, CompareFunctionT const& compare)](#constiterator-find_nextiterator-from-interval_type-const-ival-comparefunctiont-const-compare)
+      - [Parameters](#parameters-8)
+    - [(const)iterator overlap_find(interval_type const& ival, bool exclusive)](#constiterator-overlap_findinterval_type-const-ival-bool-exclusive)
+      - [Parameters](#parameters-9)
+    - [(const)iterator overlap_find_all(interval_type const& ival, OnFindFunctionT const& on_find, bool exclusive)](#constiterator-overlap_find_allinterval_type-const-ival-onfindfunctiont-const-on_find-bool-exclusive)
+      - [Parameters](#parameters-10)
+      - [Example](#example-2)
+    - [(const)iterator overlap_find_next_in_subtree(interval_type const& ival, bool exclusive)](#constiterator-overlap_find_next_in_subtreeinterval_type-const-ival-bool-exclusive)
+      - [Parameters](#parameters-11)
+    - [interval_tree& deoverlap()](#interval_tree-deoverlap)
+    - [After deoverlap](#after-deoverlap)
+    - [interval_tree& deoverlap_copy()](#interval_tree-deoverlap_copy)
+    - [interval_tree punch(interval_type const& ival)](#interval_tree-punchinterval_type-const-ival)
+    - [After punching (with [0, 50])](#after-punching-with-0-50)
+    - [interval_tree punch()](#interval_tree-punch)
+    - [bool empty() const noexcept](#bool-empty-const-noexcept)
+    - [iterator begin()](#iterator-begin)
+    - [iterator end()](#iterator-end)
+
 ### iterator insert(interval_type const& ival)
 Adds an interval into the tree. 
 #### Parameters
@@ -235,6 +274,24 @@ Returns a past the end iterator.
 ---
 
 ## Members of Interval
+
+  - [Members of Interval](#members-of-interval)
+    - [using value_type](#using-value_type)
+    - [using interval_kind](#using-interval_kind)
+    - [friend bool operator==(interval const& lhs, interval const& other)](#friend-bool-operatorinterval-const-lhs-interval-const-other)
+    - [friend bool operator!=(interval const& lhs, interval const& other)](#friend-bool-operatorinterval-const-lhs-interval-const-other-1)
+    - [value_type low() const](#value_type-low-const)
+    - [value_type high() const](#value_type-high-const)
+    - [bool overlaps(value_type l, value_type h) const](#bool-overlapsvalue_type-l-value_type-h-const)
+    - [bool overlaps_exclusive(value_type l, value_type h) const](#bool-overlaps_exclusivevalue_type-l-value_type-h-const)
+    - [bool overlaps(interval const& other) const](#bool-overlapsinterval-const-other-const)
+    - [bool overlaps_exclusive(interval const& other) const](#bool-overlaps_exclusiveinterval-const-other-const)
+    - [bool within(value_type value) const](#bool-withinvalue_type-value-const)
+    - [bool within(interval const& other) const](#bool-withininterval-const-other-const)
+    - [value_type operator-(interval const& other) const](#value_type-operator-interval-const-other-const)
+    - [value_type size() const](#value_type-size-const)
+    - [interval join(interval const& other) const](#interval-joininterval-const-other-const)
+
 You can implement your own interval if you provide all the same functions.
 ### using value_type
 The underlying interval numerical type
