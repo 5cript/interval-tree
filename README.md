@@ -42,7 +42,11 @@ int main()
 Having googletest (find here on github) installed / built is a requirement to run the tests.
 Navigate into the tests folder and build the source using the CMakeLists. You might have to adapt the linker line for gtest, if you built it yourself and didn't install it into your system.
 
-## Members
+## Free Functions
+### interval<NumericT, Kind> make_safe_interval(NumericT border1, NumericT border2)
+Creates an interval where the borders are sorted so the lower border is the first one.
+
+## Members of IntervalTree<Interval>
 ### iterator insert(interval_type const& ival)
 Adds an interval into the tree. 
 #### Parameters
@@ -76,7 +80,7 @@ Returns the amount of nodes in the tree.
 **Returns**: The amount of tree nodes.
 
 ---
-### iterator find(interval_type const& ival)
+### (const)iterator find(interval_type const& ival)
 Finds the first interval in the interval tree that has an exact match.
 **WARNING**: There is no special handling for floats.
 #### Parameters
@@ -85,7 +89,7 @@ Finds the first interval in the interval tree that has an exact match.
 **Returns**: An iterator to the found element, or std::end(tree).
 
 ---
-### iterator find(interval_type const& ival, CompareFunctionT const& compare)
+### (const)iterator find(interval_type const& ival, CompareFunctionT const& compare)
 Finds the first interval in the interval tree that has the following statement evaluate to true: compare(ival, interval_in_tree);
 Allows for propper float comparisons.
 #### Parameters
@@ -95,8 +99,30 @@ Allows for propper float comparisons.
 **Returns**: An iterator to the found element, or std::end(tree).
 
 ---
-### iterator find_next(iterator from, interval_type const& ival)
-Finds the next exact match INCLUDING from.
+### (const)iterator find_all(interval_type const& ival, OnFindFunctionT const& on_find)
+Find all intervals in the tree matching ival.
+#### Parameters
+* `ival` The interval to find.
+* `on_find` A function of type bool(iterator) that is called when an interval was found.
+Return true to continue, false to preemptively abort search.
+
+**Returns**: An iterator to the found element, or std::end(tree).
+
+---
+### (const)iterator find_all(interval_type const& ival, OnFindFunctionT const& on_find, CompareFunctionT const& compare)
+Find all intervals in the tree that the compare function returns true for.
+#### Parameters
+* `ival` The interval to find.
+* `compare` The compare function to compare intervals with.
+* `on_find` A function of type bool(iterator) that is called when an interval was found.
+Return true to continue, false to preemptively abort search.
+
+**Returns**: An iterator to the found element, or std::end(tree).
+
+---
+### (const)iterator find_next_in_subtree(iterator from, interval_type const& ival)
+Finds the next exact match EXCLUDING from in the subtree originating from "from".
+You cannot find all matches this way, use find_all for that.
 #### Parameters
 * `from` The iterator to start from. (including this iterator!)
 * `ival` The interval to find.
@@ -104,8 +130,9 @@ Finds the next exact match INCLUDING from.
 **Returns**: An iterator to the found element, or std::end(tree).
 
 ---
-### iterator find_next(iterator from, interval_type const& ival, CompareFunctionT const& compare)
-Finds the next exact match INCLUDING from.
+### (const)iterator find_next(iterator from, interval_type const& ival, CompareFunctionT const& compare)
+Finds the next exact match EXCLUDING from in the subtree originating from "from".
+You cannot find all matches this way, use find_all for that.
 #### Parameters
 * `from` The iterator to start from (including this iterator!)
 * `ival` The interval to find.
@@ -114,8 +141,29 @@ Finds the next exact match INCLUDING from.
 **Returns**: An iterator to the found element, or std::end(tree).
 
 ---
-### iterator overlap_find(interval_type const& ival, bool exclusive)
+### (const)iterator overlap_find(interval_type const& ival, bool exclusive)
 Finds the first interval in the interval tree that overlaps the given interval.
+#### Parameters
+* `ival` The interval to find an overlap for.
+* `exclusive` Exclude borders from overlap check. Defaults to false.
+
+**Returns**: An iterator to the found element, or std::end(tree).
+
+---
+### (const)iterator overlap_find_all(interval_type const& ival, OnFindFunctionT const& on_find, bool exclusive)
+Finds the first interval in the interval tree that overlaps the given interval.
+#### Parameters
+* `ival` The interval to find an overlap for.
+* `on_find` A function of type bool(iterator) that is called when an interval was found.
+Return true to continue, false to preemptively abort search.
+* `exclusive` Exclude borders from overlap check. Defaults to false.
+
+**Returns**: An iterator to the found element, or std::end(tree).
+
+---
+### (const)iterator overlap_find_next_in_subtree(interval_type const& ival, bool exclusive)
+Finds the next interval in the subtree originating in ival that overlaps the given interval.
+You cannot find all matches this way, use overlap_find_all for that.
 #### Parameters
 * `ival` The interval to find an overlap for.
 * `exclusive` Exclude borders from overlap check. Defaults to false.
@@ -167,3 +215,37 @@ Returns a past the end iterator.
 **Returns**: past the end iterator.
 
 ---
+
+## Members of Interval
+You can implement your own interval if you provide all the same functions.
+### using value_type
+The underlying interval numerical type
+### using interval_kind
+The interval kind. You dont need to provides this typedef in your interval class.
+### friend bool operator==(interval const& lhs, interval const& other)
+Comparison operator.
+### friend bool operator!=(interval const& lhs, interval const& other)
+Comparison operator.
+### value_type low() const
+Lower bound.
+### value_type high() const
+Upper bound.
+### bool overlaps(value_type l, value_type h) const
+Overlap these bounds with this interval (closed)?
+### bool overlaps_exclusive(value_type l, value_type h) const
+Overlap these bounds with this interval excluding borders?
+### bool overlaps(interval const& other) const
+Like overlaps with lower and upper bound.
+### bool overlaps_exclusive(interval const& other) const
+Like overlaps with lower and upper bound.
+### bool within(value_type value) const
+Is the value within the interval (closed)?
+### bool within(interval const& other) const
+Is the interval within the interval?
+### value_type operator-(interval const& other) const
+Calculates the distance between the two intervals.
+Overlapping intervals have 0 distance.
+### value_type size() const
+Returns high - low.
+### interval join(interval const& other) const
+Joins 2 intervals and whatever is inbetween.

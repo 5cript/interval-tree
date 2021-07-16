@@ -800,30 +800,117 @@ private:
         }
 
         /**
-         *  Finds the next exact match INCLUDING from.
+         *  Finds the first exact match.
          *
-         *  @param from The iterator to search from INCLUSIVE!
          *  @param ival The interval to find an exact match for within the tree.
          *  @param compare A comparison function to use.
          */
         template <typename CompareFunctionT>
-        iterator find_next(iterator from, interval_type const& ival, CompareFunctionT const& compare)
+        iterator find(interval_type const& ival, CompareFunctionT const& compare)
         {
             if (root_ == nullptr)
                 return end();
-            return iterator{find_i((++from).node_, ival, compare), this};
+            return iterator{find_i(root_, ival, compare), this};
+        }
+
+        /**
+         *  Finds the first exact match.
+         *
+         *  @param ival The interval to find an exact match for within the tree.
+         *  @param compare A comparison function to use.
+         */
+        template <typename CompareFunctionT>
+        const_iterator find(interval_type const& ival, CompareFunctionT const& compare) const
+        {
+            if (root_ == nullptr)
+                return end();
+            return const_iterator{find_i(root_, ival, compare), this};
+        }
+
+        /**
+         *  Finds the first exact match.
+         *
+         *  @param ival The interval to find an exact match for within the tree.
+         */
+        iterator find(interval_type const& ival)
+        {
+            return find(ival, [](auto const& lhs, auto const& rhs){return lhs == rhs;});
+        }
+        /**
+         *  Finds the first exact match.
+         *
+         *  @param ival The interval to find an exact match for within the tree.
+         */
+        const_iterator find(interval_type const& ival) const
+        {
+            return find(ival, [](auto const& lhs, auto const& rhs){return lhs == rhs;});
+        }
+
+        /**
+         *  Finds all exact matches and returns the amount of intervals found.
+         */
+        template <typename FunctionT, typename CompareFunctionT>
+        void find_all(interval_type const& ival, FunctionT const& on_find, CompareFunctionT const& compare)
+        {
+            if (root_ == nullptr)
+                return;
+            find_all_i<iterator>(root_, ival, on_find, compare);
+        }
+        template <typename FunctionT, typename CompareFunctionT>
+        void find_all(interval_type const& ival, FunctionT const& on_find, CompareFunctionT const& compare) const
+        {
+            if (root_ == nullptr)
+                return;
+            find_all_i<const_iterator>(root_, ival, on_find, compare);
+        }
+
+        template <typename FunctionT>
+        void find_all(interval_type const& ival, FunctionT const& on_find)
+        {
+            find_all(ival, on_find, [](auto const& lhs, auto const& rhs){return lhs == rhs;});
+        }
+        template <typename FunctionT>
+        void find_all(interval_type const& ival, FunctionT const& on_find) const
+        {
+            find_all(ival, on_find, [](auto const& lhs, auto const& rhs){return lhs == rhs;});
         }
 
         /**
          *  Finds the next exact match EXCLUDING from.
          *
-         *  @param from The iterator to search from, EXCLUCISVE!
+         *  @param from The iterator to search from EXCLUSIVE!
          *  @param ival The interval to find an exact match for within the tree.
          *  @param compare A comparison function to use.
          */
-        iterator find_next(iterator from, interval_type const& ival)
+        template <typename CompareFunctionT>
+        iterator find_next_in_subtree(iterator from, interval_type const& ival, CompareFunctionT const& compare)
         {
-            return find_next(++from, ival, [](auto const& lhs, auto const& rhs){return lhs == rhs;});
+            if (root_ == nullptr)
+                return end();
+            return iterator{find_i_ex(from.node_, ival, compare), this};
+        }
+        template <typename CompareFunctionT>
+        const_iterator find_next_in_subtree(iterator from, interval_type const& ival, CompareFunctionT const& compare) const
+        {
+            if (root_ == nullptr)
+                return end();
+            return iterator{find_i_ex(from.node_, ival, compare), this};
+        }
+
+        /**
+         *  Finds the next exact match EXCLUDING from.
+         *
+         *  @param from The iterator to search from, EXCLUSIVE!
+         *  @param ival The interval to find an exact match for within the tree.
+         *  @param compare A comparison function to use.
+         */
+        iterator find_next_in_subtree(iterator from, interval_type const& ival)
+        {
+            return find_next_in_subtree(from, ival, [](auto const& lhs, auto const& rhs){return lhs == rhs;});
+        }
+        const_iterator find_next_in_subtree(iterator from, interval_type const& ival) const
+        {
+            return find_next_in_subtree(from, ival, [](auto const& lhs, auto const& rhs){return lhs == rhs;});
         }
 
         /**
@@ -836,7 +923,46 @@ private:
         {
             if (root_ == nullptr)
                 return end();
-            return iterator{overlap_find_i(begin().node_, ival, exclusive), this};
+            if (exclusive)
+                return iterator{overlap_find_i<true>(root_, ival), this};
+            else
+                return iterator{overlap_find_i<false>(root_, ival), this};
+        }
+        const_iterator overlap_find(interval_type const& ival, bool exclusive = false) const
+        {
+            if (root_ == nullptr)
+                return end();
+            if (exclusive)
+                return const_iterator{overlap_find_i<true>(root_, ival), this};
+            else
+                return const_iterator{overlap_find_i<false>(root_, ival), this};
+        }
+
+        /**
+         *  Finds all intervals that overlaps with ival.
+         *
+         *  @param ival The interval to find an overlap for within the tree.
+         *  @param exclusive Exclude edges?
+         */
+        template <typename FunctionT>
+        void overlap_find_all(interval_type const& ival, FunctionT const& on_find, bool exclusive = false)
+        {
+            if (root_ == nullptr)
+                return;
+            if (exclusive)
+                overlap_find_all_i<true, iterator>(root_, ival, on_find);
+            else
+                overlap_find_all_i<false, iterator>(root_, ival, on_find);
+        }
+        template <typename FunctionT>
+        void overlap_find_all(interval_type const& ival, FunctionT const& on_find, bool exclusive = false) const
+        {
+            if (root_ == nullptr)
+                return;
+            if (exclusive)
+                overlap_find_all_i<true, const_iterator>(root_, ival, on_find);
+            else
+                overlap_find_all_i<false, const_iterator>(root_, ival, on_find);
         }
 
         /**
@@ -846,35 +972,17 @@ private:
          *  @param ival The interval to find an overlap for within the tree.
          *  @param exclusive Exclude edges?
          */
-        iterator overlap_find_next(iterator from, interval_type const& ival, bool exclusive = false)
+        iterator overlap_find_next_in_subtree(iterator from, interval_type const& ival, bool exclusive = false)
         {
             if (root_ == nullptr)
                 return end();
-            return iterator{overlap_find_i((++from).node_, ival, exclusive), this};
+            return iterator{overlap_find_i_ex(from.node_, ival, exclusive), this};
         }
-
-        /**
-         *  Finds the first exact match.
-         *
-         *  @param ival The interval to find an exact match for within the tree.
-         *  @param compare A comparison function to use.
-         */
-        template <typename CompareFunctionT>
-        iterator find(interval_type const& ival, CompareFunctionT const& compare)
+        const_iterator overlap_find_next_in_subtree(const_iterator  from, interval_type const& ival, bool exclusive = false) const
         {
             if (root_ == nullptr)
                 return end();
-            return iterator{find_i(begin().node_, ival, compare), this};
-        }
-
-        /**
-         *  Finds the first exact match.
-         *
-         *  @param ival The interval to find an exact match for within the tree.
-         */
-        iterator find(interval_type const& ival)
-        {
-            return find(ival, [](auto const& lhs, auto const& rhs){return lhs == rhs;});
+            return const_iterator {overlap_find_i_ex(from.node_, ival, exclusive), this};
         }
 
         /**
@@ -1006,51 +1114,91 @@ private:
             return nullptr;
         };
 
+        template <typename IteratorT, typename FunctionT, typename ComparatorFunctionT>
+        bool find_all_i(node_type* ptr, interval_type const& ival, FunctionT const& on_find, ComparatorFunctionT const& compare)
+        {
+            if (compare(ptr->interval(), ival))
+            {
+                if (!on_find(IteratorT{ptr, this}))
+                    return false;
+            }
+            if (ptr->left_ && ival.high() <= ptr->left_->max())
+            {
+                // no right? can only continue left
+                if (!ptr->right_)
+                    return find_all_i<IteratorT>(ptr->left_, ival, on_find, compare);
+
+                // upper bounds higher than what is contained right? continue left
+                if (ival.high() > ptr->right_->max())
+                    return find_all_i<IteratorT>(ptr->left_, ival, on_find, compare);
+
+                if (!find_all_i<IteratorT>(ptr->left_, ival, on_find, compare))
+                    return false;
+            }
+            if (ptr->right_ && ival.high() <= ptr->right_->max())
+            {
+                if (!ptr->left_)
+                    return find_all_i<IteratorT>(ptr->right_, ival, on_find, compare);
+
+                if (ival.high() > ptr->left_->max())
+                    return find_all_i<IteratorT>(ptr->right_, ival, on_find, compare);
+
+                if (!find_all_i<IteratorT>(ptr->right_, ival, on_find, compare))
+                    return false;
+            }
+            return true;
+        }
+
         template <typename ComparatorFunctionT>
         node_type* find_i(node_type* ptr, interval_type const& ival, ComparatorFunctionT const& compare)
         {
             if (compare(ptr->interval(), ival))
                 return ptr;
             else
-            {
-                if (ptr->left_ && ival.high() <= ptr->left_->max())
-                {
-                    // no right? can only continue left
-                    if (!ptr->right_)
-                        return find_i(ptr->left_, ival, compare);
-
-                    // upper bounds higher than what is contained right? continue left
-                    if (ival.high() > ptr->right_->max())
-                        return find_i(ptr->left_, ival, compare);
-
-                    auto* res = find_i(ptr->left_, ival, compare);
-                    if (res == nullptr)
-                        return find_i(ptr->right_, ival, compare);
-                    else
-                        return res;
-                }
-                if (ptr->right_ && ival.high() <= ptr->right_->max())
-                {
-                    if (!ptr->left_)
-                        return find_i(ptr->right_, ival, compare);
-
-                    if (ival.high() > ptr->left_->max())
-                        return find_i(ptr->right_, ival, compare);
-
-                    auto* res = find_i(ptr->right_, ival, compare);
-                    if (res == nullptr)
-                        return find_i(ptr->left_, ival, compare);
-                    else
-                        return res;
-                }
-                else
-                    return nullptr;
-            }
+                return find_i_ex(ptr, ival, compare);
         }
 
-        node_type* overlap_find_i(node_type* ptr, interval_type const& ival, bool exclusive)
+        // excludes ptr
+        template <typename ComparatorFunctionT>
+        node_type* find_i_ex(node_type* ptr, interval_type const& ival, ComparatorFunctionT const& compare)
         {
-            if (exclusive)
+            if (ptr->left_ && ival.high() <= ptr->left_->max())
+            {
+                // no right? can only continue left
+                if (!ptr->right_)
+                    return find_i(ptr->left_, ival, compare);
+
+                // upper bounds higher than what is contained right? continue left
+                if (ival.high() > ptr->right_->max())
+                    return find_i(ptr->left_, ival, compare);
+
+                auto* res = find_i(ptr->left_, ival, compare);
+                if (res != nullptr)
+                    return res;
+            }
+            if (ptr->right_ && ival.high() <= ptr->right_->max())
+            {
+                if (!ptr->left_)
+                    return find_i(ptr->right_, ival, compare);
+
+                if (ival.high() > ptr->left_->max())
+                    return find_i(ptr->right_, ival, compare);
+
+                auto* res = find_i(ptr->right_, ival, compare);
+                if (res != nullptr)
+                    return res;
+            }
+            return nullptr;
+        }
+
+        template <bool Exclusive>
+        node_type* overlap_find_i(node_type* ptr, interval_type const& ival)
+        {
+#if __cplusplus > 201703L
+            if constexpr (Exclusive)
+#else
+            if (Exclusive)
+#endif
             {
                 if (ptr->interval().overlaps_exclusive(ival))
                     return ptr;
@@ -1061,38 +1209,94 @@ private:
                     return ptr;
             }
 
+            return overlap_find_i_ex<Exclusive>(ptr, ival);
+        }
+
+        template <bool Exclusive, typename IteratorT, typename FunctionT>
+        bool overlap_find_all_i(node_type* ptr, interval_type const& ival, FunctionT const& on_find)
+        {
+#if __cplusplus > 201703L
+            if constexpr (Exclusive)
+#else
+            if (Exclusive)
+#endif
+            {
+                if (ptr->interval().overlaps_exclusive(ival))
+                {
+                    if (!on_find(IteratorT{ptr, this}))
+                    {
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                if (ptr->interval().overlaps(ival))
+                {
+                    if (!on_find(IteratorT{ptr, this}))
+                    {
+                        return false;
+                    }
+                }
+            }
             if (ptr->left_ && ptr->left_->max() >= ival.low())
             {
                 // no right? can only continue left
                 if (!ptr->right_)
-                    return overlap_find_i(ptr->left_, ival, exclusive);
+                    return overlap_find_all_i<Exclusive, IteratorT>(ptr->left_, ival, on_find);
 
                 // upper bounds higher than what is contained right? continue left
                 if (ival.high() > ptr->right_->max())
-                    return overlap_find_i(ptr->left_, ival, exclusive);
+                    return overlap_find_all_i<Exclusive, IteratorT>(ptr->left_, ival, on_find);
 
-                auto* res = overlap_find_i(ptr->left_, ival, exclusive);
-                if (res == nullptr)
-                    return overlap_find_i(ptr->right_, ival, exclusive);
-                else
+                if (!overlap_find_all_i<Exclusive, IteratorT>(ptr->left_, ival, on_find))
+                    return false;
+            }
+            if (ptr->right_ && ptr->right_->max() >= ival.low())
+            {
+                if (!ptr->left_)
+                    return overlap_find_all_i<Exclusive, IteratorT>(ptr->right_, ival, on_find);
+
+                if (ival.high() > ptr->left_->max())
+                    return overlap_find_all_i<Exclusive, IteratorT>(ptr->right_, ival, on_find);
+
+                if (!overlap_find_all_i<Exclusive, IteratorT>(ptr->right_, ival, on_find))
+                    return false;
+            }
+            return true;
+        }
+
+        // excludes ptr
+        template <bool Exclusive>
+        node_type* overlap_find_i_ex(node_type* ptr, interval_type const& ival)
+        {
+            if (ptr->left_ && ptr->left_->max() >= ival.low())
+            {
+                // no right? can only continue left
+                if (!ptr->right_)
+                    return overlap_find_i<Exclusive>(ptr->left_, ival);
+
+                // upper bounds higher than what is contained right? continue left
+                if (ival.high() > ptr->right_->max())
+                    return overlap_find_i<Exclusive>(ptr->left_, ival);
+
+                auto* res = overlap_find_i<Exclusive>(ptr->left_, ival);
+                if (res != nullptr)
                     return res;
             }
             if (ptr->right_ && ptr->right_->max() >= ival.low())
             {
                 if (!ptr->left_)
-                    return overlap_find_i(ptr->right_, ival, exclusive);
+                    return overlap_find_i<Exclusive>(ptr->right_, ival);
 
                 if (ival.high() > ptr->left_->max())
-                    return overlap_find_i(ptr->right_, ival, exclusive);
+                    return overlap_find_i<Exclusive>(ptr->right_, ival);
 
-                auto* res = overlap_find_i(ptr->right_, ival, exclusive);
-                if (res == nullptr)
-                    return overlap_find_i(ptr->left_, ival, exclusive);
-                else
+                auto* res = overlap_find_i<Exclusive>(ptr->right_, ival);
+                if (res != nullptr)
                     return res;
             }
-            else
-                return nullptr;
+            return nullptr;
         }
 
         node_type* successor(node_type* node)

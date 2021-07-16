@@ -42,49 +42,113 @@ TEST_F(OverlapFindTests, WillFindOverlapWithRootIfTouching)
 
 TEST_F(OverlapFindTests, WillNotFindOverlapIfNothingOverlaps)
 {
-    tree.insert({ 0, 5 });
-    tree.insert({ 5, 10 });
-    tree.insert({ 10, 15 });
-    tree.insert({ 15, 20 });
+    tree.insert({0, 5});
+    tree.insert({5, 10});
+    tree.insert({10, 15});
+    tree.insert({15, 20});
     EXPECT_EQ(tree.overlap_find({77, 99}), std::end(tree));
+}
+
+TEST_F(OverlapFindTests, WillNotFindOverlapOnBorderIfExclusive)
+{
+    tree.insert({0, 5});
+    tree.insert({5, 10});
+    tree.insert({10, 15});
+    tree.insert({15, 20});
+    EXPECT_EQ(tree.overlap_find({5, 5}, true), std::end(tree));
 }
 
 TEST_F(OverlapFindTests, WillFindMultipleOverlaps)
 {
-    tree.insert({ 0, 5 });
-    tree.insert({ 5, 10 });
-    tree.insert({ 10, 15 });
-    tree.insert({ 15, 20 });
+    tree.insert({0, 5});
+    tree.insert({5, 10});
+    tree.insert({10, 15});
+    tree.insert({15, 20});
 
-    auto iter = tree.overlap_find({0, 9}), end = tree.end();
-    EXPECT_EQ(iter->low(), 0);
-    EXPECT_EQ(iter->high(), 5);
-
-    iter = tree.overlap_find_next(iter, {0, 9});
-    EXPECT_EQ(iter->low(), 5);
-    EXPECT_EQ(iter->high(), 10);
-
-    iter = tree.overlap_find_next(iter, {0, 9});
-    EXPECT_EQ(iter, end);
+    std::vector <decltype(tree)::interval_type> intervals;
+    tree.overlap_find_all({5, 5}, [&intervals](auto iter) {
+        intervals.push_back(*iter);
+        return true;
+    });
+    using ::testing::UnorderedElementsAre;
+    ASSERT_THAT(intervals, UnorderedElementsAre(decltype(tree)::interval_type{0, 5}, decltype(tree)::interval_type{5, 10}));
 }
 
-TEST_F(OverlapFindTests, WillFindMultipleOverlapsIfTouching)
+TEST_F(OverlapFindTests, FindAllWillFindNothingIfEmpty)
 {
-    tree.insert({ 0, 5 });
-    tree.insert({ 5, 10 });
-    tree.insert({ 10, 15 });
-    tree.insert({ 15, 20 });
+    int findCount = 0;
+    tree.overlap_find_all({2, 7}, [&findCount](auto){
+        ++findCount;
+        return true;
+    });
+    EXPECT_EQ(findCount, 0);
+}
 
-    auto iter = tree.overlap_find({5, 5}), end = tree.end();
-    EXPECT_EQ(iter->low(), 0);
-    EXPECT_EQ(iter->high(), 5);
+TEST_F(OverlapFindTests, FindAllWillFindNothingIfNothingOverlaps)
+{
+    tree.insert({16, 21});
+    tree.insert({8, 9});
+    tree.insert({25, 30});
+    tree.insert({5, 8});
+    tree.insert({15, 23});
+    int findCount = 0;
+    tree.overlap_find_all({1000, 2000}, [&findCount](auto){
+        ++findCount;
+        return true;
+    });
+    EXPECT_EQ(findCount, 0);
+}
 
-    iter = tree.overlap_find_next(iter, {5, 5});
-    EXPECT_EQ(iter->low(), 5);
-    EXPECT_EQ(iter->high(), 10);
+TEST_F(OverlapFindTests, FindAllWillFindAllWithLotsOfDuplicates)
+{
+    tree.insert({0, 5});
+    tree.insert({0, 5});
+    tree.insert({0, 5});
+    tree.insert({0, 5});
+    tree.insert({0, 5});
 
-    iter = tree.overlap_find_next(iter, {5, 5});
-    EXPECT_EQ(iter, end);
+    int findCount = 0;
+    tree.overlap_find_all({2, 3}, [&findCount](decltype(tree)::iterator iter){
+        ++findCount;
+        EXPECT_EQ(*iter, (decltype(tree)::interval_type{0, 5}));
+        return true;
+    });
+    EXPECT_EQ(findCount, tree.size());
+}
+
+TEST_F(OverlapFindTests, CanExitPreemptivelyByReturningFalse)
+{
+    tree.insert({0, 5});
+    tree.insert({0, 5});
+    tree.insert({0, 5});
+    tree.insert({0, 5});
+    tree.insert({0, 5});
+
+    int findCount = 0;
+    tree.overlap_find_all({2, 3}, [&findCount](decltype(tree)::iterator iter){
+        ++findCount;
+        EXPECT_EQ(*iter, (decltype(tree)::interval_type{0, 5}));
+        return findCount < 3;
+    });
+    EXPECT_EQ(findCount, 3);
+}
+
+TEST_F(OverlapFindTests, WillFindSingleOverlapInBiggerTree)
+{
+    tree.insert({16, 21});
+    tree.insert({8, 9});
+    tree.insert({25, 30});
+    tree.insert({5, 8});
+    tree.insert({15, 23});
+    tree.insert({17, 19});
+    tree.insert({26, 26});
+    tree.insert({1000, 2000});
+    tree.insert({6, 10});
+    tree.insert({19, 20});
+    auto iter = tree.overlap_find({1000, 1001});
+    EXPECT_NE(iter, std::end(tree));
+    EXPECT_EQ(iter->low(), 1000);
+    EXPECT_EQ(iter->high(), 2000);
 }
 
 
