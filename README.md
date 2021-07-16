@@ -7,7 +7,7 @@ A C++ header only interval tree implementation, which takes a red black tree as 
   - [Example](#example)
   - [Compile & Run Testing](#compile--run-testing)
   - [Free Functions](#free-functions)
-  - [Members of IntervalTree<Interval>](#members-of-intervaltreeinterval)
+  - [Members of IntervalTree](#members-of-intervaltree)
   - [Members of Interval](#members-of-interval)
 
 ## How an interval tree looks like:
