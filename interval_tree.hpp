@@ -1194,7 +1194,7 @@ private:
         template <bool Exclusive>
         node_type* overlap_find_i(node_type* ptr, interval_type const& ival)
         {
-#if __cplusplus > 201703L
+#if __cplusplus >= 201703L
             if constexpr (Exclusive)
 #else
             if (Exclusive)
@@ -1215,7 +1215,7 @@ private:
         template <bool Exclusive, typename IteratorT, typename FunctionT>
         bool overlap_find_all_i(node_type* ptr, interval_type const& ival, FunctionT const& on_find)
         {
-#if __cplusplus > 201703L
+#if __cplusplus >= 201703L
             if constexpr (Exclusive)
 #else
             if (Exclusive)
