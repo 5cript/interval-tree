@@ -147,6 +147,7 @@ tree.insert({3, 7});
 tree.insert({8, 9});
 tree.find_all({3, 7}, [](auto iter) /* iter will be const_iterator if tree is const */ {
   // will find all intervals that are exactly {3,7} here.
+  return true; // continue
 });
 ```
 
@@ -208,6 +209,7 @@ tree.insert({5, 10});
 tree.insert({10, 15});
 tree.overlap_find_all({5, 5}, [](auto iter) /* iter will be const_iterator if tree is const */ {
   // called with {0, 5} and {5, 10} in unspecified order.
+  return true; // continue
 });
 ```
 
