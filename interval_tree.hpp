@@ -811,7 +811,7 @@ private:
         {
             if (root_ == nullptr)
                 return end();
-            return iterator{find_i(from.node_, ival, compare), this};
+            return iterator{find_i((++from).node_, ival, compare), this};
         }
 
         /**
@@ -864,7 +864,7 @@ private:
         {
             if (root_ == nullptr)
                 return end();
-            return iterator{find_i(root_, ival, compare), this};
+            return iterator{find_i(begin().node_, ival, compare), this};
         }
 
         /**
