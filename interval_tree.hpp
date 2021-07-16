@@ -277,6 +277,22 @@ namespace lib_interval_tree
             return counter;
         }
 
+        /**
+         *  Returns the lower bound of the interval of this node
+         */
+        value_type low() const
+        {
+            return interval_.low();
+        }
+
+        /**
+         *  Returns the upper bound of the interval of this node
+         */
+        value_type high() const
+        {
+            return interval_.high();
+        }
+
 private:
         void set_interval(interval_type const& ival)
         {
@@ -432,7 +448,7 @@ private:
             if (node_)
                 return node_->interval();
             else
-                throw std::out_of_range("interval_tree_iterator out of bounds");
+                throw std::out_of_range("dereferencing interval_tree_iterator out of bounds");
         }
 
         /**
@@ -799,15 +815,15 @@ private:
         }
 
         /**
-         *  Finds the next exact match INCLUDING from.
+         *  Finds the next exact match EXCLUDING from.
          *
-         *  @param from The iterator to search from, INCLUSIVE!
+         *  @param from The iterator to search from, EXCLUCISVE!
          *  @param ival The interval to find an exact match for within the tree.
          *  @param compare A comparison function to use.
          */
         iterator find_next(iterator from, interval_type const& ival)
         {
-            return find_next(from, ival, [](auto const& lhs, auto const& rhs){return lhs == rhs;});
+            return find_next(++from, ival, [](auto const& lhs, auto const& rhs){return lhs == rhs;});
         }
 
         /**
@@ -820,13 +836,13 @@ private:
         {
             if (root_ == nullptr)
                 return end();
-            return iterator{overlap_find_i(root_, ival, exclusive), this};
+            return iterator{overlap_find_i(begin().node_, ival, exclusive), this};
         }
 
         /**
-         *  Finds the next interval that overlaps with ival INCLUDING from.
+         *  Finds the next interval that overlaps with ival
          *
-         *  @param from The iterator to start from, INCLUSIVE!
+         *  @param from The iterator to start from, EXCLUSIVE!
          *  @param ival The interval to find an overlap for within the tree.
          *  @param exclusive Exclude edges?
          */
@@ -834,7 +850,7 @@ private:
         {
             if (root_ == nullptr)
                 return end();
-            return iterator{overlap_find_i(from.node_, ival, exclusive), this};
+            return iterator{overlap_find_i((++from).node_, ival, exclusive), this};
         }
 
         /**

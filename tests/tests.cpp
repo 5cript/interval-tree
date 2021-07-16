@@ -8,6 +8,7 @@
 #include "interval_tests.hpp"
 #include "insert_tests.hpp"
 #include "erase_tests.hpp"
+#include "overlap_tests.hpp"
 
 int main(int argc, char** argv)
 {
