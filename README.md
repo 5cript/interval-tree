@@ -105,6 +105,15 @@ Find all intervals in the tree matching ival.
 * `ival` The interval to find.
 * `on_find` A function of type bool(iterator) that is called when an interval was found.
 Return true to continue, false to preemptively abort search.
+#### Example
+```c++
+tree.insert({3, 7});
+tree.insert({3, 7});
+tree.insert({8, 9});
+tree.find_all({3, 7}, [](auto iter) /* iter will be const_iterator if tree is const */ {
+  // will find all intervals that are exactly {3,7} here.
+});
+```
 
 **Returns**: An iterator to the found element, or std::end(tree).
 
@@ -157,6 +166,15 @@ Finds the first interval in the interval tree that overlaps the given interval.
 * `on_find` A function of type bool(iterator) that is called when an interval was found.
 Return true to continue, false to preemptively abort search.
 * `exclusive` Exclude borders from overlap check. Defaults to false.
+#### Example
+```c++
+tree.insert({0, 5});
+tree.insert({5, 10});
+tree.insert({10, 15});
+tree.overlap_find_all({5, 5}, [](auto iter) /* iter will be const_iterator if tree is const */ {
+  // called with {0, 5} and {5, 10} in unspecified order.
+});
+```
 
 **Returns**: An iterator to the found element, or std::end(tree).
 
