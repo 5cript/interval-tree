@@ -3,7 +3,7 @@
 #include "test_utility.hpp"
 #include "../draw.hpp"
 
-class OverlapFindTests
+class FloatOverlapFindTests
     : public ::testing::Test
 {
 public:
@@ -12,7 +12,7 @@ protected:
     IntervalTypes <double>::tree_type tree;
 };
 
-TEST_F(OverlapFindTests, FloatOverlapTest)
+TEST_F(FloatOverlapFindTests, FloatOverlapTest)
 {
     tree.insert(lib_interval_tree::make_safe_interval<double>(-1.483529864195180e+00, -1.296053859335657e+00));
     tree.insert(lib_interval_tree::make_safe_interval<double>(-1.308996938995747e+00, -1.127801743538376e+00));
@@ -37,9 +37,9 @@ TEST_F(OverlapFindTests, FloatOverlapTest)
 
     std::vector <lib_interval_tree::interval<double>> vecOverlapsA;
     lib_interval_tree::interval <double> intSource({lat0, lat1});
-    for (auto itTargetInterval : tree) 
+    for (auto itTargetInterval : tree)
     {
-        if (itTargetInterval.overlaps(intSource)) 
+        if (itTargetInterval.overlaps(intSource))
         {
             vecOverlapsA.push_back(itTargetInterval);
         }
@@ -51,7 +51,7 @@ TEST_F(OverlapFindTests, FloatOverlapTest)
         {lat0, lat1},
         [&vecOverlapsB](lib_interval_tree::interval_tree_t<double>::iterator ittarget)
         {
-            vecOverlapsB.push_back(*ittarget); 
+            vecOverlapsB.push_back(*ittarget);
             return true;
         },
         false
@@ -68,6 +68,6 @@ TEST_F(OverlapFindTests, FloatOverlapTest)
     }
 
     lib_interval_tree::drawTree("here.png", tree);
-    
+
     ASSERT_EQ(vecOverlapsA, vecOverlapsB);
 }
