@@ -29,9 +29,9 @@ target_link_libraries(tree-tests gtest)
 # Options
 if(DRAW_EXAMPLES)
 	target_compile_definitions(tree-tests PRIVATE -DINTERVAL_TREE_DO_DRAWINGS=1)	
-	find_library(LCAIRO_WRAP NAMES cairo-wrap PATHS "cairo-wrap/build" STATIC)	
-	target_link_libraries(tree-tests LCAIRO_WRAP cairo)
-	target_include_directories(tree-tests .)
+	find_library(LCAIRO_WRAP NAMES cairo_wrap PATHS "../../cairo-wrap/build" STATIC)	
+	target_link_libraries(tree-tests ${LCAIRO_WRAP} cairo)
+	target_include_directories(tree-tests PRIVATE .. ../..)
 endif()
 
 # Compiler Options
