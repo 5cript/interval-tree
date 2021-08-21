@@ -16,10 +16,6 @@ namespace lib_interval_tree
 {
     namespace
     {
-        using int_tree_for_draw = interval_tree <interval<int, closed>>;
-        using int_tree_iterator = int_tree_for_draw::iterator;
-        using const_int_tree_iterator = int_tree_for_draw::const_iterator;
-
 		template <unsigned Size>
 		struct NumericalPointerEquivalent
 		{};
@@ -36,7 +32,8 @@ namespace lib_interval_tree
 			using type = unsigned long long;
 		};
 
-        std::string iterCaption(const_int_tree_iterator iter)
+        template <typename... List>
+        std::string iterCaption(typename lib_interval_tree::interval_tree <List...>::const_iterator iter)
         {
             auto ival = iter->interval();
             std::stringstream sstr;
@@ -100,17 +97,19 @@ namespace lib_interval_tree
         }
     }
 //#####################################################################################################################
+    template <typename... List>
     struct TreeGriditer
     {
-        const_int_tree_iterator iter;
+        typename lib_interval_tree::interval_tree <List...>::const_iterator iter;
         std::pair <int, int> parentCoords;
     };
+    template <typename... List>
     struct TreeGrid
     {
         // (row-major)
         std::vector < // rows
             std::vector < // columns
-                boost::optional <TreeGriditer>
+                boost::optional <TreeGriditer<List...>>
             >
         > grid;
         int xMax = 0;
@@ -118,13 +117,14 @@ namespace lib_interval_tree
         int yMax = 0;
     };
 //#####################################################################################################################
-    void drawIter(Cairo::DrawContext* ctx, const_int_tree_iterator iter, double x, double y, bool drawPointers)
+    template <typename... List>
+    void drawIterator(Cairo::DrawContext* ctx, typename lib_interval_tree::interval_tree <List...>::const_iterator iter, double x, double y, bool drawPointers)
     {
         auto caption = Cairo::Text(
             ctx,
             0,
             0,
-            iterCaption(iter),
+            iterCaption<List...>(iter),
             {"Arial", 18, CAIRO_FONT_WEIGHT_BOLD}
         );
 
@@ -214,32 +214,29 @@ namespace lib_interval_tree
         */
     }
 //---------------------------------------------------------------------------------------------------------------------
-    template <typename iterT>
-    void drawiter(Cairo::DrawContext* ctx, interval_tree_iterator <iterT> const& iter, double x, double y, bool drawPointers)
-    {
-        drawiter(ctx, iter, x, y, drawPointers);
-    }
-//---------------------------------------------------------------------------------------------------------------------
-    TreeGrid createGrid(int_tree_for_draw const& tree)
+    template <typename... List>
+    TreeGrid<List...> createGrid(lib_interval_tree::interval_tree <List...> const& tree)
     {
         auto root = tree.root();
         if (root == std::end(tree))
             return {};
 
-        TreeGrid grid;
+        TreeGrid<List...> grid;
 
-        struct _GridPoint
+        using tree_const_iterator = typename lib_interval_tree::interval_tree <List...>::const_iterator;
+
+        struct GridPoint
         {
-            const_int_tree_iterator iter;
-            const_int_tree_iterator parent;
+            tree_const_iterator iter;
+            tree_const_iterator parent;
             int x;
             int y;
         };
 
-        std::vector <_GridPoint> gridPoints;
+        std::vector <GridPoint> gridPoints;
 
-        std::function <int(const_int_tree_iterator iter)> subtreeSize;
-        subtreeSize = [&](const_int_tree_iterator iter) {
+        std::function <int(tree_const_iterator iter)> subtreeSize;
+        subtreeSize = [&](tree_const_iterator iter) {
             if (iter == std::end(tree))
                 return 0;
             if (iter.left() == std::end(tree) && iter.right() == std::end(tree))
@@ -253,8 +250,8 @@ namespace lib_interval_tree
             return 0;
         };
 
-        std::function <void(const_int_tree_iterator, int pX, int pY)> deduceCoordinates;
-        deduceCoordinates = [&](const_int_tree_iterator iter, int pX, int pY)
+        std::function <void(tree_const_iterator, int pX, int pY)> deduceCoordinates;
+        deduceCoordinates = [&](tree_const_iterator iter, int pX, int pY)
         {
             int y = pY;
             int x = pX;
@@ -311,19 +308,20 @@ namespace lib_interval_tree
                 }
             }
 
-            grid.grid[i.y][i.x + -grid.xMin] = {TreeGriditer{i.iter, parentCoords}};
+            grid.grid[i.y][i.x + -grid.xMin] = {TreeGriditer<List...>{i.iter, parentCoords}};
         }
 
         return grid;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void drawGrid(Cairo::DrawContext* ctx, TreeGrid const& grid, bool drawPointers, bool drawEmpty)
+    template <typename... List>
+    void drawGrid(Cairo::DrawContext* ctx, TreeGrid<List...> const& grid, bool drawPointers, bool drawEmpty)
     {
         auto iterRadius = getiterRadius();
         auto cellSize = iterRadius * 2. + gridMargin;
 
-        auto iterX = [&](int x_) {return leftPadding + iterRadius + x_ * cellSize + x_ * xPadding;};
-        auto iterY = [&](int y_) {return topPadding + iterRadius + y_ * cellSize + y_ * yPadding;};
+        auto iterX = [&](auto x_) {return leftPadding + iterRadius + x_ * cellSize + x_ * xPadding;};
+        auto iterY = [&](auto y_) {return topPadding + iterRadius + y_ * cellSize + y_ * yPadding;};
 
         // Draw Lines
         int y = 0;
@@ -358,7 +356,7 @@ namespace lib_interval_tree
                 if (cell)
                 {
                     auto iter = cell.get().iter;
-                    drawIter(ctx, iter, iterX(x), iterY(y), drawPointers);
+                    drawIterator<List...>(ctx, iter, iterX(x), iterY(y), drawPointers);
                 }
                 else if (drawEmpty)
                 {
@@ -377,7 +375,8 @@ namespace lib_interval_tree
         }
     }
 //---------------------------------------------------------------------------------------------------------------------
-    Cairo::Surface createSurface(TreeGrid const& grid)
+    template <typename... List>
+    Cairo::Surface createSurface(TreeGrid<List...> const& grid)
     {
         auto iterRadius = getiterRadius();
         auto cellSize = iterRadius * 2. + gridMargin;
@@ -391,12 +390,12 @@ namespace lib_interval_tree
     }
 //---------------------------------------------------------------------------------------------------------------------
     template <typename... List>
-    void drawTree(std::string const& fileName, lib_interval_tree::interval_tree <List...> const* tree, bool drawPointers = false, bool drawEmpty = false)
+    void drawTree(std::string const& fileName, lib_interval_tree::interval_tree <List...> const& tree, bool drawPointers = false, bool drawEmpty = false)
     {
-        auto grid = createGrid(*tree);
+        auto grid = createGrid(tree);
         auto surface = createSurface(grid);
         Cairo::DrawContext ctx(&surface);
-        drawGrid(&ctx, grid, drawPointers, drawEmpty);
+        drawGrid<List...>(&ctx, grid, drawPointers, drawEmpty);
         surface.saveToFile(fileName);
     }
 //######################################################################################################
