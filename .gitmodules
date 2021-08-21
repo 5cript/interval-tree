@@ -1,0 +1,3 @@
+[submodule "cairo-wrap"]
+	path = cairo-wrap
+	url = https://github.com/5cript/cairo-wrap.git
