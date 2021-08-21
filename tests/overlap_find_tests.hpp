@@ -150,5 +150,3 @@ TEST_F(OverlapFindTests, WillFindSingleOverlapInBiggerTree)
     EXPECT_EQ(iter->low(), 1000);
     EXPECT_EQ(iter->high(), 2000);
 }
-
-

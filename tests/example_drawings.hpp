@@ -9,7 +9,7 @@ void drawDocExample()
 {
     using namespace lib_interval_tree;
 
-    interval_tree<int> tree;
+    interval_tree_t<int> tree;
 
     tree.insert({16, 21});
     tree.insert({8, 9});
@@ -22,7 +22,7 @@ void drawDocExample()
     tree.insert({6, 10});
     tree.insert({19, 20});
 
-    drawTree("drawings/doc_example.png", &tree, false, false);
+    drawTree("drawings/doc_example.png", tree, false, false);
 }
 
 void drawFromTests1()
@@ -30,9 +30,9 @@ void drawFromTests1()
     using namespace lib_interval_tree;
     using namespace std::string_literals;
 
-    interval_tree<int> tree;
+    interval_tree_t<int> tree;
 
-    std::vector <interval_tree<int>::interval_type> intervalCollection;
+    std::vector <interval_tree_t<int>::interval_type> intervalCollection;
 
     intervalCollection.push_back({-51, 11});
     intervalCollection.push_back({26, 68});
@@ -59,13 +59,13 @@ void drawFromTests1()
     for (auto const& i : intervalCollection)
     {
         tree.insert(i);
-        drawTree("drawings/from_tests_1_"s + std::to_string(counter) + ".png", &tree, false, false);
+        drawTree("drawings/from_tests_1_"s + std::to_string(counter) + ".png", tree, false, false);
         ++counter;
     }
 
     tree.deoverlap();
 
-    drawTree("drawings/from_tests_1_deoverlapped.png", &tree, false, false);
+    drawTree("drawings/from_tests_1_deoverlapped.png", tree, false, false);
 }
 
 void drawAll()

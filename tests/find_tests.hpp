@@ -78,4 +78,3 @@ TEST_F(FindTests, WillFindAllCanExitPreemptively)
     EXPECT_EQ(findCount, 3);
 }
 
-
