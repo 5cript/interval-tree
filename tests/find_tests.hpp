@@ -101,5 +101,3 @@ TEST_F(FindTests, CanFindAllElementsBack)
         ASSERT_NE(tree.find(ival), std::end(tree));
     }
 }
-
-
