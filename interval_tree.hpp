@@ -1242,11 +1242,8 @@ private:
             if (ptr->left_ && ptr->left_->max() >= ival.low())
             {
                 // no right? can only continue left
-                if (!ptr->right_)
-                    return overlap_find_all_i<Exclusive, IteratorT>(ptr->left_, ival, on_find);
-
-                // upper bounds higher than what is contained right? continue left
-                if (ival.high() > ptr->right_->max())
+                // or upper bound is lower than what is contained right? continue left
+                if (!ptr->right_ || ival.high() < ptr->right_->low())
                     return overlap_find_all_i<Exclusive, IteratorT>(ptr->left_, ival, on_find);
 
                 if (!overlap_find_all_i<Exclusive, IteratorT>(ptr->left_, ival, on_find))
@@ -1254,10 +1251,7 @@ private:
             }
             if (ptr->right_ && ptr->right_->max() >= ival.low())
             {
-                if (!ptr->left_)
-                    return overlap_find_all_i<Exclusive, IteratorT>(ptr->right_, ival, on_find);
-
-                if (ival.high() > ptr->left_->max())
+                if (!ptr->left_ || ival.high() < ptr->left_->low())
                     return overlap_find_all_i<Exclusive, IteratorT>(ptr->right_, ival, on_find);
 
                 if (!overlap_find_all_i<Exclusive, IteratorT>(ptr->right_, ival, on_find))

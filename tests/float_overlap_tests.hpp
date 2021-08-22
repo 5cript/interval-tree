@@ -3,6 +3,8 @@
 #include "test_utility.hpp"
 #include "../draw.hpp"
 
+#include <algorithm>
+
 class FloatOverlapFindTests
     : public ::testing::Test
 {
@@ -35,39 +37,31 @@ TEST_F(FloatOverlapFindTests, FloatOverlapTest)
     double lat0 = 1.040893537045970;
     double lat1 = 1.570796326794897;
 
-    std::vector <lib_interval_tree::interval<double>> vecOverlapsA;
+    std::vector <std::pair<double, double>> vecOverlapsA;
     lib_interval_tree::interval <double> intSource({lat0, lat1});
-    for (auto itTargetInterval : tree)
+    for (auto const& iter : tree)
     {
-        if (itTargetInterval.overlaps(intSource))
-        {
-            vecOverlapsA.push_back(itTargetInterval);
-        }
+        if (iter.overlaps(intSource))
+            vecOverlapsA.push_back({iter.low(), iter.high()});
     }
 
-    std::vector <lib_interval_tree::interval<double>> vecOverlapsB;
+    std::vector <std::pair<double, double>> vecOverlapsB;
     tree.overlap_find_all
     (
         {lat0, lat1},
-        [&vecOverlapsB](lib_interval_tree::interval_tree_t<double>::iterator ittarget)
+        [&vecOverlapsB](lib_interval_tree::interval_tree_t<double>::iterator iter)
         {
-            vecOverlapsB.push_back(*ittarget);
+            vecOverlapsB.push_back({iter->low(), iter->high()});
             return true;
         },
         false
     );
 
-    for (auto const& i : vecOverlapsA)
-    {
-        std::cout << i.low() << ", " << i.high() << "\n";
-    }
-    std::cout << "\n";
-    for (auto const& i : vecOverlapsB)
-    {
-        std::cout << i.low() << ", " << i.high() << "\n";
-    }
-
     lib_interval_tree::drawTree("here.png", tree);
 
-    ASSERT_EQ(vecOverlapsA, vecOverlapsB);
+    std::sort(std::begin(vecOverlapsA), std::end(vecOverlapsA));
+    std::sort(std::begin(vecOverlapsB), std::end(vecOverlapsB));
+
+    ASSERT_EQ(vecOverlapsA.size(), vecOverlapsB.size());
+    EXPECT_THAT(vecOverlapsA, ::testing::ContainerEq(vecOverlapsB));
 }
