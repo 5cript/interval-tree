@@ -1,5 +1,9 @@
 #pragma once
 
+#include <ctime>
+#include <random>
+#include <cmath>
+
 class FindTests
     : public ::testing::Test
 {
@@ -8,7 +12,6 @@ public:
 protected:
     IntervalTypes <int>::tree_type tree;
     std::default_random_engine gen;
-    std::uniform_int_distribution <int> distSmall{-500, 500};
     std::uniform_int_distribution <int> distLarge{-50000, 50000};
 };
 
@@ -134,4 +137,3 @@ TEST_F(FindTests, CanFindAllElementsBackInStrictlyAscendingOverlappingIntervals)
         ASSERT_NE(tree.find(ival), std::end(tree));
     }
 }
-
