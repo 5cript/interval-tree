@@ -1,5 +1,9 @@
 #pragma once
 
+#include <ctime>
+#include <random>
+#include <cmath>
+
 class FindTests
     : public ::testing::Test
 {
@@ -7,6 +11,8 @@ public:
     using types = IntervalTypes <int>;
 protected:
     IntervalTypes <int>::tree_type tree;
+    std::default_random_engine gen;
+    std::uniform_int_distribution <int> distLarge{-50000, 50000};
 };
 
 TEST_F(FindTests, WillReturnEndIfTreeIsEmpty)
@@ -78,3 +84,20 @@ TEST_F(FindTests, WillFindAllCanExitPreemptively)
     EXPECT_EQ(findCount, 3);
 }
 
+TEST_F(FindTests, CanFindAllElementsBack)
+{
+    constexpr int amount = 10'000;
+
+    std::vector <decltype(tree)::interval_type> intervals;
+    intervals.reserve(amount);
+    for (int i = 0; i != amount; ++i)
+    {
+        const auto interval = lib_interval_tree::make_safe_interval(distLarge(gen), distLarge(gen));
+        intervals.emplace_back(interval);
+        tree.insert(interval);
+    }
+    for (auto const& ival : intervals)
+    {
+        ASSERT_NE(tree.find(ival), std::end(tree));
+    }
+}

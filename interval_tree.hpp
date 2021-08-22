@@ -1125,11 +1125,7 @@ private:
             if (ptr->left_ && ival.high() <= ptr->left_->max())
             {
                 // no right? can only continue left
-                if (!ptr->right_)
-                    return find_all_i<IteratorT>(ptr->left_, ival, on_find, compare);
-
-                // upper bounds higher than what is contained right? continue left
-                if (ival.high() > ptr->right_->max())
+                if (!ptr->right_ || ival.low() > ptr->right_->max())
                     return find_all_i<IteratorT>(ptr->left_, ival, on_find, compare);
 
                 if (!find_all_i<IteratorT>(ptr->left_, ival, on_find, compare))
@@ -1137,10 +1133,7 @@ private:
             }
             if (ptr->right_ && ival.high() <= ptr->right_->max())
             {
-                if (!ptr->left_)
-                    return find_all_i<IteratorT>(ptr->right_, ival, on_find, compare);
-
-                if (ival.high() > ptr->left_->max())
+                if (!ptr->left_ || ival.low() > ptr->left_->max())
                     return find_all_i<IteratorT>(ptr->right_, ival, on_find, compare);
 
                 if (!find_all_i<IteratorT>(ptr->right_, ival, on_find, compare))
@@ -1165,11 +1158,7 @@ private:
             if (ptr->left_ && ival.high() <= ptr->left_->max())
             {
                 // no right? can only continue left
-                if (!ptr->right_)
-                    return find_i(ptr->left_, ival, compare);
-
-                // upper bounds higher than what is contained right? continue left
-                if (ival.high() > ptr->right_->max())
+                if (!ptr->right_ || ival.low() > ptr->right_->max())
                     return find_i(ptr->left_, ival, compare);
 
                 auto* res = find_i(ptr->left_, ival, compare);
@@ -1178,10 +1167,7 @@ private:
             }
             if (ptr->right_ && ival.high() <= ptr->right_->max())
             {
-                if (!ptr->left_)
-                    return find_i(ptr->right_, ival, compare);
-
-                if (ival.high() > ptr->left_->max())
+                if (!ptr->left_ || ival.low() > ptr->left_->max())
                     return find_i(ptr->right_, ival, compare);
 
                 auto* res = find_i(ptr->right_, ival, compare);
@@ -1242,11 +1228,8 @@ private:
             if (ptr->left_ && ptr->left_->max() >= ival.low())
             {
                 // no right? can only continue left
-                if (!ptr->right_)
-                    return overlap_find_all_i<Exclusive, IteratorT>(ptr->left_, ival, on_find);
-
-                // upper bounds higher than what is contained right? continue left
-                if (ival.high() > ptr->right_->max())
+                // or interval low is bigger than max of right branch.
+                if (!ptr->right_ || ival.low() > ptr->right_->max())
                     return overlap_find_all_i<Exclusive, IteratorT>(ptr->left_, ival, on_find);
 
                 if (!overlap_find_all_i<Exclusive, IteratorT>(ptr->left_, ival, on_find))
@@ -1254,10 +1237,7 @@ private:
             }
             if (ptr->right_ && ptr->right_->max() >= ival.low())
             {
-                if (!ptr->left_)
-                    return overlap_find_all_i<Exclusive, IteratorT>(ptr->right_, ival, on_find);
-
-                if (ival.high() > ptr->left_->max())
+                if (!ptr->left_ || ival.low() > ptr->right_->max())
                     return overlap_find_all_i<Exclusive, IteratorT>(ptr->right_, ival, on_find);
 
                 if (!overlap_find_all_i<Exclusive, IteratorT>(ptr->right_, ival, on_find))
@@ -1273,11 +1253,8 @@ private:
             if (ptr->left_ && ptr->left_->max() >= ival.low())
             {
                 // no right? can only continue left
-                if (!ptr->right_)
-                    return overlap_find_i<Exclusive>(ptr->left_, ival);
-
-                // upper bounds higher than what is contained right? continue left
-                if (ival.high() > ptr->right_->max())
+                // or upper bounds higher than what is contained right? continue left.
+                if (!ptr->right_ || ival.low() > ptr->right_->max())
                     return overlap_find_i<Exclusive>(ptr->left_, ival);
 
                 auto* res = overlap_find_i<Exclusive>(ptr->left_, ival);
@@ -1286,10 +1263,7 @@ private:
             }
             if (ptr->right_ && ptr->right_->max() >= ival.low())
             {
-                if (!ptr->left_)
-                    return overlap_find_i<Exclusive>(ptr->right_, ival);
-
-                if (ival.high() > ptr->left_->max())
+                if (!ptr->left_ || ival.low() > ptr->left_->max())
                     return overlap_find_i<Exclusive>(ptr->right_, ival);
 
                 auto* res = overlap_find_i<Exclusive>(ptr->right_, ival);
