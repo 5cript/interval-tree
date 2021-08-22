@@ -6,11 +6,9 @@
 //#include "example_drawings.hpp"
 
 // following headers expect to be included after gtest headers and interval_tree
-/*
 #include "interval_tests.hpp"
 #include "insert_tests.hpp"
 #include "erase_tests.hpp"
-*/
 #include "find_tests.hpp"
 #include "overlap_find_tests.hpp"
 #include "float_overlap_tests.hpp"
