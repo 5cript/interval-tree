@@ -1,7 +1,6 @@
 #pragma once
 
 #include "test_utility.hpp"
-#include "../draw.hpp"
 
 #include <algorithm>
 
@@ -56,8 +55,6 @@ TEST_F(FloatOverlapFindTests, FloatOverlapTest)
         },
         false
     );
-
-    lib_interval_tree::drawTree("here.png", tree);
 
     std::sort(std::begin(vecOverlapsA), std::end(vecOverlapsA));
     std::sort(std::begin(vecOverlapsB), std::end(vecOverlapsB));
