@@ -24,7 +24,7 @@ file(GLOB sources "*.cpp")
 # Add Executable
 add_executable(tree-tests ${sources})
 
-target_link_libraries(tree-tests gtest)
+target_link_libraries(tree-tests gtest gmock)
 
 # Options
 if(DRAW_EXAMPLES)
