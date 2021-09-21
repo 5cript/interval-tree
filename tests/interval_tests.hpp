@@ -1,7 +1,5 @@
 #pragma once
 
-#include <boost/preprocessor/comma.hpp>
-
 #include <limits>
 
 class IntervalTests
@@ -36,7 +34,7 @@ TEST_F(IntervalTests, FailBadBorders)
 {
     auto f = []()
     {
-        [[maybe_unused]] auto ival = types::interval_type{1 BOOST_PP_COMMA() 0};
+        [[maybe_unused]] auto ival = types::interval_type{1, 0};
     };
 
     EXPECT_DEATH(f(), "low <= high");
