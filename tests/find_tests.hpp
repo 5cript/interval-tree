@@ -32,6 +32,15 @@ TEST_F(FindTests, WillFindRoot)
     EXPECT_EQ(tree.find({0, 1}), std::begin(tree));
 }
 
+TEST_F(FindTests, WillFindRootOnConstTree)
+{
+    tree.insert({0, 1});
+    [](auto const& tree)
+    {
+        EXPECT_EQ(tree.find({0, 1}), std::begin(tree));
+    }(tree);
+}
+
 TEST_F(FindTests, WillFindInBiggerTree)
 {
     tree.insert({16, 21});
@@ -136,4 +145,24 @@ TEST_F(FindTests, CanFindAllElementsBackInStrictlyAscendingOverlappingIntervals)
     {
         ASSERT_NE(tree.find(ival), std::end(tree));
     }
+}
+
+TEST_F(FindTests, CanFindAllOnConstTree)
+{
+    const auto targetInterval = lib_interval_tree::make_safe_interval(16, 21);
+    tree.insert(targetInterval);
+    tree.insert({8, 9});
+    tree.insert({25, 30});
+    std::vector <decltype(tree)::interval_type> intervals;
+    auto findWithConstTree = [&intervals, &targetInterval](auto const& tree)
+    {
+        tree.find_all(targetInterval, [&intervals](auto const& iter) {
+            intervals.emplace_back(*iter);
+            return true;
+        });
+    };
+    findWithConstTree(tree);
+
+    ASSERT_EQ(intervals.size(), 1);
+    EXPECT_EQ(intervals[0], targetInterval);
 }
