@@ -37,6 +37,9 @@ namespace lib_interval_tree
          *  Constructs an interval. low MUST be smaller than high.
          */
 #ifndef INTERVAL_TREE_SAFE_INTERVALS
+#if __cplusplus >= 201703L
+        constexpr
+#endif
         interval(value_type low, value_type high)
             : low_{low}
             , high_{high}
@@ -44,6 +47,9 @@ namespace lib_interval_tree
             assert(low <= high);
         }
 #else
+#if __cplusplus >= 201703L
+        constexpr
+#endif
         interval(value_type low, value_type high)
             : low_{std::min(low, high)}
             , high_{std::max(low, high)}
@@ -173,6 +179,9 @@ namespace lib_interval_tree
      *  Creates a safe interval that puts the lower bound left automatically.
      */
     template <typename numerical_type, typename interval_kind_ = closed>
+#if __cplusplus >= 201703L
+    constexpr
+#endif
     interval <numerical_type, interval_kind_> make_safe_interval(numerical_type lhs, numerical_type rhs)
     {
         return interval <numerical_type, interval_kind_>{std::min(lhs, rhs), std::max(lhs, rhs)};
