@@ -630,6 +630,7 @@ private:
         using iterator = interval_tree_iterator <node_type>;
         using const_iterator = const_interval_tree_iterator <node_type>;
         using size_type = long long;
+        using this_type = interval_tree<interval_type>;
 
     public:
         friend const_interval_tree_iterator <node_type>;
@@ -863,14 +864,14 @@ private:
         {
             if (root_ == nullptr)
                 return;
-            find_all_i<iterator>(root_, ival, on_find, compare);
+            find_all_i<this_type, iterator>(this, root_, ival, on_find, compare);
         }
         template <typename FunctionT, typename CompareFunctionT>
         void find_all(interval_type const& ival, FunctionT const& on_find, CompareFunctionT const& compare) const
         {
             if (root_ == nullptr)
                 return;
-            find_all_i<const_iterator>(root_, ival, on_find, compare);
+            find_all_i<this_type, const_iterator>(this, root_, ival, on_find, compare);
         }
 
         template <typename FunctionT>
@@ -959,9 +960,9 @@ private:
             if (root_ == nullptr)
                 return;
             if (exclusive)
-                overlap_find_all_i<true, iterator>(root_, ival, on_find);
+                overlap_find_all_i<this_type, true, iterator>(this, root_, ival, on_find);
             else
-                overlap_find_all_i<false, iterator>(root_, ival, on_find);
+                overlap_find_all_i<this_type, false, iterator>(this, root_, ival, on_find);
         }
         template <typename FunctionT>
         void overlap_find_all(interval_type const& ival, FunctionT const& on_find, bool exclusive = false) const
@@ -969,9 +970,9 @@ private:
             if (root_ == nullptr)
                 return;
             if (exclusive)
-                overlap_find_all_i<true, const_iterator>(root_, ival, on_find);
+                overlap_find_all_i<this_type, true, const_iterator>(this, root_, ival, on_find);
             else
-                overlap_find_all_i<false, const_iterator>(root_, ival, on_find);
+                overlap_find_all_i<this_type, false, const_iterator>(this, root_, ival, on_find);
         }
 
         /**
@@ -1123,36 +1124,43 @@ private:
             return nullptr;
         };
 
-        template <typename IteratorT, typename FunctionT, typename ComparatorFunctionT>
-        bool find_all_i(node_type* ptr, interval_type const& ival, FunctionT const& on_find, ComparatorFunctionT const& compare)
+        template <typename ThisType, typename IteratorT, typename FunctionT, typename ComparatorFunctionT>
+        static bool find_all_i
+        (
+            typename std::conditional<std::is_same<IteratorT, iterator>::value, ThisType, ThisType const>::type* self,
+            node_type* ptr, 
+            interval_type const& ival, 
+            FunctionT const& on_find, 
+            ComparatorFunctionT const& compare
+        )
         {
             if (compare(ptr->interval(), ival))
             {
-                if (!on_find(IteratorT{ptr, this}))
+                if (!on_find(IteratorT{ptr, self}))
                     return false;
             }
             if (ptr->left_ && ival.high() <= ptr->left_->max())
             {
                 // no right? can only continue left
                 if (!ptr->right_ || ival.low() > ptr->right_->max())
-                    return find_all_i<IteratorT>(ptr->left_, ival, on_find, compare);
+                    return find_all_i<ThisType, IteratorT>(self, ptr->left_, ival, on_find, compare);
 
-                if (!find_all_i<IteratorT>(ptr->left_, ival, on_find, compare))
+                if (!find_all_i<ThisType, IteratorT>(self, ptr->left_, ival, on_find, compare))
                     return false;
             }
             if (ptr->right_ && ival.high() <= ptr->right_->max())
             {
                 if (!ptr->left_ || ival.low() > ptr->left_->max())
-                    return find_all_i<IteratorT>(ptr->right_, ival, on_find, compare);
+                    return find_all_i<ThisType, IteratorT>(self, ptr->right_, ival, on_find, compare);
 
-                if (!find_all_i<IteratorT>(ptr->right_, ival, on_find, compare))
+                if (!find_all_i<ThisType, IteratorT>(self, ptr->right_, ival, on_find, compare))
                     return false;
             }
             return true;
         }
 
         template <typename ComparatorFunctionT>
-        node_type* find_i(node_type* ptr, interval_type const& ival, ComparatorFunctionT const& compare)
+        node_type* find_i(node_type* ptr, interval_type const& ival, ComparatorFunctionT const& compare) const
         {
             if (compare(ptr->interval(), ival))
                 return ptr;
@@ -1162,7 +1170,7 @@ private:
 
         // excludes ptr
         template <typename ComparatorFunctionT>
-        node_type* find_i_ex(node_type* ptr, interval_type const& ival, ComparatorFunctionT const& compare)
+        node_type* find_i_ex(node_type* ptr, interval_type const& ival, ComparatorFunctionT const& compare) const
         {
             if (ptr->left_ && ival.high() <= ptr->left_->max())
             {
@@ -1187,7 +1195,7 @@ private:
         }
 
         template <bool Exclusive>
-        node_type* overlap_find_i(node_type* ptr, interval_type const& ival)
+        node_type* overlap_find_i(node_type* ptr, interval_type const& ival) const
         {
 #if __cplusplus >= 201703L
             if constexpr (Exclusive)
@@ -1207,8 +1215,14 @@ private:
             return overlap_find_i_ex<Exclusive>(ptr, ival);
         }
 
-        template <bool Exclusive, typename IteratorT, typename FunctionT>
-        bool overlap_find_all_i(node_type* ptr, interval_type const& ival, FunctionT const& on_find)
+        template <typename ThisType, bool Exclusive, typename IteratorT, typename FunctionT>
+        static bool overlap_find_all_i
+        (
+            typename std::conditional<std::is_same<IteratorT, iterator>::value, ThisType, ThisType const>::type* self,
+            node_type* ptr, 
+            interval_type const& ival, 
+            FunctionT const& on_find
+        )
         {
 #if __cplusplus >= 201703L
             if constexpr (Exclusive)
@@ -1218,7 +1232,7 @@ private:
             {
                 if (ptr->interval().overlaps_exclusive(ival))
                 {
-                    if (!on_find(IteratorT{ptr, this}))
+                    if (!on_find(IteratorT{ptr, self}))
                     {
                         return false;
                     }
@@ -1228,7 +1242,7 @@ private:
             {
                 if (ptr->interval().overlaps(ival))
                 {
-                    if (!on_find(IteratorT{ptr, this}))
+                    if (!on_find(IteratorT{ptr, self}))
                     {
                         return false;
                     }
@@ -1239,17 +1253,17 @@ private:
                 // no right? can only continue left
                 // or interval low is bigger than max of right branch.
                 if (!ptr->right_ || ival.low() > ptr->right_->max())
-                    return overlap_find_all_i<Exclusive, IteratorT>(ptr->left_, ival, on_find);
+                    return overlap_find_all_i<ThisType, Exclusive, IteratorT>(self, ptr->left_, ival, on_find);
 
-                if (!overlap_find_all_i<Exclusive, IteratorT>(ptr->left_, ival, on_find))
+                if (!overlap_find_all_i<ThisType, Exclusive, IteratorT>(self, ptr->left_, ival, on_find))
                     return false;
             }
             if (ptr->right_ && ptr->right_->max() >= ival.low())
             {
                 if (!ptr->left_ || ival.low() > ptr->right_->max())
-                    return overlap_find_all_i<Exclusive, IteratorT>(ptr->right_, ival, on_find);
+                    return overlap_find_all_i<ThisType, Exclusive, IteratorT>(self, ptr->right_, ival, on_find);
 
-                if (!overlap_find_all_i<Exclusive, IteratorT>(ptr->right_, ival, on_find))
+                if (!overlap_find_all_i<ThisType, Exclusive, IteratorT>(self, ptr->right_, ival, on_find))
                     return false;
             }
             return true;
@@ -1257,7 +1271,7 @@ private:
 
         // excludes ptr
         template <bool Exclusive>
-        node_type* overlap_find_i_ex(node_type* ptr, interval_type const& ival)
+        node_type* overlap_find_i_ex(node_type* ptr, interval_type const& ival) const
         {
             if (ptr->left_ && ptr->left_->max() >= ival.low())
             {
