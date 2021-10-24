@@ -67,7 +67,7 @@ Creates an interval where the borders are sorted so the lower border is the firs
       - [Example](#example-1)
     - [(const)iterator find_all(interval_type const& ival, OnFindFunctionT const& on_find, CompareFunctionT const& compare)](#constiterator-find_allinterval_type-const-ival-onfindfunctiont-const-on_find-comparefunctiont-const-compare)
     - [(const)iterator find_next_in_subtree(iterator from, interval_type const& ival)](#constiterator-find_next_in_subtreeiterator-from-interval_type-const-ival)
-    - [(const)iterator find_next(iterator from, interval_type const& ival, CompareFunctionT const& compare)](#constiterator-find_nextiterator-from-interval_type-const-ival-comparefunctiont-const-compare)
+    - [(const)iterator find_next_in_subtree(iterator from, interval_type const& ival, CompareFunctionT const& compare)](#constiterator-find_next_in_subtreeiterator-from-interval_type-const-ival-comparefunctiont-const-compare)
     - [(const)iterator overlap_find(interval_type const& ival, bool exclusive)](#constiterator-overlap_findinterval_type-const-ival-bool-exclusive)
     - [(const)iterator overlap_find_all(interval_type const& ival, OnFindFunctionT const& on_find, bool exclusive)](#constiterator-overlap_find_allinterval_type-const-ival-onfindfunctiont-const-on_find-bool-exclusive)
       - [Example](#example-2)
@@ -127,11 +127,11 @@ Finds the first interval in the interval tree that has an exact match.
 
 ---
 ### (const)iterator find(interval_type const& ival, CompareFunctionT const& compare)
-Finds the first interval in the interval tree that has the following statement evaluate to true: compare(ival, interval_in_tree);
+Finds the first interval in the interval tree that has the following statement evaluate to true: compare(interval_in_tree, ival);
 Allows for propper float comparisons.
 #### Parameters
 * `ival` The interval to find.
-* `compare` The compare function to compare intervals with.
+* `compare` The compare function to compare intervals with. Function is called like so: compare(interval_in_tree, ival).
 
 **Returns**: An iterator to the found element, or std::end(tree).
 
@@ -160,7 +160,7 @@ tree.find_all({3, 7}, [](auto iter) /* iter will be const_iterator if tree is co
 Find all intervals in the tree that the compare function returns true for.
 #### Parameters
 * `ival` The interval to find.
-* `compare` The compare function to compare intervals with.
+* `compare` The compare function to compare intervals with. Function is called like so: compare(interval_in_tree, ival).
 * `on_find` A function of type bool(iterator) that is called when an interval was found.
 Return true to continue, false to preemptively abort search.
 
@@ -177,13 +177,13 @@ You cannot find all matches this way, use find_all for that.
 **Returns**: An iterator to the found element, or std::end(tree).
 
 ---
-### (const)iterator find_next(iterator from, interval_type const& ival, CompareFunctionT const& compare)
+### (const)iterator find_next_in_subtree(iterator from, interval_type const& ival, CompareFunctionT const& compare)
 Finds the next exact match EXCLUDING from in the subtree originating from "from".
 You cannot find all matches this way, use find_all for that.
 #### Parameters
 * `from` The iterator to start from (including this iterator!)
 * `ival` The interval to find.
-* `compare` The compare function to compare intervals with.
+* `compare` The compare function to compare intervals with. Function is called like so: compare(interval_in_tree, ival).
 
 **Returns**: An iterator to the found element, or std::end(tree).
 
