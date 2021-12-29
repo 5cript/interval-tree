@@ -15,7 +15,6 @@ A C++ header only interval tree implementation, which takes a red black tree as 
 
 ## Example
 ```C++
-#define INTERVAL_TREE_SAFE_INTERVALS // makes sure that upper_bound > lower_bound (by swapping if neccessary), but is slower. Will become an assert if left out.
 // #include "draw.hpp" // to draw tree. this is not header only anymore.
 #include "interval_tree.hpp"
 
@@ -26,7 +25,7 @@ int main()
   // interval_tree <interval <int>>;
   interval_tree_t <int> tree;
 
-  tree.insert({16, 21});
+  tree.insert(make_safe_interval<int>(21, 16)); // make_safe_interval swaps low and high if not in right order.
   tree.insert({8, 9});
   tree.insert({25, 30});
   tree.insert({5, 8});
