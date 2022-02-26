@@ -1,0 +1,1 @@
+option(DRAW_EXAMPLES "Draws some examples in a subdirectory. run make_drawable.sh before this" OFF )

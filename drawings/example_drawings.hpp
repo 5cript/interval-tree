@@ -1,11 +1,10 @@
 #pragma once
-#ifdef INTERVAL_TREE_DO_DRAWINGS
 
-#include "../draw.hpp"
+#include <interval-tree/draw.hpp>
 
 #include <string>
 
-void drawDocExample()
+static void drawDocExample()
 {
     using namespace lib_interval_tree;
 
@@ -25,7 +24,7 @@ void drawDocExample()
     drawTree("drawings/doc_example.png", tree, false, false);
 }
 
-void drawFromTests1()
+static void drawFromTests1()
 {
     using namespace lib_interval_tree;
     using namespace std::string_literals;
@@ -68,10 +67,8 @@ void drawFromTests1()
     drawTree("drawings/from_tests_1_deoverlapped.png", tree, false, false);
 }
 
-void drawAll()
+static void drawAll()
 {
     drawDocExample();
     drawFromTests1();
 }
-
-#endif // INTERVAL_TREE_DO_DRAWINGS
