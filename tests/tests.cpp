@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
-#include "../interval_tree.hpp"
+#include <interval_tree/interval_tree.hpp>
 #include "typedefs.hpp"
 //#include "example_drawings.hpp"
 

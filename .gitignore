@@ -1,5 +1,5 @@
-obj/*
-bin/*
+obj
+bin
 *.depend
 *_build_log.html
 *.layout
@@ -10,11 +10,12 @@ main.hpp
 main.cpp
 *.png
 .vscode
+build
 
-tests/bin/*
-tests/build/*
-tests/obj/*
+tests/bin
+tests/build
+tests/obj
 tests/*.cbp
 tests/*.depend
 tests/*build_log.html
-tests/cairo-wrap/*
+tests/cairo-wrap

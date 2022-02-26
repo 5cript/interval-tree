@@ -24,14 +24,12 @@ file(GLOB sources "*.cpp")
 # Add Executable
 add_executable(tree-tests ${sources})
 
-target_link_libraries(tree-tests gtest gmock)
-
+target_link_libraries(tree-tests PRIVATE gtest gmock interval-tree)
 # Options
 if(DRAW_EXAMPLES)
 	target_compile_definitions(tree-tests PRIVATE -DINTERVAL_TREE_DO_DRAWINGS=1)	
 	find_library(LCAIRO_WRAP NAMES cairo_wrap PATHS "../../cairo-wrap/build" STATIC)	
-	target_link_libraries(tree-tests ${LCAIRO_WRAP} cairo)
-	target_include_directories(tree-tests PRIVATE .. ../..)
+	target_link_libraries(tree-tests PRIVATE ${LCAIRO_WRAP} cairo)
 endif()
 
 # Compiler Options

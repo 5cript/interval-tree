@@ -5,7 +5,6 @@
 
 #include <string>
 #include <memory>
-#include <cassert>
 #include <cstdio>
 #include <stdexcept>
 #include <iterator>
@@ -44,7 +43,8 @@ namespace lib_interval_tree
             : low_{low}
             , high_{high}
         {
-            assert(low <= high);
+            if (low > high)
+                throw std::invalid_argument("Low border is not lower or equal to high border.");
         }
 #else
 #if __cplusplus >= 201703L
@@ -1128,9 +1128,9 @@ private:
         static bool find_all_i
         (
             typename std::conditional<std::is_same<IteratorT, iterator>::value, ThisType, ThisType const>::type* self,
-            node_type* ptr, 
-            interval_type const& ival, 
-            FunctionT const& on_find, 
+            node_type* ptr,
+            interval_type const& ival,
+            FunctionT const& on_find,
             ComparatorFunctionT const& compare
         )
         {
@@ -1219,8 +1219,8 @@ private:
         static bool overlap_find_all_i
         (
             typename std::conditional<std::is_same<IteratorT, iterator>::value, ThisType, ThisType const>::type* self,
-            node_type* ptr, 
-            interval_type const& ival, 
+            node_type* ptr,
+            interval_type const& ival,
             FunctionT const& on_find
         )
         {

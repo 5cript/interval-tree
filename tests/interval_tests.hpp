@@ -37,7 +37,7 @@ TEST_F(IntervalTests, FailBadBorders)
         [[maybe_unused]] auto ival = types::interval_type{1, 0};
     };
 
-    EXPECT_DEATH(f(), "low <= high");
+    ASSERT_THROW(f(), std::invalid_argument);
 }
 
 TEST_F(IntervalTests, ShallCreateInterval)
