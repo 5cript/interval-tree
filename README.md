@@ -47,7 +47,9 @@ int main()
 
 ## Compile & Run Testing
 Having googletest (find here on github) installed / built is a requirement to run the tests.
-Navigate into the tests folder and build the source using the CMakeLists. You might have to adapt the linker line for gtest, if you built it yourself and didn't install it into your system.
+Create a build folder, navigate there, run cmake and build the tree-tests target.
+You might have to adapt the linker line for gtest, if you built it yourself and didn't install it into your system.
+If you want to generate the pretty drawings, install cairo, pull the submodule and pass DRAW_EXAMPLES=on to the cmake command line to generate a drawings/make_drawings executeable.
 
 ## Free Functions
 ### interval<NumericT, Kind> make_safe_interval(NumericT border1, NumericT border2)
