@@ -35,7 +35,7 @@ if(DRAW_EXAMPLES)
 endif()
 
 # Compiler Options
-set(DEBUG_OPTIONS -fexecptions -g -Wall -pedantic-errors -pedantic)
+set(DEBUG_OPTIONS -fexceptions -g -Wall -pedantic-errors -pedantic)
 target_compile_options(tree-tests PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_OPTIONS}>")
 
 set(RELEASE_OPTIONS -fexceptions -O3 -Wall -pedantic)
