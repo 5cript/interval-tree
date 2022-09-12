@@ -15,8 +15,8 @@ A C++ header only interval tree implementation, which takes a red black tree as 
 
 ## Example
 ```C++
-// #include "draw.hpp" // to draw tree. this is not header only anymore.
-#include "interval_tree.hpp"
+// #include <interval-tree/draw.hpp> // to draw tree. this is not header only anymore.
+#include <interval-tree/interval_tree.hpp>
 
 int main()
 {
