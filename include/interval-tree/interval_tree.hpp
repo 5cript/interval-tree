@@ -56,6 +56,7 @@ namespace lib_interval_tree
         {
         }
 #endif
+        virtual ~interval() = default;
 
         /**
          *  Returns if both intervals equal.
