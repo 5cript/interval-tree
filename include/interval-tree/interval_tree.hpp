@@ -702,13 +702,15 @@ private:
             other.size_ = 0;
             return *this;
         }
+
         /**
          *  Removes all from this tree.
          */
-        void clear()
+        void clear() noexcept
         {
-            for (auto i = std::begin(*this); i != std::end(*this);)
-                i = erase(i);
+            clear_subtree(root_);
+            root_ = nullptr;
+            size_ = 0;
         }
 
         /**
@@ -1144,19 +1146,29 @@ private:
         }
 
     private:
-        node_type* copyTreeImpl(node_type* root, node_type* parent)
+        node_type* copy_tree_impl(node_type* root, node_type* parent)
         {
             if (root)
             {
                 auto* cpy = new node_type(parent, root->interval());
                 cpy->color_ = root->color_;
                 cpy->max_ = root->max_;
-                cpy->left_ = copyTreeImpl(root->left_, cpy);
-                cpy->right_ = copyTreeImpl(root->right_, cpy);
+                cpy->left_ = copy_tree_impl(root->left_, cpy);
+                cpy->right_ = copy_tree_impl(root->right_, cpy);
                 return cpy;
             }
             return nullptr;
         };
+
+        void clear_subtree(node_type* node)
+        {
+            if (node)
+            {
+                clear_subtree(node->left_);
+                clear_subtree(node->right_);
+                delete node;
+            }
+        }
 
         template <typename ThisType, typename IteratorT, typename FunctionT, typename ComparatorFunctionT>
         static bool find_all_i
