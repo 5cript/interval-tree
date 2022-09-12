@@ -171,7 +171,7 @@ namespace lib_interval_tree
             return {std::min(low_, other.low_), std::max(high_, other.high_)};
         }
 
-    private:
+    protected:
         value_type low_;
         value_type high_;
     };
