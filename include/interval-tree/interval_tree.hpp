@@ -350,7 +350,9 @@ private:
 
     public:
         constexpr basic_interval_tree_iterator(basic_interval_tree_iterator const&) = default;
+        constexpr basic_interval_tree_iterator(basic_interval_tree_iterator&& other) noexcept = default;
         basic_interval_tree_iterator& operator=(basic_interval_tree_iterator const&) = default;
+        basic_interval_tree_iterator& operator=(basic_interval_tree_iterator&& other) noexcept = default;
 
         bool operator!=(basic_interval_tree_iterator const& other) const
         {
@@ -412,6 +414,12 @@ private:
         friend tree_type;
 
     public:
+        ~const_interval_tree_iterator() = default;
+        constexpr const_interval_tree_iterator(const_interval_tree_iterator const&) = default;
+        constexpr const_interval_tree_iterator(const_interval_tree_iterator&&) noexcept = default;
+        const_interval_tree_iterator& operator=(const_interval_tree_iterator const&) = default;
+        const_interval_tree_iterator& operator=(const_interval_tree_iterator&&) noexcept = default;
+
         const_interval_tree_iterator& operator++()
         {
             if (!node_)
@@ -524,6 +532,12 @@ private:
         friend tree_type;
 
     public:
+        ~interval_tree_iterator() = default;
+        constexpr interval_tree_iterator(interval_tree_iterator const&) = default;
+        constexpr interval_tree_iterator(interval_tree_iterator&&) noexcept = default;
+        interval_tree_iterator& operator=(interval_tree_iterator const&) = default;
+        interval_tree_iterator& operator=(interval_tree_iterator&&) noexcept = default;
+
         interval_tree_iterator& operator++()
         {
             if (!node_)
@@ -637,6 +651,7 @@ private:
         friend const_interval_tree_iterator <node_type>;
         friend interval_tree_iterator <node_type>;
 
+    public:
         interval_tree()
             : root_{nullptr}
             , size_{0}
@@ -655,20 +670,38 @@ private:
             operator=(other);
         }
 
-    public:
+        interval_tree(interval_tree&& other) noexcept
+            : root_{other.root_}
+            , size_{other.size_}
+        {
+            other.root_ = nullptr;
+            other.size_ = 0;
+        }
+
         interval_tree& operator=(interval_tree const& other)
         {
             if (!empty())
                 clear();
 
             if (other.root_ != nullptr)
-                root_ = copyTreeImpl(other.root_, nullptr);
+                root_ = copy_tree_impl(other.root_, nullptr);
 
             size_ = other.size_;
 
             return *this;
         }
 
+        interval_tree& operator=(interval_tree&& other) noexcept
+        {
+            if (!empty())
+                clear();
+
+            root_ = other.root_;
+            size_ = other.size_;
+            other.root_ = nullptr;
+            other.size_ = 0;
+            return *this;
+        }
         /**
          *  Removes all from this tree.
          */
