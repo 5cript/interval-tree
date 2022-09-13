@@ -767,17 +767,18 @@ private:
          *
          *  @param ival The interval
          *  @param exclusive Exclude borders.
+         *  @param mergeSetOverlapping If the result of interval::join is a collection of intervals, shall each be inserted with more overlap searches?
          */
-        iterator insert_overlap(interval_type const& ival, bool exclusive = false)
+        iterator insert_overlap(interval_type const& ival, bool exclusive = false, bool mergeSetOverlapping = false)
         {
             auto iter = overlap_find(ival, exclusive);
             if (iter == end())
                 return insert(ival);
             else
             {
-                auto merged = iter->interval().join(ival);
-                erase(iter);
-                return insert(merged);
+                auto mergeSet = iter->interval().join(ival);
+                erase(iter);                
+                return insert_merge_set(mergeSet, mergeSetOverlapping);
             }
         }
 
@@ -1159,6 +1160,40 @@ private:
             }
             return nullptr;
         };
+
+        template <typename MergeSet>
+        iterator insert_merge_set(MergeSet const& merge_set, bool mergeSetOverlapping) 
+        {
+            if (mergeSetOverlapping) 
+            {
+                for (auto iter = merge_set.begin(), end = merge_set.end(); iter != end;)
+                {
+                    auto next = iter;
+                    if (++next == end)
+                        return insert_overlap(*iter);
+                    else
+                        insert_overlap(*iter);
+                    iter = std::move(next);
+                }
+                return end();
+            }
+            else 
+            {
+                for (auto iter = merge_set.begin(), end = merge_set.end(); iter != end;)
+                {
+                    auto next = iter;
+                    if (++next == end)
+                        return insert(*iter);
+                    else
+                        insert(*iter);
+                    iter = std::move(next);
+                }
+                return end();
+            }
+        }
+        iterator insert_merge_set(interval_type const& interval, bool) {
+            return insert(interval);
+        }
 
         void clear_subtree(node_type* node)
         {

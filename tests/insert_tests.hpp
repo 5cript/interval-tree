@@ -1,10 +1,13 @@
 #pragma once
 
 #include "test_utility.hpp"
+#include "multi_join_interval.hpp"
 
 #include <ctime>
 #include <random>
 #include <cmath>
+
+
 
 class InsertTests
     : public ::testing::Test
@@ -79,4 +82,19 @@ TEST_F(InsertTests, RBPropertyInsertTest)
         tree.insert(lib_interval_tree::make_safe_interval(distSmall(gen), distSmall(gen)));
 
     testRedBlackPropertyViolation(tree);
+}
+
+TEST_F(InsertTests, IntervalsMayReturnMultipleIntervalsForJoin)
+{
+    using interval_type = multi_join_interval <int>;
+    using tree_type = lib_interval_tree::interval_tree<interval_type>;
+
+    auto multiJoinTree = tree_type{};
+
+    multiJoinTree.insert({0, 1});
+    multiJoinTree.insert_overlap({0, 2});
+
+    EXPECT_EQ(multiJoinTree.size(), 2);
+    EXPECT_EQ(*multiJoinTree.begin(), (interval_type{0, 1})) << multiJoinTree.begin()->low() << multiJoinTree.begin()->high();
+    EXPECT_EQ(*++multiJoinTree.begin(), (interval_type{1, 2}));
 }
