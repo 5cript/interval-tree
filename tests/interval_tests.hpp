@@ -34,7 +34,10 @@ TEST_F(IntervalTests, FailBadBorders)
 {
     auto f = []()
     {
-        [[maybe_unused]] auto ival = types::interval_type{1, 0};
+#if __cplusplus >= 201703L
+        [[maybe_unused]] 
+#endif
+        auto ival = types::interval_type{1, 0};
     };
 
     ASSERT_THROW(f(), std::invalid_argument);
