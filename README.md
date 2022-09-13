@@ -99,6 +99,7 @@ Otherwise merge the interval with the one being overlapped.
 #### Parameters
 * `ival` An interval
 * `exclusive` Exclude borders from overlap check. Defaults to false.
+* `mergeSetOverlapping` If the result of interval::join is a collection of intervals, shall each be inserted with more overlap searches? Defaults to false
 
 **Returns**: An iterator to the inserted element.
 
