@@ -200,7 +200,7 @@ Finds the first interval in the interval tree that overlaps the given interval.
 
 ---
 ### (const)iterator overlap_find_all(interval_type const& ival, OnFindFunctionT const& on_find, bool exclusive)
-Finds the first interval in the interval tree that overlaps the given interval.
+Finds all intervals in the interval tree that overlaps the given interval.
 #### Parameters
 * `ival` The interval to find an overlap for.
 * `on_find` A function of type bool(iterator) that is called when an interval was found.
