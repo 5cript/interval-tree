@@ -14,9 +14,9 @@ namespace lib_interval_tree
     template <typename node_type, typename owner_type>
     class basic_interval_tree_iterator;
 
-    template <typename node_type>
+    template <typename node_type, bool reverse>
     class const_interval_tree_iterator;
 
-    template <typename node_type>
+    template <typename node_type, bool reverse>
     class interval_tree_iterator;
 }

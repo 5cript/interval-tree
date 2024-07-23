@@ -11,6 +11,7 @@
 #include "find_tests.hpp"
 #include "overlap_find_tests.hpp"
 #include "float_overlap_tests.hpp"
+#include "iteration_tests.hpp"
 
 int main(int argc, char** argv)
 {

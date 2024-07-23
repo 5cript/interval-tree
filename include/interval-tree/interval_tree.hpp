@@ -200,8 +200,10 @@ namespace lib_interval_tree
 
     public:
         friend lib_interval_tree::interval_tree <interval_type>;
-        friend lib_interval_tree::const_interval_tree_iterator <node <numerical_type, interval_type> >;
-        friend lib_interval_tree::interval_tree_iterator <node <numerical_type, interval_type> >;
+        friend lib_interval_tree::const_interval_tree_iterator <node <numerical_type, interval_type>, true>;
+        friend lib_interval_tree::const_interval_tree_iterator <node <numerical_type, interval_type>, false>;
+        friend lib_interval_tree::interval_tree_iterator <node <numerical_type, interval_type>, true>;
+        friend lib_interval_tree::interval_tree_iterator <node <numerical_type, interval_type>, false>;
 
     public:
         node(node* parent, interval_type interval)
@@ -404,7 +406,12 @@ private:
         owner_type owner_;
     };
 //############################################################################################################
-    template <typename node_type>
+    template <typename T>
+    inline void increment(T& iter);
+    template <typename T>
+    inline void increment_reverse(T& iter);
+//############################################################################################################
+    template <typename node_type, bool reverse>
     class const_interval_tree_iterator
         : public basic_interval_tree_iterator <node_type,
                                                interval_tree <typename node_type::interval_type> const*>
@@ -425,37 +432,19 @@ private:
         const_interval_tree_iterator& operator=(const_interval_tree_iterator const&) = default;
         const_interval_tree_iterator& operator=(const_interval_tree_iterator&&) noexcept = default;
 
+        friend void increment<const_interval_tree_iterator<node_type, reverse>>(const_interval_tree_iterator<node_type, reverse>& iter);
+        friend void increment_reverse<const_interval_tree_iterator<node_type, reverse>>(const_interval_tree_iterator<node_type, reverse>& iter);
+
         const_interval_tree_iterator& operator++()
         {
-            if (!node_)
-            {
-                node_ = owner_->root_;
-
-                if (!node_)
-                    return *this;
-
-                while(node_->left_)
-                    node_ = node_->left_;
-            }
-
-            if (node_->right_)
-            {
-                node_ = node_->right_;
-
-                while (node_->left_)
-                    node_ = node_->left_;
-            }
+#if __cplusplus >= 201703L
+            if constexpr (reverse)
+#else
+            if (reverse)
+#endif
+                increment_reverse(*this);
             else
-            {
-                auto* parent = node_->parent_;
-                while (parent != nullptr && node_ == parent->right_)
-                {
-                    node_ = parent;
-                    parent = parent->parent_;
-                }
-                node_ = parent;
-            }
-
+                increment(*this);
             return *this;
         }
 
@@ -525,7 +514,7 @@ private:
         }
     };
 //############################################################################################################
-    template <typename node_type>
+    template <typename node_type, bool reverse = false>
     class interval_tree_iterator
         : public basic_interval_tree_iterator <node_type,
                                                interval_tree <typename node_type::interval_type>*>
@@ -546,37 +535,19 @@ private:
         interval_tree_iterator& operator=(interval_tree_iterator const&) = default;
         interval_tree_iterator& operator=(interval_tree_iterator&&) noexcept = default;
 
+        friend void increment<interval_tree_iterator<node_type, reverse>>(interval_tree_iterator<node_type, reverse>& iter);
+        friend void increment_reverse<interval_tree_iterator<node_type, reverse>>(interval_tree_iterator<node_type, reverse>& iter);
+
         interval_tree_iterator& operator++()
         {
-            if (!node_)
-            {
-                node_ = owner_->root_;
-
-                if (!node_)
-                    return *this;
-
-                while(node_->left_)
-                    node_ = node_->left_;
-            }
-
-            if (node_->right_)
-            {
-                node_ = node_->right_;
-
-                while (node_->left_)
-                    node_ = node_->left_;
-            }
+#if __cplusplus >= 201703L
+            if constexpr (reverse)
+#else
+            if (reverse)
+#endif
+                increment_reverse(*this);
             else
-            {
-                auto* parent = node_->parent_;
-                while (parent != nullptr && node_ == parent->right_)
-                {
-                    node_ = parent;
-                    parent = parent->parent_;
-                }
-                node_ = parent;
-            }
-
+                increment(*this);
             return *this;
         }
 
@@ -646,6 +617,71 @@ private:
         }
     };
 //############################################################################################################
+    template <typename T>
+    inline void increment(T& iter)
+    {
+        if (!iter.node_)
+        {
+            iter.node_ = iter.owner_->root_;
+
+            if (!iter.node_)
+                return;
+
+            while(iter.node_->left_)
+                iter.node_ = iter.node_->left_;
+        }
+
+        if (iter.node_->right_)
+        {
+            iter.node_ = iter.node_->right_;
+
+            while (iter.node_->left_)
+                iter.node_ = iter.node_->left_;
+        }
+        else
+        {
+            auto* parent = iter.node_->parent_;
+            while (parent != nullptr && iter.node_ == parent->right_)
+            {
+                iter.node_ = parent;
+                parent = parent->parent_;
+            }
+            iter.node_ = parent;
+        }
+    }
+    template <typename T>
+    inline void increment_reverse(T& iter)
+    {
+        if (!iter.node_)
+        {
+            iter.node_ = iter.owner_->root_;
+
+            if (!iter.node_)
+                return;
+
+            while(iter.node_->right_)
+                iter.node_ = iter.node_->right_;
+        }
+
+        if (iter.node_->left_)
+        {
+            iter.node_ = iter.node_->left_;
+
+            while (iter.node_->right_)
+                iter.node_ = iter.node_->right_;
+        }
+        else
+        {
+            auto* parent = iter.node_->parent_;
+            while (parent != nullptr && iter.node_ == parent->left_)
+            {
+                iter.node_ = parent;
+                parent = parent->parent_;
+            }
+            iter.node_ = parent;
+        }
+    }
+//############################################################################################################
     template <typename IntervalT = interval <int, closed>>
     class interval_tree
     {
@@ -653,14 +689,18 @@ private:
         using interval_type = IntervalT;
         using value_type = typename interval_type::value_type;
         using node_type = node <value_type, interval_type>;
-        using iterator = interval_tree_iterator <node_type>;
-        using const_iterator = const_interval_tree_iterator <node_type>;
+        using iterator = interval_tree_iterator <node_type, false>;
+        using const_iterator = const_interval_tree_iterator <node_type, false>;
+        using reverse_iterator = interval_tree_iterator <node_type, true>;
+        using const_reverse_iterator = const_interval_tree_iterator <node_type, true>;
         using size_type = long long;
         using this_type = interval_tree<interval_type>;
 
     public:
-        friend const_interval_tree_iterator <node_type>;
-        friend interval_tree_iterator <node_type>;
+        friend const_interval_tree_iterator <node_type, true>;
+        friend const_interval_tree_iterator <node_type, false>;
+        friend interval_tree_iterator <node_type, true>;
+        friend interval_tree_iterator <node_type, false>;
 
     public:
         interval_tree()
@@ -1124,6 +1164,23 @@ private:
             return {nullptr, this};
         }
 
+        reverse_iterator rbegin()
+        {
+            if (!root_)
+                return {nullptr, this};
+
+            auto* iter = root_;
+
+            while (iter->right_)
+                iter = iter->right_;
+
+            return{iter, this};
+        }
+        reverse_iterator rend()
+        {
+            return {nullptr, this};
+        }
+
         const_iterator cbegin() const
         {
             if (!root_)
@@ -1147,6 +1204,31 @@ private:
         const_iterator end() const
         {
             return cend();
+        }
+
+        const_reverse_iterator crbegin() const
+        {
+            if (!root_)
+                return {nullptr, this};
+
+            auto* iter = root_;
+
+            while (iter->right_)
+                iter = iter->right_;
+
+            return const_reverse_iterator{iter, this};
+        }
+        const_reverse_iterator crend() const
+        {
+            return const_reverse_iterator{nullptr, this};
+        }
+        const_reverse_iterator rbegin() const
+        {
+            return crbegin();
+        }
+        const_reverse_iterator rend() const
+        {
+            return crend();
         }
 
         /**
