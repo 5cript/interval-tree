@@ -84,10 +84,10 @@ Creates an interval where the borders are sorted so the lower border is the firs
     - [iterator end()](#iterator-end)
     - [iterator cbegin()](#iterator-cbegin)
     - [iterator cend()](#iterator-cend)
-    - [iterator rbegin()](#iterator-rbegin)
-    - [iterator rend()](#iterator-rend)
-    - [iterator crbegin()](#iterator-crbegin)
-    - [iterator crend()](#iterator-crend)
+    - [reverse_iterator rbegin()](#iterator-rbegin)
+    - [reverse_iterator rend()](#iterator-rend)
+    - [reverse_iterator crbegin()](#iterator-crbegin)
+    - [reverse_iterator crend()](#iterator-crend)
 
 ### iterator insert(interval_type const& ival)
 Adds an interval into the tree. 
@@ -291,31 +291,28 @@ Returns a past the end const_iterator.
 
 ---
 
----
-### iterator rbegin()
+### reverse_iterator rbegin()
 Returns the iterator of the interval with the highest lower_bound.
 
 **Returns**: rbegin iterator.
 
 ---
-### iterator rend()
+### reverse_iterator rend()
 Returns a past the end iterator in reverse.
 
 **Returns**: past the end iterator.
 
 ---
-### iterator crbegin()
+### reverse_iterator crbegin()
 Returns the const_iterator of the interval with the highest lower_bound.
 
 **Returns**: begin iterator.
 
 ---
-### iterator crend()
+### reverse_iterator crend()
 Returns a past the end const_iterator in reverse.
 
 **Returns**: past the end const_iterator.
-
----
 
 ## Members of Interval
 ___You can implement your own interval if you provide all the same functions.___
