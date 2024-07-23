@@ -218,9 +218,9 @@ namespace lib_interval_tree
         {
         }
 
-        interval_type interval() const
+        interval_type const* interval() const
         {
-            return interval_;
+            return &interval_;
         }
 
         value_type max() const
@@ -382,7 +382,12 @@ private:
 
         typename tree_type::interval_type interval() const
         {
-            return node_->interval();
+            return *node_->interval();
+        }
+
+        node_ptr_t node() const
+        {
+            return node_;
         }
 
         virtual ~basic_interval_tree_iterator() = default;
@@ -464,7 +469,7 @@ private:
         typename value_type::interval_type operator*() const
         {
             if (node_)
-                return node_->interval();
+                return *node_->interval();
             else
                 throw std::out_of_range("dereferencing interval_tree_iterator out of bounds");
         }
@@ -505,9 +510,12 @@ private:
                 throw std::out_of_range("interval_tree_iterator out of bounds");
         }
 
-        value_type const* operator->() const
+        typename value_type::interval_type* operator->() const
         {
-            return node_;
+            if (node_)
+                return node_->interval();
+            else
+                throw std::out_of_range("dereferencing interval_tree_iterator out of bounds");
         }
 
     private:
@@ -618,14 +626,17 @@ private:
         typename value_type::interval_type operator*() const
         {
             if (node_)
-                return node_->interval();
+                return *node_->interval();
             else
                 throw std::out_of_range("interval_tree_iterator out of bounds");
         }
 
-        value_type* operator->()
+        typename value_type::interval_type const* operator->() const
         {
-            return node_;
+            if (node_)
+                return node_->interval();
+            else
+                throw std::out_of_range("dereferencing interval_tree_iterator out of bounds");
         }
 
     private:
@@ -776,8 +787,8 @@ private:
                 return insert(ival);
             else
             {
-                auto mergeSet = iter->interval().join(ival);
-                erase(iter);                
+                auto mergeSet = iter.interval().join(ival);
+                erase(iter);
                 return insert_merge_set(mergeSet, mergeSetOverlapping);
             }
         }
@@ -1061,7 +1072,7 @@ private:
         {
             if (empty())
                 return {};
-            auto min = std::begin(*this)->interval().low();
+            auto min = std::begin(*this)->interval()->low();
             auto max = root_->max_;
             return punch({min, max});
         }
@@ -1078,20 +1089,20 @@ private:
 
             interval_tree result;
             auto i = std::begin(*this);
-            if (ival.low() < i->interval().low())
-                result.insert({ival.low(), i->interval().low()});
+            if (ival.low() < i->interval()->low())
+                result.insert({ival.low(), i->interval()->low()});
 
             for (auto e = end(); i != e; ++i)
             {
                 auto next = i; ++next;
                 if (next != e)
-                    result.insert({i->interval().high(), next->interval().low()});
+                    result.insert({i->interval()->high(), next->interval()->low()});
                 else
                     break;
             }
 
-            if (i != end() && i->interval().high() < ival.high())
-                result.insert({i->interval().high(), ival.high()});
+            if (i != end() && i->interval()->high() < ival.high())
+                result.insert({i->interval()->high(), ival.high()});
 
             return result;
         }
@@ -1162,9 +1173,9 @@ private:
         };
 
         template <typename MergeSet>
-        iterator insert_merge_set(MergeSet const& merge_set, bool mergeSetOverlapping) 
+        iterator insert_merge_set(MergeSet const& merge_set, bool mergeSetOverlapping)
         {
-            if (mergeSetOverlapping) 
+            if (mergeSetOverlapping)
             {
                 for (auto iter = merge_set.begin(), end = merge_set.end(); iter != end;)
                 {
@@ -1177,7 +1188,7 @@ private:
                 }
                 return end();
             }
-            else 
+            else
             {
                 for (auto iter = merge_set.begin(), end = merge_set.end(); iter != end;)
                 {
@@ -1215,7 +1226,7 @@ private:
             ComparatorFunctionT const& compare
         )
         {
-            if (compare(ptr->interval(), ival))
+            if (compare(*ptr->interval(), ival))
             {
                 if (!on_find(IteratorT{ptr, self}))
                     return false;
@@ -1243,7 +1254,7 @@ private:
         template <typename ComparatorFunctionT>
         node_type* find_i(node_type* ptr, interval_type const& ival, ComparatorFunctionT const& compare) const
         {
-            if (compare(ptr->interval(), ival))
+            if (compare(*ptr->interval(), ival))
                 return ptr;
             else
                 return find_i_ex(ptr, ival, compare);
@@ -1284,12 +1295,12 @@ private:
             if (Exclusive)
 #endif
             {
-                if (ptr->interval().overlaps_exclusive(ival))
+                if (ptr->interval()->overlaps_exclusive(ival))
                     return ptr;
             }
             else
             {
-                if (ptr->interval().overlaps(ival))
+                if (ptr->interval()->overlaps(ival))
                     return ptr;
             }
 
@@ -1311,7 +1322,7 @@ private:
             if (Exclusive)
 #endif
             {
-                if (ptr->interval().overlaps_exclusive(ival))
+                if (ptr->interval()->overlaps_exclusive(ival))
                 {
                     if (!on_find(IteratorT{ptr, self}))
                     {
@@ -1321,7 +1332,7 @@ private:
             }
             else
             {
-                if (ptr->interval().overlaps(ival))
+                if (ptr->interval()->overlaps(ival))
                 {
                     if (!on_find(IteratorT{ptr, self}))
                     {
