@@ -89,15 +89,15 @@ void testMaxProperty(TreeT const& tree)
 {
     for (auto i = std::begin(tree); i != std::end(tree); ++i)
     {
-        if (i->left())
+        if (i.node()->left())
         {
-            EXPECT_LE(i->left()->max(), i->max());
+            EXPECT_LE(i.node()->left()->max(), i.node()->max());
         }
-        if (i->right())
+        if (i.node()->right())
         {
-            EXPECT_LE(i->right()->max(), i->max());
+            EXPECT_LE(i.node()->right()->max(), i.node()->max());
         }
-        EXPECT_GE(i->max(), i->interval().high());
+        EXPECT_GE(i.node()->max(), i.interval().high());
     }
 }
 
@@ -108,7 +108,7 @@ void testTreeHeightHealth(TreeT const& tree)
 
     auto maxHeight{0};
     for (auto i = std::begin(tree); i != std::end(tree); ++i)
-        maxHeight = std::max(maxHeight, i->height());
+        maxHeight = std::max(maxHeight, i.node()->height());
 
     EXPECT_LE(maxHeight, 2 * std::log2(treeSize + 1));
 }

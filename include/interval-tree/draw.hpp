@@ -35,7 +35,7 @@ namespace lib_interval_tree
         template <typename... List>
         std::string iterCaption(typename lib_interval_tree::interval_tree <List...>::const_iterator iter)
         {
-            auto ival = iter->interval();
+            auto ival = *iter.node()->interval();
             std::stringstream sstr;
             sstr << '[' << ival.low() << ',' << ival.high() << ']';
             return sstr.str();
@@ -172,7 +172,7 @@ namespace lib_interval_tree
             circleY,
             circleRadius
         };
-        switch (iter->color())
+        switch (iter.node()->color())
         {
         case (rb_color::red):
             circle.draw(blackPen, Cairo::Colors::Red);
@@ -190,7 +190,7 @@ namespace lib_interval_tree
 
         caption.move(circleX - actualCaptionBounds.getWidth() / 2., circleY - actualCaptionBounds.getHeight() / 2. - maxBounds.getHeight());
 
-        if (iter->color() != rb_color::black)
+        if (iter.node()->color() != rb_color::black)
             caption.draw(iterCaptionPen);
         else
             caption.draw(Cairo::Colors::White);
@@ -198,7 +198,7 @@ namespace lib_interval_tree
         max.move(circleX - maxBounds.getWidth() / 2., circleY - maxBounds.getHeight() / 2. + 10.);
         //ptr.move(circleX - ptrBounds.getWidth() / 2., circleY - ptrBounds.getHeight() / 2. + 10. + maxBounds.getHeight() + margin);
 
-        if (iter->color() != rb_color::red)
+        if (iter.node()->color() != rb_color::red)
             max.draw(ptrPen);
         else
             max.draw(Cairo::Colors::Yellow);
@@ -255,10 +255,10 @@ namespace lib_interval_tree
         {
             int y = pY;
             int x = pX;
-            if (!iter->is_root())
+            if (!iter.node()->is_root())
             {
                 ++y;
-                if (iter->is_right())
+                if (iter.node()->is_right())
                     x = x + subtreeSize(iter.left()) + 1;
                 else // is_left
                     x = x - subtreeSize(iter.right()) - 1;
