@@ -1,0 +1,58 @@
+name: Build & Test
+
+on:
+  push:
+    branches:
+      - 'feat/*'
+      - 'fix/*'
+  pull_request:
+    branches: ["master"]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  compiler_matrix:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        cxx_standard: [14, 17, 20]
+        compiler:
+          - pkg: g++-14
+            cxx: g++-14
+          - pkg: g++-13
+            cxx: g++-13
+          - pkg: g++-12
+            cxx: g++-12
+          - pkg: g++-11
+            cxx: g++-11
+          - pkg: clang-18
+            cxx: clang++-18
+          - pkg: clang-17
+            cxx: clang++-17
+          - pkg: clang-16
+            cxx: clang++-16
+
+    steps:
+      - name: Add universe repository
+        run: sudo add-apt-repository universe
+
+      - name: Update apt
+        run: sudo apt-get update
+
+      - name: Do install
+        run: sudo apt-get install -y ${{ matrix.compiler.pkg }} cmake ninja-build libgtest-dev libgmock-dev
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: CMake Configure
+        run: cmake -B ${{github.workspace}}/build -G"Ninja" -DINT_TREE_ENABLE_TESTS=on -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_CXX_STANDARD=${{ matrix.cxx_standard }}
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build
+
+      - name: Test
+        working-directory: ${{github.workspace}}/build
+        run: ./tests/tree-tests
