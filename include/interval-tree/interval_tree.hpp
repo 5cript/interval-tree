@@ -205,6 +205,11 @@ namespace lib_interval_tree
         friend lib_interval_tree::interval_tree_iterator <node <numerical_type, interval_type>, true>;
         friend lib_interval_tree::interval_tree_iterator <node <numerical_type, interval_type>, false>;
 
+        template <typename T>
+        friend void increment(T& iter);
+        template <typename T>
+        friend void increment_reverse(T& iter);
+
     public:
         node(node* parent, interval_type interval)
             : interval_{std::move(interval)}
@@ -432,8 +437,10 @@ private:
         const_interval_tree_iterator& operator=(const_interval_tree_iterator const&) = default;
         const_interval_tree_iterator& operator=(const_interval_tree_iterator&&) noexcept = default;
 
-        friend void increment<const_interval_tree_iterator<node_type, reverse>>(const_interval_tree_iterator<node_type, reverse>& iter);
-        friend void increment_reverse<const_interval_tree_iterator<node_type, reverse>>(const_interval_tree_iterator<node_type, reverse>& iter);
+        template <typename T>
+        friend void increment(T& iter);
+        template <typename T>
+        friend void increment_reverse(T& iter);
 
         const_interval_tree_iterator& operator++()
         {
@@ -535,8 +542,10 @@ private:
         interval_tree_iterator& operator=(interval_tree_iterator const&) = default;
         interval_tree_iterator& operator=(interval_tree_iterator&&) noexcept = default;
 
-        friend void increment<interval_tree_iterator<node_type, reverse>>(interval_tree_iterator<node_type, reverse>& iter);
-        friend void increment_reverse<interval_tree_iterator<node_type, reverse>>(interval_tree_iterator<node_type, reverse>& iter);
+        template <typename T>
+        friend void increment(T& iter);
+        template <typename T>
+        friend void increment_reverse(T& iter);
 
         interval_tree_iterator& operator++()
         {
@@ -701,6 +710,11 @@ private:
         friend const_interval_tree_iterator <node_type, false>;
         friend interval_tree_iterator <node_type, true>;
         friend interval_tree_iterator <node_type, false>;
+
+        template <typename T>
+        friend void increment(T& iter);
+        template <typename T>
+        friend void increment_reverse(T& iter);
 
     public:
         interval_tree()
