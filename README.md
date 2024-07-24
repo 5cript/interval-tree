@@ -84,10 +84,10 @@ Creates an interval where the borders are sorted so the lower border is the firs
     - [iterator end()](#iterator-end)
     - [iterator cbegin()](#iterator-cbegin)
     - [iterator cend()](#iterator-cend)
-    - [reverse_iterator rbegin()](#iterator-rbegin)
-    - [reverse_iterator rend()](#iterator-rend)
-    - [reverse_iterator crbegin()](#iterator-crbegin)
-    - [reverse_iterator crend()](#iterator-crend)
+    - [reverse_iterator rbegin()](#reverse_iterator-rbegin)
+    - [reverse_iterator rend()](#reverse_iterator-rend)
+    - [reverse_iterator crbegin()](#reverse_iterator-crbegin)
+    - [reverse_iterator crend()](#reverse_iterator-crend)
 
 ### iterator insert(interval_type const& ival)
 Adds an interval into the tree. 
