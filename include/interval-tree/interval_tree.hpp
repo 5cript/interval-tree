@@ -2,6 +2,7 @@
 
 #include "interval_tree_fwd.hpp"
 #include "interval_types.hpp"
+#include "tree_hooks.hpp"
 
 #include <string>
 #include <memory>
@@ -25,12 +26,13 @@ namespace lib_interval_tree
     // ############################################################################################################
     using default_interval_value_type = int;
     // ############################################################################################################
-    template <typename numerical_type, typename interval_kind_ = closed>
+    template <typename numerical_type, typename interval_kind_ = closed, typename tree_hooks = hooks::regular>
     struct interval
     {
       public:
         using value_type = numerical_type;
         using interval_kind = interval_kind_;
+        friend tree_hooks;
 
         /**
          *  Constructs an interval. low MUST be smaller than high.
@@ -178,7 +180,7 @@ namespace lib_interval_tree
     /**
      *  Creates a safe interval that puts the lower bound left automatically.
      */
-    template <typename numerical_type, typename interval_kind_ = closed>
+    template <typename numerical_type, typename interval_kind_ = closed, typename tree_hooks = hooks::regular>
 #if __cplusplus >= 201703L
     constexpr
 #endif
@@ -190,7 +192,8 @@ namespace lib_interval_tree
     // ############################################################################################################
     template <
         typename numerical_type = default_interval_value_type,
-        typename interval_type_ = interval<numerical_type, closed>>
+        typename interval_type_ = interval<numerical_type, closed, hooks::regular>,
+        typename tree_hooks = hooks::regular>
     class node
     {
       private:
@@ -199,13 +202,15 @@ namespace lib_interval_tree
       public:
         using interval_type = interval_type_;
         using value_type = numerical_type;
+        using tree_hooks_type = tree_hooks;
+        friend tree_hooks_type;
 
       public:
-        friend lib_interval_tree::interval_tree<interval_type>;
-        friend lib_interval_tree::const_interval_tree_iterator<node<numerical_type, interval_type>, true>;
-        friend lib_interval_tree::const_interval_tree_iterator<node<numerical_type, interval_type>, false>;
-        friend lib_interval_tree::interval_tree_iterator<node<numerical_type, interval_type>, true>;
-        friend lib_interval_tree::interval_tree_iterator<node<numerical_type, interval_type>, false>;
+        friend lib_interval_tree::interval_tree<interval_type, tree_hooks>;
+        friend lib_interval_tree::const_interval_tree_iterator<node<numerical_type, interval_type, tree_hooks>, true>;
+        friend lib_interval_tree::const_interval_tree_iterator<node<numerical_type, interval_type, tree_hooks>, false>;
+        friend lib_interval_tree::interval_tree_iterator<node<numerical_type, interval_type, tree_hooks>, true>;
+        friend lib_interval_tree::interval_tree_iterator<node<numerical_type, interval_type, tree_hooks>, false>;
 
         template <typename T>
         friend void increment(T& iter);
@@ -344,9 +349,11 @@ namespace lib_interval_tree
     class basic_interval_tree_iterator : public std::forward_iterator_tag
     {
       public:
-        friend interval_tree<typename node_type::interval_type>;
+        friend interval_tree<typename node_type::interval_type, typename node_type::tree_hooks_type>;
+        friend typename node_type::tree_hooks_type;
 
-        using tree_type = interval_tree<typename node_type::interval_type>;
+        using tree_hooks_type = typename node_type::tree_hooks_type;
+        using tree_type = interval_tree<typename node_type::interval_type, tree_hooks_type>;
         using value_type = node_type;
 
         using node_ptr_t = typename std::conditional<
@@ -416,16 +423,20 @@ namespace lib_interval_tree
     // ############################################################################################################
     template <typename node_type, bool reverse>
     class const_interval_tree_iterator
-        : public basic_interval_tree_iterator<node_type, interval_tree<typename node_type::interval_type> const*>
+        : public basic_interval_tree_iterator<
+              node_type,
+              interval_tree<typename node_type::interval_type, typename node_type::tree_hooks_type> const*>
     {
       public:
-        using tree_type = interval_tree<typename node_type::interval_type>;
+        using tree_hooks_type = typename node_type::tree_hooks_type;
+        using tree_type = interval_tree<typename node_type::interval_type, tree_hooks_type>;
         using iterator_base = basic_interval_tree_iterator<node_type, tree_type const*>;
         using value_type = typename iterator_base::value_type;
         using iterator_base::node_;
         using iterator_base::owner_;
 
         friend tree_type;
+        friend tree_hooks_type;
 
       public:
         ~const_interval_tree_iterator() = default;
@@ -519,16 +530,20 @@ namespace lib_interval_tree
     // ############################################################################################################
     template <typename node_type, bool reverse = false>
     class interval_tree_iterator
-        : public basic_interval_tree_iterator<node_type, interval_tree<typename node_type::interval_type>*>
+        : public basic_interval_tree_iterator<
+              node_type,
+              interval_tree<typename node_type::interval_type, typename node_type::tree_hooks_type>*>
     {
       public:
-        using tree_type = interval_tree<typename node_type::interval_type>;
+        using tree_hooks_type = typename node_type::tree_hooks_type;
+        using tree_type = interval_tree<typename node_type::interval_type, tree_hooks_type>;
         using iterator_base = basic_interval_tree_iterator<node_type, tree_type*>;
         using value_type = typename iterator_base::value_type;
         using iterator_base::node_;
         using iterator_base::owner_;
 
         friend tree_type;
+        friend tree_hooks_type;
 
       public:
         ~interval_tree_iterator() = default;
@@ -685,25 +700,40 @@ namespace lib_interval_tree
         }
     }
     // ############################################################################################################
-    template <typename IntervalT = interval<int, closed>>
-    class interval_tree
+    template <typename IntervalT = interval<int, closed>, typename tree_hooks = hooks::regular>
+    class interval_tree : public tree_hooks::hook_state
     {
       public:
         using interval_type = IntervalT;
+        using tree_hooks_type = tree_hooks;
         using value_type = typename interval_type::value_type;
-        using node_type = node<value_type, interval_type>;
+
+        // Node type:
+        using node_type = std::conditional_t<
+            std::is_same_v<typename tree_hooks::node_type, void>,
+            node<value_type, interval_type, tree_hooks>,
+            typename tree_hooks::node_type>;
+
+        // Iterators:
         using iterator = interval_tree_iterator<node_type, false>;
         using const_iterator = const_interval_tree_iterator<node_type, false>;
         using reverse_iterator = interval_tree_iterator<node_type, true>;
         using const_reverse_iterator = const_interval_tree_iterator<node_type, true>;
-        using size_type = long long;
-        using this_type = interval_tree<interval_type>;
+
+        // Size type:
+        using size_type = std::conditional_t<
+            std::is_same_v<typename tree_hooks::size_type, void>,
+            long long,
+            typename tree_hooks::size_type>;
+
+        using this_type = interval_tree<interval_type, tree_hooks>;
 
       public:
         friend const_interval_tree_iterator<node_type, true>;
         friend const_interval_tree_iterator<node_type, false>;
         friend interval_tree_iterator<node_type, true>;
         friend interval_tree_iterator<node_type, false>;
+        friend tree_hooks;
 
         template <typename T>
         friend void increment(T& iter);
@@ -718,6 +748,7 @@ namespace lib_interval_tree
 
         ~interval_tree()
         {
+            tree_hooks::template on_destroy<this_type>(*this);
             clear();
         }
 
@@ -815,6 +846,7 @@ namespace lib_interval_tree
 
             insert_fixup(z);
             recalculate_max(z);
+
             ++size_;
             return {z, this};
         }
@@ -1331,6 +1363,7 @@ namespace lib_interval_tree
             ComparatorFunctionT const& compare
         )
         {
+            std::decay_t<ThisType>::tree_hooks_type::template on_find_all<this_type>(*self, ptr, ival, compare);
             if (compare(*ptr->interval(), ival))
             {
                 if (!on_find(IteratorT{ptr, self}))
@@ -1359,6 +1392,7 @@ namespace lib_interval_tree
         template <typename ComparatorFunctionT>
         node_type* find_i(node_type* ptr, interval_type const& ival, ComparatorFunctionT const& compare) const
         {
+            tree_hooks::template on_find<this_type>(*this, ptr, ival, compare);
             if (compare(*ptr->interval(), ival))
                 return ptr;
             else
@@ -1394,6 +1428,7 @@ namespace lib_interval_tree
         template <bool Exclusive>
         node_type* overlap_find_i(node_type* ptr, interval_type const& ival) const
         {
+            tree_hooks::template on_overlap_find<this_type>(*this, ptr, ival);
 #if __cplusplus >= 201703L
             if constexpr (Exclusive)
 #else
@@ -1420,6 +1455,7 @@ namespace lib_interval_tree
             FunctionT const& on_find
         )
         {
+            std::decay_t<ThisType>::tree_hooks_type::template on_overlap_find_all<ThisType>(*self, ptr, ival);
 #if __cplusplus >= 201703L
             if constexpr (Exclusive)
 #else
@@ -1505,30 +1541,6 @@ namespace lib_interval_tree
             return y;
         }
 
-        bool is_descendant(iterator par, iterator desc)
-        {
-            auto p = desc->parent_;
-            for (; p && p != par.node_; p = p->parent_)
-            {}
-            return p != nullptr;
-        }
-
-        /**
-         *  Set v inplace of u. Does not delete u.
-         *  Creates orphaned nodes. A transplant call must be succeeded by delete calls.
-         */
-        void transplant(node_type* u, node_type* v)
-        {
-            if (u->is_root())
-                root_ = v;
-            else if (u->is_left())
-                u->parent_->left_ = v;
-            else
-                u->parent_->right_ = v;
-            if (v)
-                v->parent_ = u->parent_;
-        }
-
         /**
          *  Get leftest of x.
          */
@@ -1610,6 +1622,8 @@ namespace lib_interval_tree
 
         void recalculate_max(node_type* reacalculation_root)
         {
+            tree_hooks::template on_before_recalculate_max<this_type>(*this, reacalculation_root);
+
             auto* p = reacalculation_root;
             while (p && p->max_ <= reacalculation_root->max_)
             {
@@ -1619,10 +1633,14 @@ namespace lib_interval_tree
                     p->max_ = p->right_->max_;
                 p = p->parent_;
             }
+
+            tree_hooks::template on_after_recalculate_max<this_type>(*this, reacalculation_root);
         }
 
         void insert_fixup(node_type* z)
         {
+            tree_hooks::template on_before_insert_fixup<this_type>(*this, z);
+
             while (z->parent_ && z->parent_->color_ == rb_color::red)
             {
                 if (!z->parent_->parent_)
@@ -1673,10 +1691,14 @@ namespace lib_interval_tree
                 }
             }
             root_->color_ = rb_color::black;
+
+            tree_hooks::template on_after_insert_fixup<this_type>(*this, z);
         }
 
         void erase_fixup(node_type* x, node_type* x_parent, bool y_is_left)
         {
+            tree_hooks::template on_before_erase_fixup<this_type>(*this, x, x_parent, y_is_left);
+
             while (x != root_ && x->color_ == rb_color::black)
             {
                 node_type* w;
@@ -1759,6 +1781,8 @@ namespace lib_interval_tree
             }
 
             x->color_ = rb_color::black;
+
+            tree_hooks::template on_after_erase_fixup<this_type>(*this, x, x_parent, y_is_left);
         }
 
       private:
@@ -1766,7 +1790,7 @@ namespace lib_interval_tree
         size_type size_;
     };
     // ############################################################################################################
-    template <typename T, typename Kind = closed>
-    using interval_tree_t = interval_tree<interval<T, Kind>>;
+    template <typename T, typename Kind = closed, typename tree_hooks = hooks::regular>
+    using interval_tree_t = interval_tree<interval<T, Kind>, tree_hooks>;
     // ############################################################################################################
 }

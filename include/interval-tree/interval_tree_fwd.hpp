@@ -2,13 +2,13 @@
 
 namespace lib_interval_tree
 {
-    template <typename numerical_type, typename interval_kind_>
+    template <typename numerical_type, typename interval_kind_, typename tree_hooks>
     struct interval;
 
-    template <typename IntervalT>
+    template <typename IntervalT, typename tree_hooks>
     class interval_tree;
 
-    template <typename numerical_type, typename interval_type>
+    template <typename numerical_type, typename interval_type, typename tree_hooks>
     class node;
 
     template <typename node_type, typename owner_type>

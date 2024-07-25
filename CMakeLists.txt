@@ -15,4 +15,3 @@ endif()
 if (INT_TREE_ENABLE_TESTS)
     add_subdirectory(tests)
 endif()
-
