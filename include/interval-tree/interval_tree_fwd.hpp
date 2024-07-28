@@ -8,7 +8,7 @@ namespace lib_interval_tree
     template <typename IntervalT, typename tree_hooks>
     class interval_tree;
 
-    template <typename numerical_type, typename interval_type>
+    template <typename numerical_type, typename interval_type, typename derived>
     class node;
 
     template <typename node_type, typename owner_type, typename tree_hooks>

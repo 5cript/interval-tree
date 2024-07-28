@@ -191,11 +191,13 @@ namespace lib_interval_tree
     // ############################################################################################################
     template <
         typename numerical_type = default_interval_value_type,
-        typename interval_type_ = interval<numerical_type, closed>>
+        typename interval_type_ = interval<numerical_type, closed>,
+        typename derived = void>
     class node
     {
       protected:
-        using node_type = node<numerical_type, interval_type_>;
+        using node_type =
+            std::conditional_t<std::is_same<derived, void>::value, node<numerical_type, interval_type_>, derived>;
 
       public:
         using interval_type = interval_type_;
@@ -217,7 +219,7 @@ namespace lib_interval_tree
         friend void increment_reverse(T& iter);
 
       public:
-        node(node* parent, interval_type interval)
+        node(node_type* parent, interval_type interval)
             : interval_{std::move(interval)}
             , max_{interval.high()}
             , parent_{parent}
@@ -265,7 +267,7 @@ namespace lib_interval_tree
         /**
          *  Returns the parent node up the tree.
          */
-        node const* parent() const
+        node_type const* parent() const
         {
             return parent_;
         }
@@ -273,7 +275,7 @@ namespace lib_interval_tree
         /**
          *  Returns the left node (readonly).
          */
-        node const* left() const
+        node_type const* left() const
         {
             return left_;
         }
@@ -281,7 +283,7 @@ namespace lib_interval_tree
         /**
          *  Returns the right node (readonly).
          */
-        node const* right() const
+        node_type const* right() const
         {
             return right_;
         }
@@ -338,9 +340,9 @@ namespace lib_interval_tree
       protected:
         interval_type interval_;
         value_type max_;
-        node* parent_;
-        node* left_;
-        node* right_;
+        node_type* parent_;
+        node_type* left_;
+        node_type* right_;
         rb_color color_;
     };
     // ############################################################################################################
@@ -513,7 +515,7 @@ namespace lib_interval_tree
                 throw std::out_of_range("interval_tree_iterator out of bounds");
         }
 
-        typename value_type::interval_type* operator->() const
+        typename value_type::interval_type const* operator->() const
         {
             if (node_)
                 return node_->interval();
