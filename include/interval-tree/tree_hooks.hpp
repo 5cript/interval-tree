@@ -16,6 +16,10 @@ namespace lib_interval_tree::hooks
         {}
 
         template <typename tree_type>
+        static inline void on_after_insert(tree_type& tree, typename tree_type::node_type* node) noexcept
+        {}
+
+        template <typename tree_type>
         static inline void on_before_insert_fixup(tree_type& tree, typename tree_type::node_type* node) noexcept
         {}
 

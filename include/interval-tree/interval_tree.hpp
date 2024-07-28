@@ -26,13 +26,12 @@ namespace lib_interval_tree
     // ############################################################################################################
     using default_interval_value_type = int;
     // ############################################################################################################
-    template <typename numerical_type, typename interval_kind_ = closed, typename tree_hooks = hooks::regular>
+    template <typename numerical_type, typename interval_kind_ = closed>
     struct interval
     {
       public:
         using value_type = numerical_type;
         using interval_kind = interval_kind_;
-        friend tree_hooks;
 
         /**
          *  Constructs an interval. low MUST be smaller than high.
@@ -180,7 +179,7 @@ namespace lib_interval_tree
     /**
      *  Creates a safe interval that puts the lower bound left automatically.
      */
-    template <typename numerical_type, typename interval_kind_ = closed, typename tree_hooks = hooks::regular>
+    template <typename numerical_type, typename interval_kind_ = closed>
 #if __cplusplus >= 201703L
     constexpr
 #endif
@@ -192,8 +191,7 @@ namespace lib_interval_tree
     // ############################################################################################################
     template <
         typename numerical_type = default_interval_value_type,
-        typename interval_type_ = interval<numerical_type, closed, hooks::regular>,
-        typename tree_hooks = hooks::regular>
+        typename interval_type_ = interval<numerical_type, closed>>
     class node
     {
       private:
@@ -202,15 +200,16 @@ namespace lib_interval_tree
       public:
         using interval_type = interval_type_;
         using value_type = numerical_type;
-        using tree_hooks_type = tree_hooks;
-        friend tree_hooks_type;
 
       public:
-        friend lib_interval_tree::interval_tree<interval_type, tree_hooks>;
-        friend lib_interval_tree::const_interval_tree_iterator<node<numerical_type, interval_type, tree_hooks>, true>;
-        friend lib_interval_tree::const_interval_tree_iterator<node<numerical_type, interval_type, tree_hooks>, false>;
-        friend lib_interval_tree::interval_tree_iterator<node<numerical_type, interval_type, tree_hooks>, true>;
-        friend lib_interval_tree::interval_tree_iterator<node<numerical_type, interval_type, tree_hooks>, false>;
+        template <typename interval_type, typename hooks_type>
+        friend class interval_tree;
+
+        template <typename node_type, bool reverse, typename tree_hooks>
+        friend class const_interval_tree_iterator;
+
+        template <typename node_type, bool reverse, typename tree_hooks>
+        friend class interval_tree_iterator;
 
         template <typename T>
         friend void increment(T& iter);
@@ -345,14 +344,13 @@ namespace lib_interval_tree
         rb_color color_;
     };
     // ############################################################################################################
-    template <typename node_type, typename owner_type>
+    template <typename node_type, typename owner_type, typename tree_hooks>
     class basic_interval_tree_iterator : public std::forward_iterator_tag
     {
       public:
-        friend interval_tree<typename node_type::interval_type, typename node_type::tree_hooks_type>;
-        friend typename node_type::tree_hooks_type;
+        friend interval_tree<typename node_type::interval_type, tree_hooks>;
 
-        using tree_hooks_type = typename node_type::tree_hooks_type;
+        using tree_hooks_type = tree_hooks;
         using tree_type = interval_tree<typename node_type::interval_type, tree_hooks_type>;
         using value_type = node_type;
 
@@ -421,16 +419,17 @@ namespace lib_interval_tree
     template <typename T>
     inline void increment_reverse(T& iter);
     // ############################################################################################################
-    template <typename node_type, bool reverse>
+    template <typename node_type, bool reverse, typename tree_hooks>
     class const_interval_tree_iterator
         : public basic_interval_tree_iterator<
               node_type,
-              interval_tree<typename node_type::interval_type, typename node_type::tree_hooks_type> const*>
+              interval_tree<typename node_type::interval_type, tree_hooks> const*,
+              tree_hooks>
     {
       public:
-        using tree_hooks_type = typename node_type::tree_hooks_type;
+        using tree_hooks_type = tree_hooks;
         using tree_type = interval_tree<typename node_type::interval_type, tree_hooks_type>;
-        using iterator_base = basic_interval_tree_iterator<node_type, tree_type const*>;
+        using iterator_base = basic_interval_tree_iterator<node_type, tree_type const*, tree_hooks>;
         using value_type = typename iterator_base::value_type;
         using iterator_base::node_;
         using iterator_base::owner_;
@@ -524,20 +523,21 @@ namespace lib_interval_tree
 
       private:
         const_interval_tree_iterator(node_type const* node, tree_type const* owner)
-            : basic_interval_tree_iterator<node_type, tree_type const*>{node, owner}
+            : basic_interval_tree_iterator<node_type, tree_type const*, tree_hooks>{node, owner}
         {}
     };
     // ############################################################################################################
-    template <typename node_type, bool reverse = false>
+    template <typename node_type, bool reverse, typename tree_hooks>
     class interval_tree_iterator
         : public basic_interval_tree_iterator<
               node_type,
-              interval_tree<typename node_type::interval_type, typename node_type::tree_hooks_type>*>
+              interval_tree<typename node_type::interval_type, tree_hooks>*,
+              tree_hooks>
     {
       public:
-        using tree_hooks_type = typename node_type::tree_hooks_type;
+        using tree_hooks_type = tree_hooks;
         using tree_type = interval_tree<typename node_type::interval_type, tree_hooks_type>;
-        using iterator_base = basic_interval_tree_iterator<node_type, tree_type*>;
+        using iterator_base = basic_interval_tree_iterator<node_type, tree_type*, tree_hooks>;
         using value_type = typename iterator_base::value_type;
         using iterator_base::node_;
         using iterator_base::owner_;
@@ -631,7 +631,7 @@ namespace lib_interval_tree
 
       private:
         interval_tree_iterator(node_type* node, tree_type* owner)
-            : basic_interval_tree_iterator<node_type, tree_type*>{node, owner}
+            : basic_interval_tree_iterator<node_type, tree_type*, tree_hooks>{node, owner}
         {}
     };
     // ############################################################################################################
@@ -711,14 +711,14 @@ namespace lib_interval_tree
         // Node type:
         using node_type = std::conditional_t<
             std::is_same_v<typename tree_hooks::node_type, void>,
-            node<value_type, interval_type, tree_hooks>,
+            node<value_type, interval_type>,
             typename tree_hooks::node_type>;
 
         // Iterators:
-        using iterator = interval_tree_iterator<node_type, false>;
-        using const_iterator = const_interval_tree_iterator<node_type, false>;
-        using reverse_iterator = interval_tree_iterator<node_type, true>;
-        using const_reverse_iterator = const_interval_tree_iterator<node_type, true>;
+        using iterator = interval_tree_iterator<node_type, false, tree_hooks>;
+        using const_iterator = const_interval_tree_iterator<node_type, false, tree_hooks>;
+        using reverse_iterator = interval_tree_iterator<node_type, true, tree_hooks>;
+        using const_reverse_iterator = const_interval_tree_iterator<node_type, true, tree_hooks>;
 
         // Size type:
         using size_type = std::conditional_t<
@@ -729,10 +729,10 @@ namespace lib_interval_tree
         using this_type = interval_tree<interval_type, tree_hooks>;
 
       public:
-        friend const_interval_tree_iterator<node_type, true>;
-        friend const_interval_tree_iterator<node_type, false>;
-        friend interval_tree_iterator<node_type, true>;
-        friend interval_tree_iterator<node_type, false>;
+        friend const_interval_tree_iterator<node_type, true, tree_hooks>;
+        friend const_interval_tree_iterator<node_type, false, tree_hooks>;
+        friend interval_tree_iterator<node_type, true, tree_hooks>;
+        friend interval_tree_iterator<node_type, false, tree_hooks>;
         friend tree_hooks;
 
         template <typename T>
@@ -846,6 +846,8 @@ namespace lib_interval_tree
 
             insert_fixup(z);
             recalculate_max(z);
+
+            tree_hooks::template on_after_insert<this_type>(*this, z);
 
             ++size_;
             return {z, this};
