@@ -710,7 +710,7 @@ namespace lib_interval_tree
 
         // Node type:
         using node_type = std::conditional_t<
-            std::is_same_v<typename tree_hooks::node_type, void>,
+            std::is_same<typename tree_hooks::node_type, void>::value,
             node<value_type, interval_type>,
             typename tree_hooks::node_type>;
 
@@ -722,7 +722,7 @@ namespace lib_interval_tree
 
         // Size type:
         using size_type = std::conditional_t<
-            std::is_same_v<typename tree_hooks::size_type, void>,
+            std::is_same<typename tree_hooks::size_type, void>::value,
             long long,
             typename tree_hooks::size_type>;
 
