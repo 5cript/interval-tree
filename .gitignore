@@ -6,8 +6,6 @@ bin
 *.save-failed
 __history/
 *.cbp
-main.hpp
-main.cpp
 *.png
 .vscode
 build

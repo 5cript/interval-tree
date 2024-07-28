@@ -12,6 +12,7 @@
 #include "overlap_find_tests.hpp"
 #include "float_overlap_tests.hpp"
 #include "iteration_tests.hpp"
+#include "hook_tests.hpp"
 
 int main(int argc, char** argv)
 {

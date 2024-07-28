@@ -27,3 +27,12 @@ target_compile_options(tree-tests PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_OPTIONS}>")
 
 set(RELEASE_OPTIONS -fexceptions -O3 -Wall -pedantic)
 target_compile_options(tree-tests PUBLIC "$<$<CONFIG:RELEASE>:${RELEASE_OPTIONS}>")
+
+# If msys2, copy dynamic libraries to executable directory, visual studio does this automatically.
+# And there is no need on linux.
+if (DEFINED ENV{MSYSTEM})
+    add_custom_command(TARGET tree-tests POST_BUILD
+        COMMAND bash -c "ldd $<TARGET_FILE:tree-tests>" | "grep" "clang" | awk "NF == 4 { system(\"${CMAKE_COMMAND} -E copy \" \$3 \" $<TARGET_FILE_DIR:tree-tests>\") }"
+        VERBATIM
+    )
+endif()
