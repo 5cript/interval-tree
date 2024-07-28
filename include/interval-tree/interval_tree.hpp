@@ -194,7 +194,7 @@ namespace lib_interval_tree
         typename interval_type_ = interval<numerical_type, closed>>
     class node
     {
-      private:
+      protected:
         using node_type = node<numerical_type, interval_type_>;
 
       public:
@@ -226,7 +226,7 @@ namespace lib_interval_tree
             , color_{rb_color::fail}
         {}
 
-        ~node()
+        virtual ~node()
         {}
 
         interval_type const* interval() const
@@ -314,7 +314,7 @@ namespace lib_interval_tree
             return interval_.high();
         }
 
-      private:
+      protected:
         void set_interval(interval_type const& ival)
         {
             interval_ = ival;
@@ -335,7 +335,7 @@ namespace lib_interval_tree
             }
         }
 
-      private:
+      protected:
         interval_type interval_;
         value_type max_;
         node* parent_;
