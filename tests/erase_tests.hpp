@@ -1,5 +1,8 @@
 #pragma once
 
+#include "interval_io.hpp"
+#include "test_utility.hpp"
+
 #include <ctime>
 #include <random>
 #include <cmath>
@@ -48,7 +51,7 @@ public:
         other.oracle_ = nullptr;
         return *this;
     }
-    ~OracleInterval() 
+    ~OracleInterval()
     {
         if (oracle_ != nullptr)
             --oracle_->livingInstances;
@@ -72,6 +75,23 @@ class EraseTests
 {
 public:
     using interval_type = OracleInterval<int>;
+
+public:
+    auto makeTree()
+    {
+        lib_interval_tree::interval_tree_t <int> regularTree;
+        regularTree.insert({16, 21});
+        regularTree.insert({8, 9});
+        regularTree.insert({25, 30});
+        regularTree.insert({5, 8});
+        regularTree.insert({15, 23});
+        regularTree.insert({17, 19});
+        regularTree.insert({26, 26});
+        regularTree.insert({0, 3});
+        regularTree.insert({6, 10});
+        regularTree.insert({19, 20});
+        return regularTree;
+    }
 
 protected:
     Oracle oracle;
@@ -161,4 +181,85 @@ TEST_F(EraseTests, RandomEraseTest)
     EXPECT_EQ(oracle.livingInstances, amount - deleteAmount);
     testMaxProperty(tree);
     testTreeHeightHealth(tree);
+}
+
+
+
+TEST_F(EraseTests, MassiveDeleteEntireTreeWithEraseReturnIterator)
+{
+    constexpr int amount = 1000;
+
+    for (int i = 0; i != amount; ++i)
+        tree.insert(makeSafeOracleInterval(&oracle, distSmall(gen), distSmall(gen)));
+
+    for(auto iter = tree.begin(); !tree.empty();)
+    {
+        iter = tree.erase(iter);
+    }
+
+    EXPECT_EQ(oracle.livingInstances, 0);
+    testMaxProperty(tree);
+    testTreeHeightHealth(tree);
+}
+
+TEST_F(EraseTests, ReturnedIteratorPointsToNextInOrderNode)
+{
+    auto regularTree = makeTree();
+    auto iter = regularTree.erase(regularTree.find({16, 21}));
+    EXPECT_EQ(*iter, (decltype(regularTree)::interval_type{17, 19})) << *iter;
+
+    regularTree = makeTree();
+    iter = regularTree.erase(regularTree.find({8, 9}));
+    EXPECT_EQ(*iter, (decltype(regularTree)::interval_type{15, 23})) << *iter;
+
+    regularTree = makeTree();
+    iter = regularTree.erase(regularTree.find({25, 30}));
+    EXPECT_EQ(*iter, (decltype(regularTree)::interval_type{26, 26})) << *iter;
+
+    regularTree = makeTree();
+    iter = regularTree.erase(regularTree.find({5, 8}));
+    EXPECT_EQ(*iter, (decltype(regularTree)::interval_type{6, 10})) << *iter;
+
+    regularTree = makeTree();
+    iter = regularTree.erase(regularTree.find({15, 23}));
+    EXPECT_EQ(*iter, (decltype(regularTree)::interval_type{16, 21})) << *iter;
+
+    regularTree = makeTree();
+    iter = regularTree.erase(regularTree.find({17, 19}));
+    EXPECT_EQ(*iter, (decltype(regularTree)::interval_type{19, 20})) << *iter;
+
+    regularTree = makeTree();
+    iter = regularTree.erase(regularTree.find({26, 26}));
+    EXPECT_EQ(iter, regularTree.end());
+
+    regularTree = makeTree();
+    iter = regularTree.erase(regularTree.find({0, 3}));
+    EXPECT_EQ(*iter, (decltype(regularTree)::interval_type{5, 8})) << *iter;
+
+    regularTree = makeTree();
+    iter = regularTree.erase(regularTree.find({6, 10}));
+    EXPECT_EQ(*iter, (decltype(regularTree)::interval_type{8, 9})) << *iter;
+
+    regularTree = makeTree();
+    iter = regularTree.erase(regularTree.find({19, 20}));
+    EXPECT_EQ(*iter, (decltype(regularTree)::interval_type{25, 30})) << *iter;
+}
+
+TEST_F(EraseTests, CanEraseEntireTreeUsingReturnedIterator)
+{
+    auto tree = makeTree();
+    for (auto iter = tree.begin(); iter != tree.end();)
+        iter = tree.erase(iter);
+    EXPECT_EQ(tree.empty(), true);
+}
+
+TEST_F(EraseTests, FromNuiTest)
+{
+    lib_interval_tree::interval_tree_t <int> tree;
+    tree.insert({0, 0});
+    tree.insert({4, 4});
+    tree.insert({13, 13});
+
+    auto iter = tree.erase(tree.find({4, 4}));
+    EXPECT_EQ(*iter, (decltype(tree)::interval_type{13, 13})) << *iter;
 }

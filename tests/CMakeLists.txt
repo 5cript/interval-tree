@@ -28,6 +28,10 @@ target_compile_options(tree-tests PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_OPTIONS}>")
 set(RELEASE_OPTIONS -fexceptions -O3 -Wall -pedantic)
 target_compile_options(tree-tests PUBLIC "$<$<CONFIG:RELEASE>:${RELEASE_OPTIONS}>")
 
+if (INT_TREE_DRAW_EXAMPLES)
+    target_link_libraries(tree-tests PRIVATE cairo cairo-wrap)
+endif()
+
 # If msys2, copy dynamic libraries to executable directory, visual studio does this automatically.
 # And there is no need on linux.
 if (DEFINED ENV{MSYSTEM})

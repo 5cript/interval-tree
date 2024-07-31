@@ -886,19 +886,27 @@ namespace lib_interval_tree
                 throw std::out_of_range("cannot erase end iterator");
 
             auto next = iter;
-            ++next;
 
-            node_type* y;
-            if (!iter.node_->left_ || !iter.node_->right_)
-                y = iter.node_;
-            else
-                y = successor(iter.node_);
+            node_type* y = [&next, &iter, this]() {
+                if (!iter.node_->left_ || !iter.node_->right_)
+                {
+                    ++next;
+                    return iter.node_;
+                }
+                else
+                {
+                    const auto y = successor(iter.node_);
+                    next = iterator{iter.node_, this};
+                    return y;
+                }
+            }();
 
-            node_type* x;
-            if (y->left_)
-                x = y->left_;
-            else
-                x = y->right_;
+            node_type* x = [y](){
+                if (y->left_)
+                    return y->left_;
+                else
+                    return y->right_;
+            }();
 
             if (x)
                 x->parent_ = y->parent_;
