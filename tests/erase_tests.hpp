@@ -1,6 +1,5 @@
 #pragma once
 
-#include <interval-tree/draw.hpp>
 #include "interval_io.hpp"
 #include "test_utility.hpp"
 
@@ -260,8 +259,6 @@ TEST_F(EraseTests, FromNuiTest)
     tree.insert({0, 0});
     tree.insert({4, 4});
     tree.insert({13, 13});
-
-    drawTree("erase_tests_from_nui", tree);
 
     auto iter = tree.erase(tree.find({4, 4}));
     EXPECT_EQ(*iter, (decltype(tree)::interval_type{13, 13})) << *iter;
