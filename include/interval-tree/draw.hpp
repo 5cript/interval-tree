@@ -21,15 +21,15 @@ namespace lib_interval_tree
 		{};
 
 		template <>
-		struct NumericalPointerEquivalent <sizeof(unsigned long)>
+		struct NumericalPointerEquivalent <sizeof(std::uint32_t)>
 		{
-			using type = unsigned long;
+			using type = uint32_t;
 		};
 
 		template <>
-		struct NumericalPointerEquivalent <sizeof(unsigned long long)>
+		struct NumericalPointerEquivalent <sizeof(std::uint64_t)>
 		{
-			using type = unsigned long long;
+			using type = uint64_t;
 		};
 
         template <typename... List>
