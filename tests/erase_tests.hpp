@@ -184,6 +184,25 @@ TEST_F(EraseTests, RandomEraseTest)
     testTreeHeightHealth(tree);
 }
 
+
+
+TEST_F(EraseTests, MassiveDeleteEntireTreeWithEraseReturnIterator)
+{
+    constexpr int amount = 1000;
+
+    for (int i = 0; i != amount; ++i)
+        tree.insert(makeSafeOracleInterval(&oracle, distSmall(gen), distSmall(gen)));
+
+    for(auto iter = tree.begin(); !tree.empty();)
+    {
+        iter = tree.erase(iter);
+    }
+
+    EXPECT_EQ(oracle.livingInstances, 0);
+    testMaxProperty(tree);
+    testTreeHeightHealth(tree);
+}
+
 TEST_F(EraseTests, ReturnedIteratorPointsToNextInOrderNode)
 {
     auto regularTree = makeTree();
@@ -233,4 +252,17 @@ TEST_F(EraseTests, CanEraseEntireTreeUsingReturnedIterator)
     for (auto iter = tree.begin(); iter != tree.end();)
         iter = tree.erase(iter);
     EXPECT_EQ(tree.empty(), true);
+}
+
+TEST_F(EraseTests, FromNuiTest)
+{
+    lib_interval_tree::interval_tree_t <int> tree;
+    tree.insert({0, 0});
+    tree.insert({4, 4});
+    tree.insert({13, 13});
+
+    drawTree("erase_tests_from_nui", tree);
+
+    auto iter = tree.erase(tree.find({4, 4}));
+    EXPECT_EQ(*iter, (decltype(tree)::interval_type{13, 13})) << *iter;
 }
