@@ -22,8 +22,13 @@ int main()
 {
   using namespace lib_interval_tree;
 
-  // interval_tree <interval <int>>;
-  interval_tree_t <int> tree;
+  // interval_tree<interval<int>>; // closed by default
+  // interval_tree<interval<int, open>>;
+  // interval_tree<interval<int, closed>>;
+  // interval_tree<interval<int, left_open>>;
+  // interval_tree<interval<int, right_open>>;
+  // interval_tree<interval<int, closed_adjacent>>; // counts adjacent intervals as overlapping
+  interval_tree_t<int> tree;
 
   tree.insert(make_safe_interval<int>(21, 16)); // make_safe_interval swaps low and high if not in right order.
   tree.insert({8, 9});
@@ -42,6 +47,12 @@ int main()
   {
     std::cout << "[" << i.low() << ", " << i.high() << "]\n";
   }
+
+  using lib_interval_tree::open;
+  // dynamic has some logic overhead.
+  interval_tree<interval<int, dynamic>> dynamicIntervals;
+  dynamicIntervals.insert({0, 1, interval_border::closed, interval_border::open});
+  dynamicIntervals.insert({7, 5, interval_border::open, interval_border::closed_adjacent});
 }
 ```
 
@@ -315,7 +326,18 @@ Returns a past the end const_iterator in reverse.
 **Returns**: past the end const_iterator.
 
 ## Members of Interval
-___You can implement your own interval if you provide all the same functions.___
+___You can implement your own interval if you provide the same functions, except (within, operator-, size, operator!=).___
+
+There are 6 types of intervals:
+- open: (a, b)
+- left_open: (a, b]
+- right_open: [a, b)
+- closed: [a, b]
+- closed_adjacent: [a, b] (counts adjacent intervals as overlapping)
+- dynamic: Can be any of the above, depending on the input. Not supported for floating point.
+
+Which can be picked with the second template parameter of interval:
+`lib_interval_tree::interval<int, lib_interval_tree::open>`
 
   - [Members of Interval](#members-of-interval)
     - [using value_type](#using-value_type)
@@ -324,7 +346,7 @@ ___You can implement your own interval if you provide all the same functions.___
     - [friend bool operator!=(interval const& lhs, interval const& other)](#friend-bool-operatorinterval-const-lhs-interval-const-other-1)
     - [value_type low() const](#value_type-low-const)
     - [value_type high() const](#value_type-high-const)
-    - [bool overlaps(value_type l, value_type h) const](#bool-overlapsvalue_type-l-value_type-h-const)
+    - [\[\[deprecated\]\] bool overlaps(value_type l, value_type h) const](#bool-overlapsvalue_type-l-value_type-h-const)
     - [bool overlaps_exclusive(value_type l, value_type h) const](#bool-overlaps_exclusivevalue_type-l-value_type-h-const)
     - [bool overlaps(interval const& other) const](#bool-overlapsinterval-const-other-const)
     - [bool overlaps_exclusive(interval const& other) const](#bool-overlaps_exclusiveinterval-const-other-const)
@@ -346,8 +368,9 @@ Comparison operator.
 Lower bound.
 ### value_type high() const
 Upper bound.
-### bool overlaps(value_type l, value_type h) const
+### \[\[deprecated\]\] bool overlaps(value_type l, value_type h) const
 Overlap these bounds with this interval (closed)?
+Is deprecated because the overlapping only works with closed intervals.
 ### bool overlaps_exclusive(value_type l, value_type h) const
 Overlap these bounds with this interval excluding borders?
 ### bool overlaps(interval const& other) const
@@ -355,13 +378,13 @@ Like overlaps with lower and upper bound.
 ### bool overlaps_exclusive(interval const& other) const
 Like overlaps with lower and upper bound.
 ### bool within(value_type value) const
-Is the value within the interval (closed)?
+Is the value within the interval?
 ### bool within(interval const& other) const
 Is the interval within the interval?
 ### value_type operator-(interval const& other) const
 Calculates the distance between the two intervals.
 Overlapping intervals have 0 distance.
 ### value_type size() const
-Returns high - low.
+Returns The amount of elements in the interval when integral, or the distance between the 2 bounds when floating point.
 ### interval join(interval const& other) const
 Joins 2 intervals and whatever is inbetween.
