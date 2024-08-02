@@ -829,3 +829,74 @@ TEST_F(IntervalTests, DynamicJoinTest)
         i<dynamic>(0, 4, interval_border::closed, interval_border::closed_adjacent)
     );
 }
+
+TEST_F(IntervalTests, CanInsertDynamicIntervalIntoTree)
+{
+    interval_tree<interval<int, dynamic>> dynamic_interval_tree;
+    auto iter = dynamic_interval_tree.insert(i<dynamic>(0, 5, interval_border::closed, interval_border::closed));
+    EXPECT_EQ(iter->low(), 0);
+    EXPECT_EQ(iter->high(), 5);
+    EXPECT_EQ(iter->left_border(), interval_border::closed);
+    EXPECT_EQ(iter->right_border(), interval_border::closed);
+    EXPECT_EQ(dynamic_interval_tree.begin(), iter);
+}
+
+TEST_F(IntervalTests, CanFindDynamicIntervalInTree)
+{
+    interval_tree<interval<int, dynamic>> dynamic_interval_tree;
+    dynamic_interval_tree.insert(i<dynamic>(0, 5, interval_border::closed, interval_border::closed));
+    auto iter = dynamic_interval_tree.find(i<dynamic>(0, 5, interval_border::closed, interval_border::closed));
+    EXPECT_EQ(iter->low(), 0);
+    EXPECT_EQ(iter->high(), 5);
+    EXPECT_EQ(iter->left_border(), interval_border::closed);
+    EXPECT_EQ(iter->right_border(), interval_border::closed);
+}
+
+TEST_F(IntervalTests, CanEraseDynamicIntervalFromTree)
+{
+    interval_tree<interval<int, dynamic>> dynamic_interval_tree;
+    dynamic_interval_tree.insert(i<dynamic>(0, 5, interval_border::closed, interval_border::closed));
+    dynamic_interval_tree.erase(dynamic_interval_tree.begin());
+    EXPECT_TRUE(dynamic_interval_tree.empty());
+}
+
+TEST_F(IntervalTests, CanOverlapFindDynamicIntervalInTree)
+{
+    interval_tree<interval<int, dynamic>> dynamic_interval_tree;
+    dynamic_interval_tree.insert(i<dynamic>(0, 5, interval_border::closed, interval_border::closed));
+    auto iter =
+        dynamic_interval_tree.overlap_find(i<dynamic>(3, 7, interval_border::open, interval_border::closed_adjacent));
+    EXPECT_EQ(iter->low(), 0);
+    EXPECT_EQ(iter->high(), 5);
+    EXPECT_EQ(iter->left_border(), interval_border::closed);
+    EXPECT_EQ(iter->right_border(), interval_border::closed);
+}
+
+TEST_F(IntervalTests, CanInsertOverlappingDynamicIntervalIntoTree)
+{
+    interval_tree<interval<int, dynamic>> dynamic_interval_tree;
+    dynamic_interval_tree.insert(i<dynamic>(0, 5, interval_border::closed, interval_border::closed));
+    dynamic_interval_tree.insert_overlap(i<dynamic>(3, 7, interval_border::open, interval_border::closed_adjacent));
+    auto iter = dynamic_interval_tree.find(i<dynamic>(0, 7, interval_border::closed, interval_border::closed_adjacent));
+    EXPECT_EQ(iter->low(), 0);
+    EXPECT_EQ(iter->high(), 7);
+    EXPECT_EQ(iter->left_border(), interval_border::closed);
+    EXPECT_EQ(iter->right_border(), interval_border::closed_adjacent);
+}
+
+TEST_F(IntervalTests, CanFindDynamicIntervalUsingComparisonFunction)
+{
+    interval_tree<interval<int, dynamic>> dynamic_interval_tree;
+    dynamic_interval_tree.insert(i<dynamic>(0, 5, interval_border::closed, interval_border::closed));
+    auto iter = dynamic_interval_tree.find(
+        i<dynamic>(0, 5, interval_border::open, interval_border::open),
+        // ignore border types:
+        [](const auto& a, const auto& b) {
+            return a.low() == b.low() && a.high() == b.high();
+        }
+    );
+    EXPECT_EQ(iter->low(), 0);
+    EXPECT_EQ(iter->high(), 5);
+    EXPECT_EQ(iter->left_border(), interval_border::closed);
+    EXPECT_EQ(iter->right_border(), interval_border::closed);
+}
