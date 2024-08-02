@@ -2,12 +2,10 @@
 
 #include "feature_test.hpp"
 
-#ifdef LIB_INTERVAL_TREE_CONCEPTS
-#    include <type_traits>
-#endif
-
 #include <cmath>
 #include <algorithm>
+#include <utility>
+#include <type_traits>
 
 namespace lib_interval_tree
 {
@@ -69,9 +67,22 @@ namespace lib_interval_tree
         }
 
         template <typename numerical_type>
-        static inline numerical_type size(numerical_type low, numerical_type high)
+        static inline typename std::enable_if<!std::is_floating_point<numerical_type>::value, numerical_type>::type
+        size(numerical_type low, numerical_type high)
         {
             return high - low + 1;
+        }
+
+        template <typename numerical_type>
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires std::is_floating_point_v<numerical_type>
+        static inline numerical_type
+#else
+        static inline typename std::enable_if<std::is_floating_point<numerical_type>::value, numerical_type>::type
+#endif
+        size(numerical_type low, numerical_type high)
+        {
+            return high - low;
         }
     };
     // ()
@@ -90,27 +101,49 @@ namespace lib_interval_tree
         }
 
         template <typename numerical_type>
-        static inline numerical_type size(numerical_type low, numerical_type high)
+        static inline typename std::enable_if<!std::is_floating_point<numerical_type>::value, numerical_type>::type
+        size(numerical_type low, numerical_type high)
         {
             return high - low - 1;
+        }
+
+        template <typename numerical_type>
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires std::is_floating_point_v<numerical_type>
+        static inline numerical_type
+#else
+        static inline typename std::enable_if<std::is_floating_point<numerical_type>::value, numerical_type>::type
+#endif
+        size(numerical_type low, numerical_type high)
+        {
+            return high - low;
         }
     };
     /// [] and adjacent counts as overlapping
     struct closed_adjacent
     {
         template <typename numerical_type>
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires std::is_integral_v<numerical_type>
+#endif
         static inline bool within(numerical_type low, numerical_type high, numerical_type p)
         {
             return (low <= p) && (p <= high);
         }
 
         template <typename numerical_type>
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires std::is_integral_v<numerical_type>
+#endif
         static inline bool overlaps(numerical_type l1, numerical_type h1, numerical_type l2, numerical_type h2)
         {
             return (l1 <= (h2 + 1)) && ((l2 - 1) <= h1);
         }
 
         template <typename numerical_type>
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires std::is_integral_v<numerical_type>
+#endif
         static inline numerical_type size(numerical_type low, numerical_type high)
         {
             return high - low + 1;
@@ -123,6 +156,10 @@ namespace lib_interval_tree
         open,
         closed_adjacent
     };
+
+    /**
+     * @brief Do not use for floating point types
+     */
     class dynamic
     {
       public:

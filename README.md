@@ -323,7 +323,7 @@ There are 6 types of intervals:
 - right_open: [a, b)
 - closed: [a, b]
 - closed_adjacent: [a, b] (counts adjacent intervals as overlapping)
-- dynamic: Can be any of the above, depending on the input.
+- dynamic: Can be any of the above, depending on the input. Not supported for floating point.
 
 Which can be picked with the second template parameter of interval:
 `lib_interval_tree::interval<int, lib_interval_tree::open>`
