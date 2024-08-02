@@ -48,7 +48,6 @@ int main()
     std::cout << "[" << i.low() << ", " << i.high() << "]\n";
   }
 
-  using lib_interval_tree::open;
   // dynamic has some logic overhead.
   interval_tree<interval<int, dynamic>> dynamicIntervals;
   dynamicIntervals.insert({0, 1, interval_border::closed, interval_border::open});
@@ -369,8 +368,8 @@ Lower bound.
 ### value_type high() const
 Upper bound.
 ### \[\[deprecated\]\] bool overlaps(value_type l, value_type h) const
-Overlap these bounds with this interval (closed)?
-Is deprecated because the overlapping only works with closed intervals.
+Overlap these bounds with this interval?
+Is deprecated because the overlapping does not work with the dynamic interval type.
 ### bool overlaps_exclusive(value_type l, value_type h) const
 Overlap these bounds with this interval excluding borders?
 ### bool overlaps(interval const& other) const
