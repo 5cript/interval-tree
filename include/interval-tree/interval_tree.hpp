@@ -3,6 +3,7 @@
 #include "interval_tree_fwd.hpp"
 #include "interval_types.hpp"
 #include "tree_hooks.hpp"
+#include "feature_test.hpp"
 
 #include <string>
 #include <memory>
@@ -26,8 +27,8 @@ namespace lib_interval_tree
     // ############################################################################################################
     using default_interval_value_type = int;
     // ############################################################################################################
-    template <typename numerical_type, typename interval_kind_ = closed>
-    struct interval
+    template <typename numerical_type, typename interval_kind_>
+    struct interval_base
     {
       public:
         using value_type = numerical_type;
@@ -40,7 +41,7 @@ namespace lib_interval_tree
 #    if __cplusplus >= 201703L
         constexpr
 #    endif
-            interval(value_type low, value_type high)
+            interval_base(value_type low, value_type high)
             : low_{low}
             , high_{high}
         {
@@ -51,28 +52,12 @@ namespace lib_interval_tree
 #    if __cplusplus >= 201703L
         constexpr
 #    endif
-            interval(value_type low, value_type high)
+            interval_base(value_type low, value_type high)
             : low_{std::min(low, high)}
             , high_{std::max(low, high)}
         {}
 #endif
-        virtual ~interval() = default;
-
-        /**
-         *  Returns if both intervals equal.
-         */
-        friend bool operator==(interval const& lhs, interval const& other)
-        {
-            return lhs.low_ == other.low_ && lhs.high_ == other.high_;
-        }
-
-        /**
-         *  Returns if both intervals are different.
-         */
-        friend bool operator!=(interval const& lhs, interval const& other)
-        {
-            return lhs.low_ != other.low_ || lhs.high_ != other.high_;
-        }
+        virtual ~interval_base() = default;
 
         /**
          *  Returns the lower bound of the interval
@@ -90,13 +75,63 @@ namespace lib_interval_tree
             return high_;
         }
 
+      protected:
+        value_type low_;
+        value_type high_;
+    };
+    // ############################################################################################################
+    template <typename numerical_type, typename interval_kind_ = closed>
+    struct interval : public interval_base<numerical_type, interval_kind_>
+    {
+      public:
+        using value_type = typename interval_base<numerical_type, interval_kind_>::value_type;
+        using interval_kind = typename interval_base<numerical_type, interval_kind_>::interval_kind;
+
+        using interval_base<numerical_type, interval_kind_>::low;
+        using interval_base<numerical_type, interval_kind_>::high;
+
+        using interval_base<numerical_type, interval_kind_>::low_;
+        using interval_base<numerical_type, interval_kind_>::high_;
+
+        /**
+         *  Constructs an interval. low MUST be smaller than high.
+         */
+#if __cplusplus >= 201703L
+        constexpr
+#endif
+            interval(value_type low, value_type high)
+            : interval_base<numerical_type, interval_kind_>{low, high}
+        {}
+
+        /**
+         *  Returns true if both intervals equal.
+         */
+        friend bool operator==(
+            interval<numerical_type, interval_kind_> const& lhs,
+            interval<numerical_type, interval_kind_> const& rhs
+        )
+        {
+            return lhs.low_ == rhs.low_ && lhs.high_ == rhs.high_;
+        }
+
+        /**
+         *  Returns true if both intervals are different.
+         */
+        friend bool operator!=(
+            interval<numerical_type, interval_kind_> const& lhs,
+            interval<numerical_type, interval_kind_> const& rhs
+        )
+        {
+            return lhs.low_ != rhs.low_ || lhs.high_ != rhs.high_;
+        }
+
         /**
          *  Returns whether the intervals overlap.
          *  For when both intervals are closed.
          */
-        bool overlaps(value_type l, value_type h) const
+        LIB_INTERVAL_TREE_DEPRECATED bool overlaps(value_type l, value_type h) const
         {
-            return low_ <= h && l <= high_;
+            return interval_kind::overlaps(low_, high_, l, h);
         }
 
         /**
@@ -113,7 +148,7 @@ namespace lib_interval_tree
          */
         bool overlaps(interval const& other) const
         {
-            return overlaps(other.low_, other.high_);
+            return interval_kind::overlaps(low_, high_, other.low_, other.high_);
         }
 
         /**
@@ -137,7 +172,7 @@ namespace lib_interval_tree
          */
         bool within(interval const& other) const
         {
-            return low_ <= other.low_ && high_ >= other.high_;
+            return within(other.low_) && within(other.high_);
         }
 
         /**
@@ -148,18 +183,10 @@ namespace lib_interval_tree
         {
             if (overlaps(other))
                 return 0;
-            if (high_ < other.low_)
+            if (high_ <= other.low_)
                 return other.low_ - high_;
             else
                 return low_ - other.high_;
-        }
-
-        /**
-         *  Returns the size of the interval.
-         */
-        value_type size() const
-        {
-            return high_ - low_;
         }
 
         /**
@@ -171,10 +198,140 @@ namespace lib_interval_tree
             return {std::min(low_, other.low_), std::max(high_, other.high_)};
         }
 
-      protected:
-        value_type low_;
-        value_type high_;
+        /**
+         *  Returns the size of the interval.
+         */
+        value_type size() const
+        {
+            return interval_kind::size(low_, high_);
+        }
     };
+
+    template <typename numerical_type>
+    struct interval<numerical_type, dynamic> : public interval_base<numerical_type, dynamic>
+    {
+      public:
+        using value_type = typename interval_base<numerical_type, dynamic>::value_type;
+        using interval_kind = dynamic;
+
+        /**
+         *  Constructs an interval. low MUST be smaller than high.
+         */
+#if __cplusplus >= 201703L
+        constexpr
+#endif
+            interval(value_type low, value_type high, interval_border leftBorder, interval_border rightBorder)
+            : interval_base<numerical_type, interval_kind>{low, high}
+            , left_border_{leftBorder}
+            , right_border_{rightBorder}
+        {}
+
+        /**
+         *  Returns true if both intervals equal.
+         */
+        friend bool
+        operator==(interval<numerical_type, dynamic> const& lhs, interval<numerical_type, dynamic> const& other)
+        {
+            return lhs.low_ == other.low_ && lhs.high_ == other.high_ && lhs.left_border_ == other.left_border_ &&
+                lhs.right_border_ == other.right_border_;
+        }
+
+        /**
+         *  Returns true if both intervals are different.
+         */
+        friend bool
+        operator!=(interval<numerical_type, dynamic> const& lhs, interval<numerical_type, dynamic> const& other)
+        {
+            return lhs.low_ != other.low_ || lhs.high_ != other.high_ || lhs.left_border_ != other.left_border_ ||
+                lhs.right_border_ != other.right_border_;
+        }
+
+        using interval_base<numerical_type, interval_kind>::low;
+        using interval_base<numerical_type, interval_kind>::high;
+        using interval_base<numerical_type, interval_kind>::low_;
+        using interval_base<numerical_type, interval_kind>::high_;
+
+        /**
+         *  Returns whether the intervals overlap
+         */
+        bool overlaps(interval const& other) const
+        {
+            return interval_kind::overlaps(*this, other);
+        }
+
+        /**
+         *  Returns whether the intervals overlap exclusively, independent of border.
+         */
+        bool overlaps_exclusive(interval const& other) const
+        {
+            return low_ < other.high_ && other.low_ < high_;
+        }
+
+        /**
+         *  Returns whether the given value is in this.
+         */
+        bool within(value_type value) const
+        {
+            return interval_kind::within(*this, value);
+        }
+
+        /**
+         *  Returns whether the given interval is in this.
+         */
+        bool within(interval const& other) const
+        {
+            return within(other.low_) && within(other.high_);
+        }
+
+        /**
+         *  Calculates the distance between the two intervals.
+         *  Overlapping intervals have 0 distance.
+         */
+        value_type operator-(interval const& other) const
+        {
+            interval_kind::distance(*this, other);
+        }
+
+        /**
+         *  Creates a new interval from this and other, that contains both intervals and whatever
+         *  is between.
+         */
+        interval join(interval const& other) const
+        {
+            return interval_kind::join(*this, other);
+        }
+
+        /**
+         *  Returns the size of the interval.
+         */
+        value_type size() const
+        {
+            return interval_kind::size(*this);
+        }
+
+        /**
+         * @brief Returns the left border type of the interval.
+         *
+         */
+        interval_border left_border() const
+        {
+            return left_border_;
+        }
+
+        /**
+         * @brief Returns the right border type of the interval.
+         *
+         */
+        interval_border right_border() const
+        {
+            return right_border_;
+        }
+
+      protected:
+        interval_border left_border_;
+        interval_border right_border_;
+    };
+
     // ############################################################################################################
     /**
      *  Creates a safe interval that puts the lower bound left automatically.
