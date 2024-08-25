@@ -9,7 +9,7 @@
 
 // define LIB_INTERVAL_TREE_DEPRECATED if __attribute__((deprecated)) is not supported
 #ifndef LIB_INTERVAL_TREE_DEPRECATED
-#    if __has_cpp_attribute(depreacted)
+#    if __has_cpp_attribute(deprecated)
 #        define LIB_INTERVAL_TREE_DEPRECATED [[deprecated]]
 #    else
 #        define LIB_INTERVAL_TREE_DEPRECATED __attribute__((deprecated))
