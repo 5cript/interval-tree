@@ -393,6 +393,11 @@ namespace lib_interval_tree
             return &interval_;
         }
 
+        interval_type* interval()
+        {
+            return &interval_;
+        }
+
         value_type max() const
         {
             return max_;
@@ -1058,7 +1063,7 @@ namespace lib_interval_tree
                 }
             }();
 
-            node_type* x = [y](){
+            node_type* x = [y]() {
                 if (y->left_)
                     return y->left_;
                 else
@@ -1468,7 +1473,7 @@ namespace lib_interval_tree
         {
             if (root)
             {
-                auto* cpy = new node_type(parent, root->interval());
+                auto* cpy = new node_type(parent, *root->interval());
                 cpy->color_ = root->color_;
                 cpy->max_ = root->max_;
                 cpy->left_ = copy_tree_impl(root->left_, cpy);
