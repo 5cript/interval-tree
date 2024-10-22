@@ -57,11 +57,8 @@ struct minimal_custom_interval : public lib_interval_tree::interval<int, lib_int
 {
     using lib_interval_tree::interval<int, lib_interval_tree::closed>::interval;
 
-    std::function<minimal_custom_interval(minimal_custom_interval const& other)> on_join;
     minimal_custom_interval join(minimal_custom_interval const& other) const
     {
-        if (on_join)
-            return on_join(other);
         return {std::min(low_, other.low_), std::max(high_, other.high_)};
     }
 };
