@@ -53,6 +53,19 @@ struct custom_interval : public lib_interval_tree::interval<numerical_type, inte
     }
 };
 
+struct minimal_custom_interval : public lib_interval_tree::interval<int, lib_interval_tree::closed>
+{
+    using lib_interval_tree::interval<int, lib_interval_tree::closed>::interval;
+
+    std::function<minimal_custom_interval(minimal_custom_interval const& other)> on_join;
+    minimal_custom_interval join(minimal_custom_interval const& other) const
+    {
+        if (on_join)
+            return on_join(other);
+        return {std::min(low_, other.low_), std::max(high_, other.high_)};
+    }
+};
+
 TEST_F(CustomIntervalTests, CanInsertCustomIntervalJoined)
 {
     lib_interval_tree::interval_tree<custom_interval<int>> tree;
@@ -116,4 +129,27 @@ TEST_F(CustomIntervalTests, CustomOverlapsExclusiveIvalIsCalled)
     tree.insert_overlap(ival2, true);
 
     EXPECT_TRUE(overlaps_exclusive_ival_called);
+}
+
+TEST_F(CustomIntervalTests, CanUseMinimalCustomInterval)
+{
+    lib_interval_tree::interval_tree<minimal_custom_interval> tree;
+    tree.insert({0, 5});
+    tree.insert_overlap({4, 10});
+    tree.erase(tree.begin());
+
+    EXPECT_EQ(tree.size(), 0);
+
+    tree.insert({0, 5});
+    tree.insert({7, 10});
+    auto iter = tree.find({0, 5});
+    ASSERT_NE(iter, tree.end());
+    EXPECT_EQ(iter->low(), 0);
+    EXPECT_EQ(iter->high(), 5);
+
+    tree.deoverlap();
+    auto iter2 = tree.overlap_find({8, 12});
+    ASSERT_NE(iter2, tree.end());
+    EXPECT_EQ(iter2->low(), 7);
+    EXPECT_EQ(iter2->high(), 10);
 }
