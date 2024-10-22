@@ -14,6 +14,7 @@
 #include "float_overlap_tests.hpp"
 #include "iteration_tests.hpp"
 #include "hook_tests.hpp"
+#include "custom_interval_tests.hpp"
 
 int main(int argc, char** argv)
 {
