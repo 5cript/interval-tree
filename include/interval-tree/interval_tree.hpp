@@ -793,6 +793,13 @@ namespace lib_interval_tree
                 throw std::out_of_range("dereferencing interval_tree_iterator out of bounds");
         }
 
+        typename value_type::interval_type* operator->() {
+            if (node_)
+                return node_->interval();
+            else
+                throw std::out_of_range("dereferencing interval_tree_iterator out of bounds");
+        }
+
       private:
         interval_tree_iterator(node_type* node, tree_type* owner)
             : basic_interval_tree_iterator<node_type, tree_type*, tree_hooks>{node, owner}
