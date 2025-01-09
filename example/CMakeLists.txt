@@ -1,1 +1,2 @@
 add_subdirectory(from_readme)
+add_subdirectory(dot_graph)

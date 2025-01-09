@@ -42,7 +42,7 @@ int main()
   tree.insert({19, 20});
 
   tree.deoverlap();
-  
+
   for (auto const& i : tree)
   {
     std::cout << "[" << i.low() << ", " << i.high() << "]\n";
@@ -61,9 +61,79 @@ Create a build folder, navigate there, run cmake and build the tree-tests target
 You might have to adapt the linker line for gtest, if you built it yourself and didn't install it into your system.
 If you want to generate the pretty drawings, install cairo, pull the submodule and pass INT_TREE_DRAW_EXAMPLES=on to the cmake command line to generate a drawings/make_drawings executeable.
 
+## Draw Dot Graph
+This draws a dot graph of the tree:
+```c++
+#include <interval-tree/interval_tree.hpp>
+#include <interval-tree/dot_graph.hpp>
+
+int main()
+{
+    using namespace lib_interval_tree;
+    interval_tree_t<int> tree;
+
+    tree.insert(make_safe_interval<int>(21, 16)); // make_safe_interval swaps low and high if not in right order.
+    tree.insert({8, 9});
+    tree.insert({25, 30});
+    tree.insert({5, 8});
+    tree.insert({15, 23});
+    tree.insert({17, 19});
+    tree.insert({26, 26});
+    tree.insert({0, 3});
+    tree.insert({6, 10});
+    tree.insert({19, 20});
+
+    draw_dot_graph(
+        std::cout,
+        tree,
+        {
+            // digraph or graph?
+            .digraph = true,
+
+            // graph name
+            .name = "G",
+
+            // extra node attributes
+            .extra_node_attributes = {"color=red"},
+
+            // extra graph statements
+            .extra_statements = {"rankdir=LR"},
+
+            // put space after comma of interval label? (a,b) vs (a, b)
+            .space_after_comma = false,
+
+            // left brace override enabled if not 0, otherwise determined from interval kind
+            .left_brace = '\0',
+
+            // right brace override enabled if not 0, otherwise determined from interval kind
+            .right_brace = '\0',
+
+            // edge attributes
+            .edge_attributes = {"color=blue"},
+
+            // indent characters
+            .indent = "\t",
+        }
+    );
+}
+```
+
 ## Free Functions
 ### interval<NumericT, Kind> make_safe_interval(NumericT border1, NumericT border2)
 Creates an interval where the borders are sorted so the lower border is the first one.
+
+### draw_dot_graph(std::ostream& os, interval_tree_t<Interval> const& tree, DrawOptions const& options)
+Draws a dot graph of the interval tree to the output stream.
+Options are:
+- digraph: bool
+- name: std::string
+- extra_node_attributes: std::vector<std::string>
+- extra_statements: std::vector<std::string>
+- space_after_comma: bool
+- left_brace: std::optional<std::string>
+- right_brace: std::optional<std::string>
+- edge_attributes: std::vector<std::string>
+- indent: std::string
 
 ## Members of IntervalTree<Interval>
 
