@@ -1,6 +1,8 @@
 // #include <interval-tree/draw.hpp> // to draw tree. this is not header only anymore.
 #include <interval-tree/interval_tree.hpp>
 
+#include <iostream>
+
 int main()
 {
     using namespace lib_interval_tree;

@@ -6,13 +6,9 @@
 #include "feature_test.hpp"
 
 #include <string>
-#include <memory>
-#include <cstdio>
 #include <stdexcept>
 #include <iterator>
 #include <type_traits>
-
-#include <iostream>
 
 namespace lib_interval_tree
 {

@@ -8,6 +8,7 @@ __history/
 *.cbp
 *.png
 .vscode
+.clangd
 build
 
 tests/bin

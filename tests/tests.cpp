@@ -15,6 +15,7 @@
 #include "iteration_tests.hpp"
 #include "hook_tests.hpp"
 #include "custom_interval_tests.hpp"
+#include "dot_draw_tests.hpp"
 
 int main(int argc, char** argv)
 {
