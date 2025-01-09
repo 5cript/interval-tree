@@ -17,5 +17,36 @@ int main()
     tree.insert({6, 10});
     tree.insert({19, 20});
 
-    draw_dot_graph(std::cout, tree);
+    draw_dot_graph(
+        std::cout,
+        tree,
+        {
+            // digraph or graph?
+            .digraph = true,
+
+            // graph name
+            .name = "G",
+
+            // extra node attributes
+            .extra_node_attributes = {"color=red"},
+
+            // extra graph statements
+            .extra_statements = {"rankdir=LR"},
+
+            // put space after comma of interval label? (a,b) vs (a, b)
+            .space_after_comma = false,
+
+            // left brace override, otherwise determined from interval kind
+            .left_brace = std::nullopt,
+
+            // right brace override, otherwise determined from interval kind
+            .right_brace = std::nullopt,
+
+            // edge attributes
+            .edge_attributes = {"color=blue"},
+
+            // indent characters
+            .indent = "\t",
+        }
+    );
 }
