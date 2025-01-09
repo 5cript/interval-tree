@@ -4,7 +4,6 @@
 
 #include <iostream>
 #include <string>
-#include <optional>
 #include <vector>
 #include <utility>
 
@@ -17,8 +16,8 @@ namespace lib_interval_tree
         std::vector<std::string> extra_node_attributes = {};
         std::vector<std::string> extra_statements = {};
         bool space_after_comma = false;
-        std::optional<char> left_brace = std::nullopt;
-        std::optional<char> right_brace = std::nullopt;
+        char left_brace = '\0';
+        char right_brace = '\0';
         std::vector<std::string> edge_attributes = {};
         std::string indent = "\t";
     };
@@ -40,27 +39,27 @@ namespace lib_interval_tree
                 using ival_type = typename TreeT::interval_type;
 
                 const auto determine_brace = []() {
-                    if (std::is_same_v<typename ival_type::interval_kind, closed>)
+                    if (std::is_same<typename ival_type::interval_kind, closed>::value)
                         return "[]";
-                    else if (std::is_same_v<typename ival_type::interval_kind, left_open>)
+                    else if (std::is_same<typename ival_type::interval_kind, left_open>::value)
                         return "(]";
-                    else if (std::is_same_v<typename ival_type::interval_kind, right_open>)
+                    else if (std::is_same<typename ival_type::interval_kind, right_open>::value)
                         return "[)";
-                    else if (std::is_same_v<typename ival_type::interval_kind, open>)
+                    else if (std::is_same<typename ival_type::interval_kind, open>::value)
                         return "()";
-                    else if (std::is_same_v<typename ival_type::interval_kind, closed_adjacent>)
+                    else if (std::is_same<typename ival_type::interval_kind, closed_adjacent>::value)
                         return "[]";
                     else
                         return "[]";
                 };
 
-                if (settings_.left_brace)
-                    left_brace_ = *settings_.left_brace;
+                if (settings_.left_brace != '\0')
+                    left_brace_ = settings_.left_brace;
                 else
                     left_brace_ = determine_brace()[0];
 
-                if (settings_.right_brace)
-                    right_brace_ = *settings_.right_brace;
+                if (settings_.right_brace != '\0')
+                    right_brace_ = settings_.right_brace;
                 else
                     right_brace_ = determine_brace()[1];
             }
@@ -78,7 +77,7 @@ namespace lib_interval_tree
             void make_label(T const& ival)
             {
 #if __cplusplus >= 201703L
-                if constexpr (std::is_same_v<typename T::interval_kind, dynamic>)
+                if constexpr (std::is_same<typename T::interval_kind, dynamic>::value)
                 {
                     stream_ << (ival.left_border() == interval_border::open ? '(' : '[') << ival.low()
                             << (settings_.space_after_comma ? ", " : ",") << ival.high()
@@ -203,7 +202,7 @@ namespace lib_interval_tree
     template <typename TreeT>
     void draw_dot_graph(std::ostream& stream, TreeT const& tree, dot_graph_draw_settings const& settings = {})
     {
-        detail::graph_painter painter{stream, tree, settings};
+        detail::graph_painter<TreeT> painter{stream, tree, settings};
         painter.make_header();
         if (tree.empty())
         {

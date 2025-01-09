@@ -102,11 +102,11 @@ int main()
             // put space after comma of interval label? (a,b) vs (a, b)
             .space_after_comma = false,
 
-            // left brace override, otherwise determined from interval kind
-            .left_brace = std::nullopt,
+            // left brace override enabled if not 0, otherwise determined from interval kind
+            .left_brace = '\0',
 
-            // right brace override, otherwise determined from interval kind
-            .right_brace = std::nullopt,
+            // right brace override enabled if not 0, otherwise determined from interval kind
+            .right_brace = '\0',
 
             // edge attributes
             .edge_attributes = {"color=blue"},
