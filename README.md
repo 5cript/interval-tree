@@ -127,12 +127,12 @@ Draws a dot graph of the interval tree to the output stream.
 Options are:
 - digraph: bool
 - name: std::string
-- extra_node_attributes: std::vector<std::string>
-- extra_statements: std::vector<std::string>
+- extra_node_attributes: std::vector\<std::string\>
+- extra_statements: std::vector\<std::string\>
 - space_after_comma: bool
-- left_brace: std::optional<std::string>
-- right_brace: std::optional<std::string>
-- edge_attributes: std::vector<std::string>
+- left_brace: char (0 = ignored, std::optional is c++17)
+- right_brace: char (0 = ignored, std::optional is c++17)
+- edge_attributes: std::vector\<std::string\>
 - indent: std::string
 
 ## Members of IntervalTree<Interval>
