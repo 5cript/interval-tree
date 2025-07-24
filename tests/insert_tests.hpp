@@ -130,3 +130,19 @@ TEST_F(InsertTests, CanInsertOverlapRecursively)
     EXPECT_EQ(tree.begin()->low(), 0);
     EXPECT_EQ(tree.begin()->high(), 29);
 }
+
+TEST_F(InsertTests, InsertOverlapDoesNotRecursivelyIfNotRequested)
+{
+    using tree_type = lib_interval_tree::interval_tree<types::interval_type>;
+
+    auto tree = tree_type{};
+    tree.insert({0, 9});
+    tree.insert({20, 29});
+    tree.insert_overlap({8, 21}, false, false);
+
+    EXPECT_EQ(tree.size(), 2);
+    EXPECT_EQ(tree.begin()->low(), 0);
+    EXPECT_EQ(tree.begin()->high(), 21);
+    EXPECT_EQ((*++tree.begin()).low(), 20);
+    EXPECT_EQ((*++tree.begin()).high(), 29);
+}
