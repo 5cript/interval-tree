@@ -42,7 +42,7 @@ int main()
   tree.insert({19, 20});
 
   tree.deoverlap();
-  
+
   for (auto const& i : tree)
   {
     std::cout << "[" << i.low() << ", " << i.high() << "]\n";
@@ -69,7 +69,7 @@ Creates an interval where the borders are sorted so the lower border is the firs
 
   - [Members of IntervalTree<Interval>](#members-of-intervaltreeinterval)
     - [iterator insert(interval_type const& ival)](#iterator-insertinterval_type-const-ival)
-    - [iterator insert_overlap(interval_type const& ival)](#iterator-insert_overlapinterval_type-const-ival)
+    - [iterator insert_overlap(interval_type const& ival, bool, bool)](#iterator-insert_overlapinterval_type-const-ival-bool-bool)
     - [iterator erase(iterator iter)](#iterator-eraseiterator-iter)
     - [size_type size() const](#size_type-size-const)
     - [(const)iterator find(interval_type const& ival)](#constiterator-findinterval_type-const-ival)
@@ -100,20 +100,20 @@ Creates an interval where the borders are sorted so the lower border is the firs
     - [reverse_iterator crend()](#reverse_iterator-crend)
 
 ### iterator insert(interval_type const& ival)
-Adds an interval into the tree. 
+Adds an interval into the tree.
 #### Parameters
 * `ival` An interval
 
 **Returns**: An iterator to the inserted element.
 
 ---
-### iterator insert_overlap(interval_type const& ival)
+### iterator insert_overlap(interval_type const& ival, bool, bool)
 Inserts an interval into the tree if no other interval overlaps it.
 Otherwise merge the interval with the one being overlapped.
 #### Parameters
 * `ival` An interval
 * `exclusive` Exclude borders from overlap check. Defaults to false.
-* `mergeSetOverlapping` If the result of interval::join is a collection of intervals, shall each be inserted with more overlap searches? Defaults to false
+* `recursive` If the result of interval::join is a collection of intervals, shall each be inserted with more overlap searches? If the result is a single interval, shall it be inserted via insert_overlap or insert? Defaults to false. recursive=true picks insert_overlap. Also be careful to not produce overlapping merge sets when doing recursive insertion, or it will recurse endlessly.
 
 **Returns**: An iterator to the inserted element.
 
@@ -325,7 +325,7 @@ Returns a past the end const_iterator in reverse.
 **Returns**: past the end const_iterator.
 
 ## Members of Interval
-___You can implement your own interval if you provide the same functions, except (within, operator-, size, operator!=).___
+___You can implement your own interval if you provide the same functions, except (operator-, size, operator!=).___
 
 There are 6 types of intervals:
 - open: (a, b)

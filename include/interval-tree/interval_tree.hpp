@@ -1022,20 +1022,22 @@ namespace lib_interval_tree
          *  Otherwise merge the interval with the being overlapped.
          *
          *  @param ival The interval
-         *  @param exclusive Exclude borders.
-         *  @param mergeSetOverlapping If the result of interval::join is a collection of intervals, shall each be
-         * inserted with more overlap searches?
+         *  @param exclusive Exclude borders regardeless of interval type.
+         *  @param recursive If the result of interval::join is a collection of intervals, shall each be
+         *  inserted with more overlap searches? If the result is a single interval shall it insert_overlap or insert?
+         *  Be careful to not produce overlapping merge sets when doing recursive insertion, or it will recurse
+         *  endlessly.
          */
-        iterator insert_overlap(interval_type const& ival, bool exclusive = false, bool mergeSetOverlapping = false)
+        iterator insert_overlap(interval_type const& ival, bool exclusive = false, bool recursive = false)
         {
             auto iter = overlap_find(ival, exclusive);
             if (iter == end())
                 return insert(ival);
             else
             {
-                auto mergeSet = iter.interval().join(ival);
+                auto merge_set = iter.interval().join(ival);
                 erase(iter);
-                return insert_merge_set(mergeSet, mergeSetOverlapping);
+                return insert_merge_set(std::move(merge_set), exclusive, recursive);
             }
         }
 
@@ -1484,17 +1486,17 @@ namespace lib_interval_tree
         };
 
         template <typename MergeSet>
-        iterator insert_merge_set(MergeSet const& merge_set, bool mergeSetOverlapping)
+        iterator insert_merge_set(MergeSet const& merge_set, bool exclusive, bool recursive)
         {
-            if (mergeSetOverlapping)
+            if (recursive)
             {
                 for (auto iter = merge_set.begin(), end = merge_set.end(); iter != end;)
                 {
                     auto next = iter;
                     if (++next == end)
-                        return insert_overlap(*iter);
+                        return insert_overlap(*iter, exclusive, recursive);
                     else
-                        insert_overlap(*iter);
+                        insert_overlap(*iter, exclusive, recursive);
                     iter = std::move(next);
                 }
                 return end();
@@ -1513,8 +1515,10 @@ namespace lib_interval_tree
                 return end();
             }
         }
-        iterator insert_merge_set(interval_type const& interval, bool)
+        iterator insert_merge_set(interval_type const& interval, bool exclusive, bool recursive)
         {
+            if (recursive)
+                return insert_overlap(interval, exclusive, recursive);
             return insert(interval);
         }
 
