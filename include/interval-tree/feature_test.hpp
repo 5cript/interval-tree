@@ -23,3 +23,21 @@
 #        define LIB_INTERVAL_TREE_FALLTHROUGH __attribute__((fallthrough))
 #    endif
 #endif
+
+// if constexpr is supported, use it, otherwise use plain if and pray the compiler optimizes it.
+#if __cplusplus >= 201703L
+#    define INTERVAL_TREE_CONSTEXPR_IF if constexpr
+#else
+#    define INTERVAL_TREE_CONSTEXPR_IF if
+#endif
+
+// enum { value = value_ } or static constexpr
+#if __cplusplus >= 201703L
+#    define INTERVAL_TREE_META_VALUE(type, name, the_value) static constexpr type name = the_value
+#else
+#    define INTERVAL_TREE_META_VALUE(type, name, the_value) \
+        enum : type \
+        { \
+            name = the_value \
+        }
+#endif

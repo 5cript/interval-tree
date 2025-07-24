@@ -7,32 +7,27 @@
 template <typename numerical_type, typename interval_kind_ = lib_interval_tree::closed>
 struct multi_join_interval
 {
-public:
+  public:
     using value_type = numerical_type;
     using interval_kind = interval_kind_;
 
-#ifndef INTERVAL_TREE_SAFE_INTERVALS
 #if __cplusplus >= 201703L
     constexpr
 #endif
-    multi_join_interval(value_type low, value_type high)
+        multi_join_interval(value_type low, value_type high)
         : low_{low}
         , high_{high}
     {
         if (low > high)
             throw std::invalid_argument("Low border is not lower or equal to high border.");
     }
-#else
-#if __cplusplus >= 201703L
-    constexpr
-#endif
-    multi_join_interval(value_type low, value_type high)
-        : low_{std::min(low, high)}
-        , high_{std::max(low, high)}
-    {
-    }
-#endif
+
     virtual ~multi_join_interval() = default;
+    multi_join_interval(multi_join_interval const&) = default;
+    multi_join_interval(multi_join_interval&&) noexcept = default;
+    multi_join_interval& operator=(multi_join_interval const&) = default;
+    multi_join_interval& operator=(multi_join_interval&&) noexcept = default;
+
     friend bool operator==(multi_join_interval const& lhs, multi_join_interval const& other)
     {
         return lhs.low_ == other.low_ && lhs.high_ == other.high_;
@@ -91,13 +86,13 @@ public:
         const auto min = std::min(low_, other.low_);
         const auto max = std::max(high_, other.high_);
         const auto avg = (min + max) / 2;
-        return {
-            {min, avg},
-            {avg, max},
+        return std::vector<multi_join_interval>{
+            multi_join_interval{min, avg - 1},
+            multi_join_interval{avg + 1, max},
         };
     }
 
-protected:
+  protected:
     value_type low_;
     value_type high_;
 };
