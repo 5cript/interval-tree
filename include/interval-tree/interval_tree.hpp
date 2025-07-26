@@ -1421,100 +1421,6 @@ namespace lib_interval_tree
             return punch({min, max});
         }
 
-        // TODO: private
-        /**
-         * @brief Finds the interval that is right of the given value and does not contain it.
-         * Only works with deoverlapped trees.
-         *
-         * @param low
-         * @return node_type*
-         */
-        node_type* find_directly_right_of_i(value_type search_value) const
-        {
-            if (empty())
-                return nullptr;
-
-            // There can be no interval strictly right of the value, if the value
-            // is larger than the max.
-            if (search_value > root_->max_)
-                return nullptr;
-
-            const auto is_interval_strictly_right_of_value = [search_value](node_type* node) {
-                return node->low() > search_value ||
-                    (node->low() == search_value && !node->interval()->within(search_value));
-            };
-
-            auto* node = root_;
-
-            // If the interval is not strictly right of the value, we can only go down right
-            // And dont have to check left.
-            while (!is_interval_strictly_right_of_value(node) && node->right_)
-                node = node->right_;
-
-            bool go_left = false;
-            bool go_right = false;
-            do
-            {
-                go_left = node->left_ && is_interval_strictly_right_of_value(node->left_);
-                go_right = node->right_ && is_interval_strictly_right_of_value(node->right_);
-
-                if (go_left)
-                    node = node->left_;
-                else if (go_right)
-                    node = node->right_;
-            } while (go_left || go_right);
-
-            if (is_interval_strictly_right_of_value(node))
-                return node;
-
-            // We only end up here when node == root_, otherwise we never went down the tree to begin with.
-            return nullptr;
-        }
-
-        /**
-         * @brief Find the interval that is left of the given value or contains it.
-         * Only works in deoverlapped trees. Because a deoverlapped tree is indistinguishable
-         * from a regular binary search tree. The tree is then also sorted by the upper interval bound.
-         * Making this search possible in the first place.
-         *
-         * @param search_value
-         * @return node_type*
-         */
-        node_type* find_leftest_interval_of_value_i(value_type search_value) const
-        {
-            if (empty())
-                return nullptr;
-
-            auto* node = root_;
-
-            // low of a node is always lower than the lows of all nodes right of that node
-            // high of a node is always lower than the lows of all nodes right of that node
-
-            bool go_left = false;
-            bool go_right = false;
-
-            do
-            {
-                go_right = search_value > node->high();
-                if (go_right)
-                {
-                    go_right &= node->right_ != nullptr;
-                    if (go_right)
-                        node = node->right_;
-                    continue;
-                }
-
-                go_left = node->left_ != nullptr && search_value < node->low();
-                if (go_left)
-                    node = node->left_;
-            } while (go_left || go_right);
-
-            if (search_value < node->low())
-                return nullptr;
-
-            return node;
-        }
-
         /**
          * Only works with deoverlapped trees.
          * Removes all intervals from the given interval and produces a tree that contains the remaining intervals.
@@ -1562,7 +1468,6 @@ namespace lib_interval_tree
                 if (ex.right_slice)
                 {
                     ival = std::move(*ex.right_slice);
-                    // TODO: Can I avoid assigning this every loop? -> maybe by extracting the first iteration?
                     insert_remaining = true;
                 }
                 else
@@ -1671,6 +1576,50 @@ namespace lib_interval_tree
         }
 
       private:
+        /**
+         * @brief Find the interval that is left of the given value or contains it.
+         * Only works in deoverlapped trees. Because a deoverlapped tree is indistinguishable
+         * from a regular binary search tree. The tree is then also sorted by the upper interval bound.
+         * Making this search possible in the first place.
+         *
+         * @param search_value
+         * @return node_type*
+         */
+        node_type* find_leftest_interval_of_value_i(value_type search_value) const
+        {
+            if (empty())
+                return nullptr;
+
+            auto* node = root_;
+
+            // low of a node is always lower than the lows of all nodes right of that node
+            // high of a node is always lower than the lows of all nodes right of that node
+
+            bool go_left = false;
+            bool go_right = false;
+
+            do
+            {
+                go_right = search_value > node->high();
+                if (go_right)
+                {
+                    go_right &= node->right_ != nullptr;
+                    if (go_right)
+                        node = node->right_;
+                    continue;
+                }
+
+                go_left = node->left_ != nullptr && search_value < node->low();
+                if (go_left)
+                    node = node->left_;
+            } while (go_left || go_right);
+
+            if (search_value < node->low())
+                return nullptr;
+
+            return node;
+        }
+
         node_type* copy_tree_impl(node_type* root, node_type* parent)
         {
             if (root)
