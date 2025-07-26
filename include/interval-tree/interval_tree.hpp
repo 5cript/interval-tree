@@ -1128,7 +1128,7 @@ namespace lib_interval_tree
          *  Be careful to not produce overlapping merge sets when doing recursive insertion, or it will recurse
          *  endlessly.
          */
-        iterator insert_overlap(interval_type const& ival, bool exclusive = false, bool recursive = false)
+        iterator insert_overlap(interval_type const& ival, bool exclusive = false, bool recursive = true)
         {
             auto iter = overlap_find(ival, exclusive);
             if (iter == end())
