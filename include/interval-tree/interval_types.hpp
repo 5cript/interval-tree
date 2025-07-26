@@ -193,14 +193,33 @@ namespace lib_interval_tree
 
         template <typename numerical_type>
 #ifdef LIB_INTERVAL_TREE_CONCEPTS
-        requires(!std::is_floating_point_v<numerical_type>)
+        requires(!std::is_floating_point_v<numerical_type> && std::is_signed_v<numerical_type>)
         static inline numerical_type
 #else
-        static inline typename std::enable_if<!std::is_floating_point<numerical_type>::value, numerical_type>::type
+        static inline typename std::enable_if<
+            !std::is_floating_point<numerical_type>::value && std::is_signed<numerical_type>::value,
+            numerical_type>::type
 #endif
         size(numerical_type low, numerical_type high)
         {
             return high - low - 1;
+        }
+
+        template <typename numerical_type>
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires(!std::is_floating_point_v<numerical_type> && std::is_unsigned_v<numerical_type>)
+        static inline numerical_type
+#else
+        static inline typename std::enable_if<
+            !std::is_floating_point<numerical_type>::value && std::is_unsigned<numerical_type>::value,
+            numerical_type>::type
+#endif
+        size(numerical_type low, numerical_type high)
+        {
+            if (high > low)
+                return high - low - 1;
+            else
+                return 0;
         }
 
         template <typename numerical_type>
@@ -393,7 +412,13 @@ namespace lib_interval_tree
 
             const auto highToClosed = [](auto const& ival) {
                 if (ival.right_border() == interval_border::open)
+                {
+                    INTERVAL_TREE_CONSTEXPR_IF(std::is_unsigned<typename interval_type::value_type>::value)
+                    {
+                        return ival.high() > 0 ? ival.high() - 1 : 0;
+                    }
                     return ival.high() - 1;
+                }
                 return ival.high();
             };
 
@@ -442,11 +467,33 @@ namespace lib_interval_tree
                 return 0;
 
             value_type adjusted_low = ival1.left_border() == interval_border::open ? ival1.low() + 1 : ival1.low();
-            value_type adjusted_high = ival1.right_border() == interval_border::open ? ival1.high() - 1 : ival1.high();
+
+            value_type adjusted_high = [&]() {
+                INTERVAL_TREE_CONSTEXPR_IF(std::is_unsigned<value_type>::value)
+                {
+                    return ival1.right_border() == interval_border::open ? (ival1.high() > 0 ? ival1.high() - 1 : 0)
+                                                                         : ival1.high();
+                }
+                else
+                {
+                    return ival1.right_border() == interval_border::open ? ival1.high() - 1 : ival1.high();
+                }
+            }();
+
             value_type other_adjusted_low =
                 ival2.left_border() == interval_border::open ? ival2.low() + 1 : ival2.low();
-            value_type other_adjusted_high =
-                ival2.right_border() == interval_border::open ? ival2.high() - 1 : ival2.high();
+
+            value_type other_adjusted_high = [&]() {
+                INTERVAL_TREE_CONSTEXPR_IF(std::is_unsigned<value_type>::value)
+                {
+                    return ival2.right_border() == interval_border::open ? (ival2.high() > 0 ? ival2.high() - 1 : 0)
+                                                                         : ival2.high();
+                }
+                else
+                {
+                    return ival2.right_border() == interval_border::open ? ival2.high() - 1 : ival2.high();
+                }
+            }();
 
             if (adjusted_high < other_adjusted_low)
                 return other_adjusted_low - adjusted_high;
@@ -540,7 +587,13 @@ namespace lib_interval_tree
                     ? &ival1
                     : &ival2;
 
-                const auto openAdjusted = rightOpenInterval->high() - 1;
+                const auto openAdjusted = [&]() {
+                    INTERVAL_TREE_CONSTEXPR_IF(std::is_unsigned<typename interval_type::value_type>::value)
+                    {
+                        return rightOpenInterval->high() > 0 ? rightOpenInterval->high() - 1 : 0;
+                    }
+                    return rightOpenInterval->high() - 1;
+                }();
 
                 if (openAdjusted == rightClosedInterval->high())
                 {
