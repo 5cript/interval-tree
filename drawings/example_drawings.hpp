@@ -151,6 +151,32 @@ static void drawClosedPunchExample()
     drawTree("drawings/closed_punched.png", punched, false, false);
 }
 
+static void drawAdjacentClosedPunchExample()
+{
+    constexpr int iterations = 5;
+    using namespace lib_interval_tree;
+
+    interval_tree<interval<int, closed_adjacent>> tree;
+
+    // insert shuffled into new tree
+    std::vector<std::pair<int, int>> intervals;
+    for (int i = 0; i < iterations; ++i)
+    {
+        intervals.emplace_back(i * 10, i * 10 + 5);
+    }
+
+    std::mt19937 rng(std::random_device{}());
+    std::shuffle(intervals.begin(), intervals.end(), rng);
+    for (const auto& interval : intervals)
+    {
+        tree.insert({interval.first, interval.second});
+    }
+
+    drawTree("drawings/closed_adjacent_punch_source.png", tree, false, false);
+    const auto punched = tree.punch({-10, iterations * 10 + 10});
+    drawTree("drawings/closed_adjacent_punched.png", punched, false, false);
+}
+
 static void drawFloatPunchExample()
 {
     constexpr int iterations = 5;
@@ -184,5 +210,6 @@ static void drawAll()
     drawLargeOverlapFree();
     drawOpenPunchExample();
     drawClosedPunchExample();
+    drawAdjacentClosedPunchExample();
     drawFloatPunchExample();
 }
