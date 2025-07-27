@@ -5,7 +5,6 @@
 #include "typedefs.hpp"
 
 // following headers expect to be included after gtest headers and interval_tree
-#include "interval_tests.hpp"
 #include "interval_tree_tests.hpp"
 #include "insert_tests.hpp"
 #include "erase_tests.hpp"
@@ -16,6 +15,8 @@
 #include "hook_tests.hpp"
 #include "custom_interval_tests.hpp"
 #include "dot_draw_tests.hpp"
+#include "punch_tests.hpp"
+#include "interval_tests.hpp"
 
 int main(int argc, char** argv)
 {

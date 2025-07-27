@@ -4,6 +4,7 @@
 #include "interval_types.hpp"
 #include "tree_hooks.hpp"
 #include "feature_test.hpp"
+#include "optional.hpp"
 
 #include <string>
 #include <stdexcept>
@@ -21,7 +22,38 @@ namespace lib_interval_tree
         double_black
     };
     // ############################################################################################################
+    template <typename interval_type>
+    struct slice_type
+    {
+        optional<interval_type> left_slice{};
+        optional<interval_type> right_slice{};
+    };
+    // ############################################################################################################
     using default_interval_value_type = int;
+    // ############################################################################################################
+    namespace detail
+    {
+        template <class...>
+        using void_t = void;
+
+        template <typename interval_t, typename = void>
+        struct has_slice_impl : std::false_type
+        {};
+
+        template <typename interval_t>
+        struct has_slice_impl<
+            interval_t,
+            void_t<decltype(std::declval<interval_t>().slice(std::declval<interval_t>()))>> : std::true_type
+        {};
+
+#if __cplusplus >= 202002L
+        template <typename interval_t>
+        concept has_slice = has_slice_impl<interval_t>::value;
+#else
+        template <typename interval_t>
+        constexpr bool has_slice = has_slice_impl<interval_t>::value;
+#endif
+    }
     // ############################################################################################################
     template <typename numerical_type, typename interval_kind_>
     struct interval_base
@@ -201,6 +233,36 @@ namespace lib_interval_tree
         {
             return interval_kind::size(low_, high_);
         }
+
+        /**
+         * @brief Removes other from this interval returning what is remaining.
+         *
+         * The range of other going beyond the range of this is ignored.
+         *
+         * @param other
+         * @return slice_type<interval>
+         */
+        slice_type<interval> slice(interval const& other) const
+        {
+            slice_type<interval> slices{};
+            if (low_ < other.low_)
+            {
+                auto slice = interval{low_, std::min(interval_kind::left_slice_upper_bound(other.low_), high_)};
+                // >= comparison avoids overflows in case of unsigned integers
+                if (slice.high_ >= slice.low_ && slice.size() > 0)
+                    slices.left_slice = std::move(slice);
+            }
+            // low_ == other.low_ does not produce a left slice in any case.
+            if (high_ > other.high_)
+            {
+                auto slice = interval{std::max(interval_kind::right_slice_lower_bound(other.high_), low_), high_};
+                // >= comparison avoids overflows in case of unsigned integers
+                if (slice.high_ >= slice.low_ && slice.size() > 0)
+                    slices.right_slice = std::move(slice);
+            }
+            // high_ == other.high_ does not produce a right slice in any case.
+            return slices;
+        }
     };
 
     template <typename numerical_type>
@@ -321,6 +383,47 @@ namespace lib_interval_tree
         interval_border right_border() const
         {
             return right_border_;
+        }
+
+        /**
+         * @brief Removes other from this interval returning what is remaining.
+         *
+         * @param other
+         * @return slice_type<interval>
+         */
+        slice_type<interval> slice(interval const& other) const
+        {
+            if (!overlaps(other))
+                return {};
+
+            slice_type<interval> slices{};
+            if (low_ < other.low_)
+            {
+                auto slice = interval{
+                    low_,
+                    std::min(other.low_, high_),
+                    left_border_,
+                    other.left_border() == interval_border::open ? interval_border::closed : interval_border::open
+                };
+                // >= comparison avoids overflows in case of unsigned integers
+                if (slice.high_ >= slice.low_ && slice.size() > 0)
+                    slices.left_slice = std::move(slice);
+            }
+            // low_ == other.low_ does not produce a left slice in any case.
+            if (high_ > other.high_)
+            {
+                auto slice = interval{
+                    std::max(other.high_, low_),
+                    high_,
+                    right_border_ == interval_border::open ? interval_border::closed : interval_border::open,
+                    other.right_border()
+                };
+                // >= comparison avoids overflows in case of unsigned integers
+                if (slice.high_ >= slice.low_ && slice.size() > 0)
+                    slices.right_slice = std::move(slice);
+            }
+            // high_ == other.high_ does not produce a right slice in any case.
+            return slices;
         }
 
       protected:
@@ -1024,7 +1127,7 @@ namespace lib_interval_tree
          *  Be careful to not produce overlapping merge sets when doing recursive insertion, or it will recurse
          *  endlessly.
          */
-        iterator insert_overlap(interval_type const& ival, bool exclusive = false, bool recursive = false)
+        iterator insert_overlap(interval_type const& ival, bool exclusive = false, bool recursive = true)
         {
             auto iter = overlap_find(ival, exclusive);
             if (iter == end())
@@ -1338,38 +1441,74 @@ namespace lib_interval_tree
         {
             if (empty())
                 return {};
-            auto min = std::begin(*this)->interval()->low();
-            auto max = root_->max_;
-            return punch({min, max});
+            return punch({begin()->low(), root_->max_});
         }
 
         /**
-         *  Only works with deoverlapped trees.
-         *  Removes all intervals from the given interval and produces a tree that contains the remaining intervals.
-         *  This is basically the other punch overload with ival = [tree_lowest, tree_highest]
+         * Only works with deoverlapped trees.
+         * Removes all intervals from the given interval and produces a tree that contains the remaining intervals.
+         * This is basically the other punch overload with ival = [tree_lowest, tree_highest]
+         *
+         * @param ival The range in which to punch out the gaps as a new tree
          */
-        interval_tree punch(interval_type const& ival) const
+        template <typename interval_t = interval_type>
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires detail::has_slice<interval_t>
+        interval_tree
+#else
+        typename std::enable_if<detail::has_slice<interval_t>, interval_tree>::type
+#endif
+        punch(interval_type ival) const
         {
-            if (empty())
-                return {};
-
             interval_tree result;
-            auto i = std::begin(*this);
-            if (ival.low() < i->interval()->low())
-                result.insert({ival.low(), i->interval()->low()});
 
-            for (auto e = end(); i != e; ++i)
+            if (empty())
             {
-                auto next = i;
-                ++next;
-                if (next != e)
-                    result.insert({i->interval()->high(), next->interval()->low()});
-                else
-                    break;
+                // Nothing to punch, so return the whole interval
+                result.insert(ival);
+                return result;
             }
 
-            if (i != end() && i->interval()->high() < ival.high())
-                result.insert({i->interval()->high(), ival.high()});
+            auto* left_of_or_contains = find_leftest_interval_of_value_i(ival.low());
+
+            const_iterator iter{nullptr, this};
+            if (left_of_or_contains == nullptr)
+            {
+                iter = cbegin();
+                // not adjacent or overlapping?
+                if (ival.high() < iter->low())
+                {
+                    result.insert(ival);
+                    return result;
+                }
+            }
+            else
+            {
+                iter = const_iterator{left_of_or_contains, this};
+            }
+
+            slice_type<interval_type> ex;
+            bool insert_remaining = false;
+            for (; iter != cend(); ++iter)
+            {
+                ex = ival.slice(*iter);
+                if (ex.left_slice)
+                    result.insert(*ex.left_slice);
+
+                if (ex.right_slice)
+                {
+                    ival = std::move(*ex.right_slice);
+                    insert_remaining = true;
+                }
+                else
+                {
+                    insert_remaining = false;
+                    break;
+                }
+            }
+
+            if (insert_remaining && ival.size() > 0)
+                result.insert(ival);
 
             return result;
         }
@@ -1467,6 +1606,50 @@ namespace lib_interval_tree
         }
 
       private:
+        /**
+         * @brief Find the interval that is left of the given value or contains it.
+         * Only works in deoverlapped trees. Because a deoverlapped tree is indistinguishable
+         * from a regular binary search tree. The tree is then also sorted by the upper interval bound.
+         * Making this search possible in the first place.
+         *
+         * @param search_value
+         * @return node_type*
+         */
+        node_type* find_leftest_interval_of_value_i(value_type search_value) const
+        {
+            if (empty())
+                return nullptr;
+
+            auto* node = root_;
+
+            // low of a node is always lower than the lows of all nodes right of that node
+            // high of a node is always lower than the lows of all nodes right of that node
+
+            bool go_left = false;
+            bool go_right = false;
+
+            do
+            {
+                go_right = search_value > node->high();
+                if (go_right)
+                {
+                    go_right &= node->right_ != nullptr;
+                    if (go_right)
+                        node = node->right_;
+                    continue;
+                }
+
+                go_left = node->left_ != nullptr && search_value < node->low();
+                if (go_left)
+                    node = node->left_;
+            } while (go_left || go_right);
+
+            if (search_value < node->low())
+                return nullptr;
+
+            return node;
+        }
+
         node_type* copy_tree_impl(node_type* root, node_type* parent)
         {
             if (root)

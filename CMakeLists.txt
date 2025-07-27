@@ -6,6 +6,12 @@ project(interval-tree)
 
 add_library(interval-tree INTERFACE)
 
+if(INT_TREE_USE_OPTIONAL_POLYFILL)
+    target_compile_definitions(interval-tree INTERFACE
+        -DINTERVAL_TREE_USE_OPTIONAL_POLYFILL
+    )
+endif()
+
 target_include_directories(interval-tree INTERFACE ./include)
 
 if(INT_TREE_DRAW_EXAMPLES)

@@ -2,7 +2,9 @@
 
 #include <interval-tree/draw.hpp>
 
+#include <random>
 #include <string>
+#include <iostream>
 
 static void drawDocExample()
 {
@@ -31,7 +33,7 @@ static void drawFromTests1()
 
     interval_tree_t<int> tree;
 
-    std::vector <interval_tree_t<int>::interval_type> intervalCollection;
+    std::vector<interval_tree_t<int>::interval_type> intervalCollection;
 
     intervalCollection.push_back({-51, 11});
     intervalCollection.push_back({26, 68});
@@ -67,8 +69,147 @@ static void drawFromTests1()
     drawTree("drawings/from_tests_1_deoverlapped.png", tree, false, false);
 }
 
+static void drawLargeOverlapFree()
+{
+    using namespace lib_interval_tree;
+
+    interval_tree_t<int> tree;
+
+    for (int i = 0; i < 30; ++i)
+    {
+        tree.insert({i * 10, i * 10 + 5});
+    }
+
+    drawTree("drawings/large_overlap_free.png", tree, false, false);
+
+    std::vector<std::pair<int, int>> intervals;
+    for (int i = 0; i < 30; ++i)
+    {
+        intervals.emplace_back(i * 10, i * 10 + 5);
+    }
+
+    // insert shuffled into new tree
+    interval_tree_t<int> tree2;
+    std::mt19937 rng(std::random_device{}());
+    std::shuffle(intervals.begin(), intervals.end(), rng);
+    for (const auto& interval : intervals)
+    {
+        tree2.insert({interval.first, interval.second});
+    }
+    drawTree("drawings/large_overlap_free_shuffled.png", tree2, false, false);
+}
+
+static void drawOpenPunchExample()
+{
+    constexpr int iterations = 5;
+    using namespace lib_interval_tree;
+
+    interval_tree<interval<int, open>> tree;
+
+    // insert shuffled into new tree
+    std::vector<std::pair<int, int>> intervals;
+    for (int i = 0; i < iterations; ++i)
+    {
+        intervals.emplace_back(i * 10, i * 10 + 5);
+    }
+
+    std::mt19937 rng(std::random_device{}());
+    std::shuffle(intervals.begin(), intervals.end(), rng);
+    for (const auto& interval : intervals)
+    {
+        tree.insert({interval.first, interval.second});
+    }
+
+    drawTree("drawings/open_punch_source.png", tree, false, false);
+    const auto punched = tree.punch({-10, iterations * 10 + 10});
+    drawTree("drawings/open_punched.png", punched, false, false);
+}
+
+static void drawClosedPunchExample()
+{
+    constexpr int iterations = 5;
+    using namespace lib_interval_tree;
+
+    interval_tree<interval<int, closed>> tree;
+
+    // insert shuffled into new tree
+    std::vector<std::pair<int, int>> intervals;
+    for (int i = 0; i < iterations; ++i)
+    {
+        intervals.emplace_back(i * 10, i * 10 + 5);
+    }
+
+    std::mt19937 rng(std::random_device{}());
+    std::shuffle(intervals.begin(), intervals.end(), rng);
+    for (const auto& interval : intervals)
+    {
+        tree.insert({interval.first, interval.second});
+    }
+
+    drawTree("drawings/closed_punch_source.png", tree, false, false);
+    const auto punched = tree.punch({-10, iterations * 10 + 10});
+    drawTree("drawings/closed_punched.png", punched, false, false);
+}
+
+static void drawAdjacentClosedPunchExample()
+{
+    constexpr int iterations = 5;
+    using namespace lib_interval_tree;
+
+    interval_tree<interval<int, closed_adjacent>> tree;
+
+    // insert shuffled into new tree
+    std::vector<std::pair<int, int>> intervals;
+    for (int i = 0; i < iterations; ++i)
+    {
+        intervals.emplace_back(i * 10, i * 10 + 5);
+    }
+
+    std::mt19937 rng(std::random_device{}());
+    std::shuffle(intervals.begin(), intervals.end(), rng);
+    for (const auto& interval : intervals)
+    {
+        tree.insert({interval.first, interval.second});
+    }
+
+    drawTree("drawings/closed_adjacent_punch_source.png", tree, false, false);
+    const auto punched = tree.punch({-10, iterations * 10 + 10});
+    drawTree("drawings/closed_adjacent_punched.png", punched, false, false);
+}
+
+static void drawFloatPunchExample()
+{
+    constexpr int iterations = 5;
+    using namespace lib_interval_tree;
+
+    interval_tree<interval<float, closed>> tree;
+
+    // insert shuffled into new tree
+    std::vector<std::pair<float, float>> intervals;
+    for (int i = 0; i < iterations; ++i)
+    {
+        intervals.emplace_back(i * 10.0f, i * 10.0f + 5.0f);
+    }
+
+    std::mt19937 rng(std::random_device{}());
+    std::shuffle(intervals.begin(), intervals.end(), rng);
+    for (const auto& interval : intervals)
+    {
+        tree.insert({interval.first, interval.second});
+    }
+
+    drawTree("drawings/float_punch_source.png", tree, false, false);
+    const auto punched = tree.punch({-10.0f, iterations * 10.0f + 10.0f});
+    drawTree("drawings/float_punched.png", punched, false, false);
+}
+
 static void drawAll()
 {
     drawDocExample();
     drawFromTests1();
+    drawLargeOverlapFree();
+    drawOpenPunchExample();
+    drawClosedPunchExample();
+    drawAdjacentClosedPunchExample();
+    drawFloatPunchExample();
 }

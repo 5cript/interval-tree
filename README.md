@@ -61,6 +61,11 @@ Create a build folder, navigate there, run cmake and build the tree-tests target
 You might have to adapt the linker line for gtest, if you built it yourself and didn't install it into your system.
 If you want to generate the pretty drawings, install cairo, pull the submodule and pass INT_TREE_DRAW_EXAMPLES=on to the cmake command line to generate a drawings/make_drawings executeable.
 
+Some features of this library require the presence of an optional type.
+If you are using C++17 and up, it will be std::optional.
+Otherwise you can specify INTERVAL_TREE_HAVE_BOOST_OPTIONAL to use boost::optional.
+And if neither, a reduced version of optional is provided in the library, not perfectly exchangeable with std::optional, but sufficient for the library to work.
+
 ## Draw Dot Graph
 This draws a dot graph of the tree:
 ```c++
@@ -137,37 +142,75 @@ Options are:
 
 ## Members of IntervalTree<Interval>
 
-  - [Members of IntervalTree<Interval>](#members-of-intervaltreeinterval)
-    - [iterator insert(interval_type const& ival)](#iterator-insertinterval_type-const-ival)
-    - [iterator insert_overlap(interval_type const& ival, bool, bool)](#iterator-insert_overlapinterval_type-const-ival-bool-bool)
+- [interval-tree](#interval-tree)
+  - [How an interval tree looks like:](#how-an-interval-tree-looks-like)
+  - [Example](#example)
+  - [Compile \& Run Testing](#compile--run-testing)
+  - [Draw Dot Graph](#draw-dot-graph)
+  - [Free Functions](#free-functions)
+    - [interval\<NumericT, Kind\> make\_safe\_interval(NumericT border1, NumericT border2)](#intervalnumerict-kind-make_safe_intervalnumerict-border1-numerict-border2)
+    - [draw\_dot\_graph(std::ostream\& os, interval\_tree\_t const\& tree, DrawOptions const\& options)](#draw_dot_graphstdostream-os-interval_tree_t-const-tree-drawoptions-const-options)
+  - [Members of IntervalTree](#members-of-intervaltree)
+    - [iterator insert(interval\_type const\& ival)](#iterator-insertinterval_type-const-ival)
+      - [Parameters](#parameters)
+    - [iterator insert\_overlap(interval\_type const\& ival, bool, bool)](#iterator-insert_overlapinterval_type-const-ival-bool-bool)
+      - [Parameters](#parameters-1)
     - [iterator erase(iterator iter)](#iterator-eraseiterator-iter)
-    - [size_type size() const](#size_type-size-const)
-    - [(const)iterator find(interval_type const& ival)](#constiterator-findinterval_type-const-ival)
-    - [(const)iterator find(interval_type const& ival, CompareFunctionT const& compare)](#constiterator-findinterval_type-const-ival-comparefunctiont-const-compare)
-    - [(const)iterator find_all(interval_type const& ival, OnFindFunctionT const& on_find)](#constiterator-find_allinterval_type-const-ival-onfindfunctiont-const-on_find)
+      - [Parameters](#parameters-2)
+    - [size\_type size() const](#size_type-size-const)
+    - [(const)iterator find(interval\_type const\& ival)](#constiterator-findinterval_type-const-ival)
+      - [Parameters](#parameters-3)
+    - [(const)iterator find(interval\_type const\& ival, CompareFunctionT const\& compare)](#constiterator-findinterval_type-const-ival-comparefunctiont-const-compare)
+      - [Parameters](#parameters-4)
+    - [(const)iterator find\_all(interval\_type const\& ival, OnFindFunctionT const\& on\_find)](#constiterator-find_allinterval_type-const-ival-onfindfunctiont-const-on_find)
+      - [Parameters](#parameters-5)
       - [Example](#example-1)
-    - [(const)iterator find_all(interval_type const& ival, OnFindFunctionT const& on_find, CompareFunctionT const& compare)](#constiterator-find_allinterval_type-const-ival-onfindfunctiont-const-on_find-comparefunctiont-const-compare)
-    - [(const)iterator find_next_in_subtree(iterator from, interval_type const& ival)](#constiterator-find_next_in_subtreeiterator-from-interval_type-const-ival)
-    - [(const)iterator find_next_in_subtree(iterator from, interval_type const& ival, CompareFunctionT const& compare)](#constiterator-find_next_in_subtreeiterator-from-interval_type-const-ival-comparefunctiont-const-compare)
-    - [(const)iterator overlap_find(interval_type const& ival, bool exclusive)](#constiterator-overlap_findinterval_type-const-ival-bool-exclusive)
-    - [(const)iterator overlap_find_all(interval_type const& ival, OnFindFunctionT const& on_find, bool exclusive)](#constiterator-overlap_find_allinterval_type-const-ival-onfindfunctiont-const-on_find-bool-exclusive)
+    - [(const)iterator find\_all(interval\_type const\& ival, OnFindFunctionT const\& on\_find, CompareFunctionT const\& compare)](#constiterator-find_allinterval_type-const-ival-onfindfunctiont-const-on_find-comparefunctiont-const-compare)
+      - [Parameters](#parameters-6)
+    - [(const)iterator find\_next\_in\_subtree(iterator from, interval\_type const\& ival)](#constiterator-find_next_in_subtreeiterator-from-interval_type-const-ival)
+      - [Parameters](#parameters-7)
+    - [(const)iterator find\_next\_in\_subtree(iterator from, interval\_type const\& ival, CompareFunctionT const\& compare)](#constiterator-find_next_in_subtreeiterator-from-interval_type-const-ival-comparefunctiont-const-compare)
+      - [Parameters](#parameters-8)
+    - [(const)iterator overlap\_find(interval\_type const\& ival, bool exclusive)](#constiterator-overlap_findinterval_type-const-ival-bool-exclusive)
+      - [Parameters](#parameters-9)
+    - [(const)iterator overlap\_find\_all(interval\_type const\& ival, OnFindFunctionT const\& on\_find, bool exclusive)](#constiterator-overlap_find_allinterval_type-const-ival-onfindfunctiont-const-on_find-bool-exclusive)
+      - [Parameters](#parameters-10)
       - [Example](#example-2)
-    - [(const)iterator overlap_find_next_in_subtree(interval_type const& ival, bool exclusive)](#constiterator-overlap_find_next_in_subtreeinterval_type-const-ival-bool-exclusive)
-    - [interval_tree& deoverlap()](#interval_tree-deoverlap)
+    - [(const)iterator overlap\_find\_next\_in\_subtree(interval\_type const\& ival, bool exclusive)](#constiterator-overlap_find_next_in_subtreeinterval_type-const-ival-bool-exclusive)
+      - [Parameters](#parameters-11)
+    - [interval\_tree\& deoverlap()](#interval_tree-deoverlap)
     - [After deoverlap](#after-deoverlap)
-    - [interval_tree& deoverlap_copy()](#interval_tree-deoverlap_copy)
-    - [interval_tree punch(interval_type const& ival)](#interval_tree-punchinterval_type-const-ival)
-    - [After punching (with [0, 50])](#after-punching-with-0-50)
-    - [interval_tree punch()](#interval_tree-punch)
+    - [interval\_tree deoverlap\_copy()](#interval_tree-deoverlap_copy)
+    - [interval\_tree punch(interval\_type const\& ival)](#interval_tree-punchinterval_type-const-ival)
+    - [Before punching (closed\_adjacent intervals)](#before-punching-closed_adjacent-intervals)
+    - [After punching (with \[-10, 60\])](#after-punching-with--10-60)
+    - [interval\_tree punch()](#interval_tree-punch)
     - [bool empty() const noexcept](#bool-empty-const-noexcept)
     - [iterator begin()](#iterator-begin)
     - [iterator end()](#iterator-end)
     - [iterator cbegin()](#iterator-cbegin)
     - [iterator cend()](#iterator-cend)
-    - [reverse_iterator rbegin()](#reverse_iterator-rbegin)
-    - [reverse_iterator rend()](#reverse_iterator-rend)
-    - [reverse_iterator crbegin()](#reverse_iterator-crbegin)
-    - [reverse_iterator crend()](#reverse_iterator-crend)
+    - [reverse\_iterator rbegin()](#reverse_iterator-rbegin)
+    - [reverse\_iterator rend()](#reverse_iterator-rend)
+    - [reverse\_iterator crbegin()](#reverse_iterator-crbegin)
+    - [reverse\_iterator crend()](#reverse_iterator-crend)
+  - [Members of Interval](#members-of-interval)
+    - [using value\_type](#using-value_type)
+    - [using interval\_kind](#using-interval_kind)
+    - [friend bool operator==(interval const\& lhs, interval const\& other)](#friend-bool-operatorinterval-const-lhs-interval-const-other)
+    - [friend bool operator!=(interval const\& lhs, interval const\& other)](#friend-bool-operatorinterval-const-lhs-interval-const-other-1)
+    - [value\_type low() const](#value_type-low-const)
+    - [value\_type high() const](#value_type-high-const)
+    - [\[\[deprecated\]\] bool overlaps(value\_type l, value\_type h) const](#deprecated-bool-overlapsvalue_type-l-value_type-h-const)
+    - [bool overlaps\_exclusive(value\_type l, value\_type h) const](#bool-overlaps_exclusivevalue_type-l-value_type-h-const)
+    - [bool overlaps(interval const\& other) const](#bool-overlapsinterval-const-other-const)
+    - [bool overlaps\_exclusive(interval const\& other) const](#bool-overlaps_exclusiveinterval-const-other-const)
+    - [bool within(value\_type value) const](#bool-withinvalue_type-value-const)
+    - [bool within(interval const\& other) const](#bool-withininterval-const-other-const)
+    - [value\_type operator-(interval const\& other) const](#value_type-operator-interval-const-other-const)
+    - [value\_type size() const](#value_type-size-const)
+    - [interval join(interval const\& other) const](#interval-joininterval-const-other-const)
+    - [slice\_type slice(interval const\& other) const](#slice_type-sliceinterval-const-other-const)
 
 ### iterator insert(interval_type const& ival)
 Adds an interval into the tree.
@@ -326,13 +369,20 @@ Same as deoverlap, but not inplace
 
 ---
 ### interval_tree punch(interval_type const& ival)
-Removes all intervals from `ival` and produces a tree that contains the remaining intervals.
-**The tree must be deoverlapped, or the result is undefined.**
-`ival` is expected to encompass the entire interval range.
+Cuts the intervals of the tree out of the given interval. Like a cookie cutter cuts out of dough.
+This will return a new interval_tree containing the gaps between the intervals in the tree and the given interval.
+Closed adjacent intervals are treated as exclusive on the borders. [0,5]a[6,10]a will not produce another interval between 5 and 6 as they are considered within the intervals and nothing fits inbetween.
+Regular closed intervals will not behave like this, so [0,5][6,10] will produce a new interval [5,6].
+Open intervals with integral numbers will also not produce the gap (5, 6), because (5, 6) is empty for integers, not for floats.
+
+**IMPORTANT! The tree must be deoverlapped, or the result is undefined.**
+`ival` can be any subrange of the tree, including encompassing the whole tree.
 
 **Returns**: A new interval_tree containing the gaps.
-### After punching (with [0, 50])
-![AfterPunch](https://cloud.githubusercontent.com/assets/6238896/24613645/2dbf72e8-1889-11e7-813f-6d16fe0ad327.png)
+### Before punching (closed_adjacent intervals)
+![BeforePunch](https://private-user-images.githubusercontent.com/6238896/471147224-5c631e00-dea4-4b75-a3bf-6fdd8ec1440b.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTM1NjI1MzQsIm5iZiI6MTc1MzU2MjIzNCwicGF0aCI6Ii82MjM4ODk2LzQ3MTE0NzIyNC01YzYzMWUwMC1kZWE0LTRiNzUtYTNiZi02ZmRkOGVjMTQ0MGIucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI1MDcyNiUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNTA3MjZUMjAzNzE0WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9ZDQ0NWIwMTcwMjZhNDA1YmUwNGI1YTIzNTBhZTQ5OTNhMWFiOTU5ZmU0N2E3NDI0NTQ0MzYwODA4N2E2MGFiZiZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.P5zLeXg0-9bd20Thj6pfq_WxriMn4GC_lDSLzzGKMbw)
+### After punching (with [-10, 60])
+![AfterPunch](https://private-user-images.githubusercontent.com/6238896/471147227-5c226d1d-d544-4a43-89a4-b3545145107d.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTM1NjI1MzQsIm5iZiI6MTc1MzU2MjIzNCwicGF0aCI6Ii82MjM4ODk2LzQ3MTE0NzIyNy01YzIyNmQxZC1kNTQ0LTRhNDMtODlhNC1iMzU0NTE0NTEwN2QucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI1MDcyNiUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNTA3MjZUMjAzNzE0WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9NmE2ZDUzMjU2ZTNjZWQ0Y2QzYjQ3ZGUyYjgyNWM2NDViYTAxMTdlY2RjYmQyMzg4OWFmZDlhMWU5YjY4NjlmZCZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.Infe9i281LDOEC5GeBFuLHVE6Xjqw7KvcUo-gv3hjpk)
 
 ---
 ### interval_tree punch()
@@ -395,7 +445,7 @@ Returns a past the end const_iterator in reverse.
 **Returns**: past the end const_iterator.
 
 ## Members of Interval
-___You can implement your own interval if you provide the same functions, except (operator-, size, operator!=).___
+___You can implement your own interval if you provide the same functions, except (slice, operator-, size, operator!=).___
 
 There are 6 types of intervals:
 - open: (a, b)
@@ -457,3 +507,12 @@ Overlapping intervals have 0 distance.
 Returns The amount of elements in the interval when integral, or the distance between the 2 bounds when floating point.
 ### interval join(interval const& other) const
 Joins 2 intervals and whatever is inbetween.
+### slice_type<interval> slice(interval const& other) const
+Removes other from this interval returning what is remaining.
+The range of other going beyond the range of this is ignored.
+Returns a struct with 2 members: left_slice and right_slice.
+[   this interval  ]
+[left][other][right]
+
+When the intervals are closed, adjacent results are differenty by 1.
+[0, 9].slice([5, 19]) => left: [0, 4], right: nullopt

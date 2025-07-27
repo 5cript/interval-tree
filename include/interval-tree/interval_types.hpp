@@ -29,6 +29,18 @@ namespace lib_interval_tree
         {
             return high - low;
         }
+
+        template <typename numerical_type>
+        static inline numerical_type left_slice_upper_bound(numerical_type value)
+        {
+            return value;
+        }
+
+        template <typename numerical_type>
+        static inline numerical_type right_slice_lower_bound(numerical_type value)
+        {
+            return value;
+        }
     };
     // [)
     struct right_open
@@ -50,6 +62,18 @@ namespace lib_interval_tree
         {
             return high - low;
         }
+
+        template <typename numerical_type>
+        static inline numerical_type left_slice_upper_bound(numerical_type high)
+        {
+            return high;
+        }
+
+        template <typename numerical_type>
+        static inline numerical_type right_slice_lower_bound(numerical_type value)
+        {
+            return value;
+        }
     };
     // []
     struct closed
@@ -67,7 +91,12 @@ namespace lib_interval_tree
         }
 
         template <typename numerical_type>
-        static inline typename std::enable_if<!std::is_floating_point<numerical_type>::value, numerical_type>::type
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires std::is_integral_v<numerical_type>
+        static inline numerical_type
+#else
+        static inline typename std::enable_if<std::is_integral<numerical_type>::value, numerical_type>::type
+#endif
         size(numerical_type low, numerical_type high)
         {
             return high - low + 1;
@@ -83,6 +112,18 @@ namespace lib_interval_tree
         size(numerical_type low, numerical_type high)
         {
             return high - low;
+        }
+
+        template <typename numerical_type>
+        static inline numerical_type left_slice_upper_bound(numerical_type high)
+        {
+            return high;
+        }
+
+        template <typename numerical_type>
+        static inline numerical_type right_slice_lower_bound(numerical_type value)
+        {
+            return value;
         }
     };
     // ()
@@ -101,10 +142,34 @@ namespace lib_interval_tree
         }
 
         template <typename numerical_type>
-        static inline typename std::enable_if<!std::is_floating_point<numerical_type>::value, numerical_type>::type
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires(!std::is_floating_point_v<numerical_type> && std::is_signed_v<numerical_type>)
+        static inline numerical_type
+#else
+        static inline typename std::enable_if<
+            !std::is_floating_point<numerical_type>::value && std::is_signed<numerical_type>::value,
+            numerical_type>::type
+#endif
         size(numerical_type low, numerical_type high)
         {
             return high - low - 1;
+        }
+
+        template <typename numerical_type>
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires(!std::is_floating_point_v<numerical_type> && std::is_unsigned_v<numerical_type>)
+        static inline numerical_type
+#else
+        static inline typename std::enable_if<
+            !std::is_floating_point<numerical_type>::value && std::is_unsigned<numerical_type>::value,
+            numerical_type>::type
+#endif
+        size(numerical_type low, numerical_type high)
+        {
+            if (high > low)
+                return high - low - 1;
+            else
+                return 0;
         }
 
         template <typename numerical_type>
@@ -118,6 +183,18 @@ namespace lib_interval_tree
         {
             return high - low;
         }
+
+        template <typename numerical_type>
+        static inline numerical_type left_slice_upper_bound(numerical_type high)
+        {
+            return high;
+        }
+
+        template <typename numerical_type>
+        static inline numerical_type right_slice_lower_bound(numerical_type high)
+        {
+            return high;
+        }
     };
     /// [] and adjacent counts as overlapping
     struct closed_adjacent
@@ -125,8 +202,11 @@ namespace lib_interval_tree
         template <typename numerical_type>
 #ifdef LIB_INTERVAL_TREE_CONCEPTS
         requires std::is_integral_v<numerical_type>
+        static inline bool
+#else
+        static inline typename std::enable_if<std::is_integral<numerical_type>::value, bool>::type
 #endif
-        static inline bool within(numerical_type low, numerical_type high, numerical_type p)
+        within(numerical_type low, numerical_type high, numerical_type p)
         {
             return (low <= p) && (p <= high);
         }
@@ -134,19 +214,98 @@ namespace lib_interval_tree
         template <typename numerical_type>
 #ifdef LIB_INTERVAL_TREE_CONCEPTS
         requires std::is_integral_v<numerical_type>
+        static inline bool
+#else
+        static inline typename std::enable_if<std::is_integral<numerical_type>::value, bool>::type
 #endif
-        static inline bool overlaps(numerical_type l1, numerical_type h1, numerical_type l2, numerical_type h2)
+        overlaps(numerical_type l1, numerical_type h1, numerical_type l2, numerical_type h2)
         {
-            return (l1 <= (h2 + 1)) && ((l2 - 1) <= h1);
+            return (l1 <= (h2 + 1)) && (l2 <= (h1 + 1));
         }
 
         template <typename numerical_type>
 #ifdef LIB_INTERVAL_TREE_CONCEPTS
         requires std::is_integral_v<numerical_type>
+        static inline numerical_type
+#else
+        static inline typename std::enable_if<std::is_integral<numerical_type>::value, numerical_type>::type
 #endif
-        static inline numerical_type size(numerical_type low, numerical_type high)
+        size(numerical_type low, numerical_type high)
         {
             return high - low + 1;
+        }
+
+        template <typename numerical_type>
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires std::is_floating_point_v<numerical_type>
+        static inline numerical_type
+#else
+        static inline typename std::enable_if<std::is_floating_point<numerical_type>::value, numerical_type>::type
+#endif
+        size(numerical_type low, numerical_type high)
+        {
+            return high - low;
+        }
+
+        template <typename numerical_type>
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires(std::is_signed_v<numerical_type> && !std::is_floating_point_v<numerical_type>)
+        static inline numerical_type
+#else
+        static inline typename std::enable_if<
+            std::is_signed<numerical_type>::value && !std::is_floating_point<numerical_type>::value,
+            numerical_type>::type
+#endif
+        left_slice_upper_bound(numerical_type value)
+        {
+            return value - 1;
+        }
+
+        template <typename numerical_type>
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires(std::is_floating_point_v<numerical_type>)
+        static inline numerical_type
+#else
+        static inline typename std::enable_if<std::is_floating_point<numerical_type>::value, numerical_type>::type
+#endif
+        left_slice_upper_bound(numerical_type value)
+        {
+            return value;
+        }
+
+        template <typename numerical_type>
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires std::is_unsigned_v<numerical_type>
+        static inline numerical_type
+#else
+        static inline typename std::enable_if<std::is_unsigned<numerical_type>::value, numerical_type>::type
+#endif
+        left_slice_upper_bound(numerical_type value)
+        {
+            return value > 0 ? value - 1 : 0;
+        }
+
+        template <typename numerical_type>
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires(!std::is_floating_point_v<numerical_type>)
+        static inline numerical_type
+#else
+        static inline typename std::enable_if<!std::is_floating_point<numerical_type>::value, numerical_type>::type
+#endif
+        right_slice_lower_bound(numerical_type value)
+        {
+            return value + 1;
+        }
+        template <typename numerical_type>
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires std::is_floating_point_v<numerical_type>
+        static inline numerical_type
+#else
+        static inline typename std::enable_if<std::is_floating_point<numerical_type>::value, numerical_type>::type
+#endif
+        right_slice_lower_bound(numerical_type value)
+        {
+            return value;
         }
     };
 
@@ -166,8 +325,11 @@ namespace lib_interval_tree
         template <typename interval_type>
 #ifdef LIB_INTERVAL_TREE_CONCEPTS
         requires std::is_integral_v<typename interval_type::value_type>
+        static inline bool
+#else
+        static inline typename std::enable_if<std::is_integral<typename interval_type::value_type>::value, bool>::type
 #endif
-        static inline bool within(interval_type const& ival, typename interval_type::value_type p)
+        within(interval_type const& ival, typename interval_type::value_type p)
         {
             switch (ival.left_border())
             {
@@ -217,8 +379,11 @@ namespace lib_interval_tree
         template <typename interval_type>
 #ifdef LIB_INTERVAL_TREE_CONCEPTS
         requires std::is_integral_v<typename interval_type::value_type>
+        static inline bool
+#else
+        static inline typename std::enable_if<std::is_integral<typename interval_type::value_type>::value, bool>::type
 #endif
-        static inline bool overlaps(interval_type const& ival1, interval_type const& ival2)
+        overlaps(interval_type const& ival1, interval_type const& ival2)
         {
             const auto lowToClosed = [](auto const& ival) {
                 if (ival.left_border() == interval_border::open)
@@ -228,7 +393,13 @@ namespace lib_interval_tree
 
             const auto highToClosed = [](auto const& ival) {
                 if (ival.right_border() == interval_border::open)
+                {
+                    INTERVAL_TREE_CONSTEXPR_IF(std::is_unsigned<typename interval_type::value_type>::value)
+                    {
+                        return ival.high() > 0 ? ival.high() - 1 : 0;
+                    }
                     return ival.high() - 1;
+                }
                 return ival.high();
             };
 
@@ -263,8 +434,13 @@ namespace lib_interval_tree
         template <typename interval_type>
 #ifdef LIB_INTERVAL_TREE_CONCEPTS
         requires std::is_integral_v<typename interval_type::value_type>
+        static inline typename interval_type::value_type
+#else
+        static inline typename std::enable_if<
+            std::is_integral<typename interval_type::value_type>::value,
+            typename interval_type::value_type>::type
 #endif
-        static typename interval_type::value_type distance(interval_type const& ival1, interval_type const& ival2)
+        distance(interval_type const& ival1, interval_type const& ival2)
         {
             using value_type = typename interval_type::value_type;
 
@@ -272,11 +448,33 @@ namespace lib_interval_tree
                 return 0;
 
             value_type adjusted_low = ival1.left_border() == interval_border::open ? ival1.low() + 1 : ival1.low();
-            value_type adjusted_high = ival1.right_border() == interval_border::open ? ival1.high() - 1 : ival1.high();
+
+            value_type adjusted_high = [&]() {
+                INTERVAL_TREE_CONSTEXPR_IF(std::is_unsigned<value_type>::value)
+                {
+                    return ival1.right_border() == interval_border::open ? (ival1.high() > 0 ? ival1.high() - 1 : 0)
+                                                                         : ival1.high();
+                }
+                else
+                {
+                    return ival1.right_border() == interval_border::open ? ival1.high() - 1 : ival1.high();
+                }
+            }();
+
             value_type other_adjusted_low =
                 ival2.left_border() == interval_border::open ? ival2.low() + 1 : ival2.low();
-            value_type other_adjusted_high =
-                ival2.right_border() == interval_border::open ? ival2.high() - 1 : ival2.high();
+
+            value_type other_adjusted_high = [&]() {
+                INTERVAL_TREE_CONSTEXPR_IF(std::is_unsigned<value_type>::value)
+                {
+                    return ival2.right_border() == interval_border::open ? (ival2.high() > 0 ? ival2.high() - 1 : 0)
+                                                                         : ival2.high();
+                }
+                else
+                {
+                    return ival2.right_border() == interval_border::open ? ival2.high() - 1 : ival2.high();
+                }
+            }();
 
             if (adjusted_high < other_adjusted_low)
                 return other_adjusted_low - adjusted_high;
@@ -303,8 +501,12 @@ namespace lib_interval_tree
         template <typename interval_type>
 #ifdef LIB_INTERVAL_TREE_CONCEPTS
         requires std::is_integral_v<typename interval_type::value_type>
+        static inline interval_type
+#else
+        static inline
+            typename std::enable_if<std::is_integral<typename interval_type::value_type>::value, interval_type>::type
 #endif
-        static interval_type join(interval_type const& ival1, interval_type const& ival2)
+        join(interval_type const& ival1, interval_type const& ival2)
         {
             typename interval_type::value_type low;
             typename interval_type::value_type high;
@@ -366,7 +568,13 @@ namespace lib_interval_tree
                     ? &ival1
                     : &ival2;
 
-                const auto openAdjusted = rightOpenInterval->high() - 1;
+                const auto openAdjusted = [&]() {
+                    INTERVAL_TREE_CONSTEXPR_IF(std::is_unsigned<typename interval_type::value_type>::value)
+                    {
+                        return rightOpenInterval->high() > 0 ? rightOpenInterval->high() - 1 : 0;
+                    }
+                    return rightOpenInterval->high() - 1;
+                }();
 
                 if (openAdjusted == rightClosedInterval->high())
                 {
@@ -391,8 +599,13 @@ namespace lib_interval_tree
         template <typename interval_type>
 #ifdef LIB_INTERVAL_TREE_CONCEPTS
         requires std::is_integral_v<typename interval_type::value_type>
+        static inline typename interval_type::value_type
+#else
+        static inline typename std::enable_if<
+            std::is_integral<typename interval_type::value_type>::value,
+            typename interval_type::value_type>::type
 #endif
-        typename interval_type::value_type size(interval_type const& ival)
+        size(interval_type const& ival)
         {
             auto left = ival.left_border();
             if (left == interval_border::closed_adjacent)
