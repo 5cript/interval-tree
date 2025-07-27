@@ -31,6 +31,30 @@ namespace lib_interval_tree
     // ############################################################################################################
     using default_interval_value_type = int;
     // ############################################################################################################
+    namespace detail
+    {
+        template <class...>
+        using void_t = void;
+
+        template <typename interval_t, typename = void>
+        struct has_slice_impl : std::false_type
+        {};
+
+        template <typename interval_t>
+        struct has_slice_impl<
+            interval_t,
+            void_t<decltype(std::declval<interval_t>().slice(std::declval<interval_t>()))>> : std::true_type
+        {};
+
+#if __cplusplus >= 202002L
+        template <typename interval_t>
+        concept has_slice = has_slice_impl<interval_t>::value;
+#else
+        template <typename interval_t>
+        constexpr bool has_slice = has_slice_impl<interval_t>::value;
+#endif
+    }
+    // ############################################################################################################
     template <typename numerical_type, typename interval_kind_>
     struct interval_base
     {
@@ -211,12 +235,14 @@ namespace lib_interval_tree
         }
 
         /**
-         * @brief Extrudes other from this interval returning what is remaining.
+         * @brief Removes other from this interval returning what is remaining.
+         *
+         * The range of other going beyond the range of this is ignored.
          *
          * @param other
          * @return slice_type<interval>
          */
-        slice_type<interval> extrude(interval const& other) const
+        slice_type<interval> slice(interval const& other) const
         {
             slice_type<interval> slices{};
             if (low_ < other.low_)
@@ -361,12 +387,12 @@ namespace lib_interval_tree
         }
 
         /**
-         * @brief Extrudes other from this interval returning what is remaining.
+         * @brief Removes other from this interval returning what is remaining.
          *
          * @param other
          * @return slice_type<interval>
          */
-        slice_type<interval> extrude(interval const& other) const
+        slice_type<interval> slice(interval const& other) const
         {
             if (!overlaps(other))
                 return {};
@@ -1416,9 +1442,7 @@ namespace lib_interval_tree
         {
             if (empty())
                 return {};
-            auto min = std::begin(*this)->interval()->low();
-            auto max = root_->max_;
-            return punch({min, max});
+            return punch({begin()->low(), root_->max_});
         }
 
         /**
@@ -1428,7 +1452,14 @@ namespace lib_interval_tree
          *
          * @param ival The range in which to punch out the gaps as a new tree
          */
-        interval_tree punch(interval_type ival) const
+        template <typename interval_t = interval_type>
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires detail::has_slice<interval_t>
+        interval_tree
+#else
+        typename std::enable_if<detail::has_slice<interval_t>, interval_tree>::type
+#endif
+        punch(interval_type ival) const
         {
             interval_tree result;
 
@@ -1461,7 +1492,7 @@ namespace lib_interval_tree
             bool insert_remaining = false;
             for (; iter != cend(); ++iter)
             {
-                ex = ival.extrude(*iter);
+                ex = ival.slice(*iter);
                 if (ex.left_slice)
                     result.insert(*ex.left_slice);
 

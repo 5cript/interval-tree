@@ -669,3 +669,26 @@ TEST_F(PunchTests, ClosedFloatGap)
     EXPECT_NEAR((++iter)->low(), 10.0f, 0.001f);
     EXPECT_FLOAT_EQ(iter->high(), 12.0f);
 }
+
+TEST_F(PunchTests, PunchWithoutArgsEncompassesTree)
+{
+    using types = closed<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{10, 15});
+    tree.insert(types::interval_type{20, 25});
+    tree.insert(types::interval_type{30, 35});
+    auto result = tree.punch();
+
+    ASSERT_EQ(result.size(), 3);
+    auto iter = result.begin();
+    EXPECT_EQ(iter->low(), 6);
+    EXPECT_EQ(iter->high(), 9);
+
+    EXPECT_EQ((++iter)->low(), 16);
+    EXPECT_EQ(iter->high(), 19);
+
+    EXPECT_EQ((++iter)->low(), 26);
+    EXPECT_EQ(iter->high(), 29);
+}

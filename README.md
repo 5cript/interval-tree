@@ -210,6 +210,7 @@ Options are:
     - [value\_type operator-(interval const\& other) const](#value_type-operator-interval-const-other-const)
     - [value\_type size() const](#value_type-size-const)
     - [interval join(interval const\& other) const](#interval-joininterval-const-other-const)
+    - [slice\_type slice(interval const\& other) const](#slice_type-sliceinterval-const-other-const)
 
 ### iterator insert(interval_type const& ival)
 Adds an interval into the tree.
@@ -443,7 +444,7 @@ Returns a past the end const_iterator in reverse.
 **Returns**: past the end const_iterator.
 
 ## Members of Interval
-___You can implement your own interval if you provide the same functions, except (operator-, size, operator!=).___
+___You can implement your own interval if you provide the same functions, except (slice, operator-, size, operator!=).___
 
 There are 6 types of intervals:
 - open: (a, b)
@@ -505,3 +506,12 @@ Overlapping intervals have 0 distance.
 Returns The amount of elements in the interval when integral, or the distance between the 2 bounds when floating point.
 ### interval join(interval const& other) const
 Joins 2 intervals and whatever is inbetween.
+### slice_type<interval> slice(interval const& other) const
+Removes other from this interval returning what is remaining.
+The range of other going beyond the range of this is ignored.
+Returns a struct with 2 members: left_slice and right_slice.
+[   this interval  ]
+[left][other][right]
+
+When the intervals are closed, adjacent results are differenty by 1.
+[0, 9].slice([5, 19]) => left: [0, 4], right: nullopt
