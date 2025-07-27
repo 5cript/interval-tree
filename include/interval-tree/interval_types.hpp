@@ -115,63 +115,13 @@ namespace lib_interval_tree
         }
 
         template <typename numerical_type>
-#ifdef LIB_INTERVAL_TREE_CONCEPTS
-        requires(std::is_signed_v<numerical_type> && !std::is_floating_point_v<numerical_type>)
-        static inline numerical_type
-#else
-        static inline typename std::enable_if<
-            std::is_signed<numerical_type>::value && !std::is_floating_point<numerical_type>::value,
-            numerical_type>::type
-#endif
-        left_slice_upper_bound(numerical_type value)
+        static inline numerical_type left_slice_upper_bound(numerical_type high)
         {
-            return value - 1;
+            return high;
         }
 
         template <typename numerical_type>
-#ifdef LIB_INTERVAL_TREE_CONCEPTS
-        requires(std::is_floating_point_v<numerical_type>)
-        static inline numerical_type
-#else
-        static inline typename std::enable_if<std::is_floating_point<numerical_type>::value, numerical_type>::type
-#endif
-        left_slice_upper_bound(numerical_type value)
-        {
-            return value;
-        }
-
-        template <typename numerical_type>
-#ifdef LIB_INTERVAL_TREE_CONCEPTS
-        requires std::is_unsigned_v<numerical_type>
-        static inline numerical_type
-#else
-        static inline typename std::enable_if<std::is_unsigned<numerical_type>::value, numerical_type>::type
-#endif
-        left_slice_upper_bound(numerical_type value)
-        {
-            return value > 0 ? value - 1 : 0;
-        }
-
-        template <typename numerical_type>
-#ifdef LIB_INTERVAL_TREE_CONCEPTS
-        requires(!std::is_floating_point_v<numerical_type>)
-        static inline numerical_type
-#else
-        static inline typename std::enable_if<!std::is_floating_point<numerical_type>::value, numerical_type>::type
-#endif
-        right_slice_lower_bound(numerical_type value)
-        {
-            return value + 1;
-        }
-
-        template <typename numerical_type>
-#ifdef LIB_INTERVAL_TREE_CONCEPTS
-        requires std::is_floating_point_v<numerical_type>
-        static inline numerical_type
-#else
-        static inline typename std::enable_if<std::is_floating_point<numerical_type>::value, numerical_type>::type
-#endif
-        right_slice_lower_bound(numerical_type value)
+        static inline numerical_type right_slice_lower_bound(numerical_type value)
         {
             return value;
         }
@@ -299,14 +249,28 @@ namespace lib_interval_tree
 
         template <typename numerical_type>
 #ifdef LIB_INTERVAL_TREE_CONCEPTS
-        requires std::is_signed_v<numerical_type>
+        requires(std::is_signed_v<numerical_type> && !std::is_floating_point_v<numerical_type>)
         static inline numerical_type
 #else
-        static inline typename std::enable_if<std::is_signed<numerical_type>::value, numerical_type>::type
+        static inline typename std::enable_if<
+            std::is_signed<numerical_type>::value && !std::is_floating_point<numerical_type>::value,
+            numerical_type>::type
 #endif
         left_slice_upper_bound(numerical_type value)
         {
             return value - 1;
+        }
+
+        template <typename numerical_type>
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires(std::is_floating_point_v<numerical_type>)
+        static inline numerical_type
+#else
+        static inline typename std::enable_if<std::is_floating_point<numerical_type>::value, numerical_type>::type
+#endif
+        left_slice_upper_bound(numerical_type value)
+        {
+            return value;
         }
 
         template <typename numerical_type>
@@ -322,9 +286,26 @@ namespace lib_interval_tree
         }
 
         template <typename numerical_type>
-        static inline numerical_type right_slice_lower_bound(numerical_type value)
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires(!std::is_floating_point_v<numerical_type>)
+        static inline numerical_type
+#else
+        static inline typename std::enable_if<!std::is_floating_point<numerical_type>::value, numerical_type>::type
+#endif
+        right_slice_lower_bound(numerical_type value)
         {
             return value + 1;
+        }
+        template <typename numerical_type>
+#ifdef LIB_INTERVAL_TREE_CONCEPTS
+        requires std::is_floating_point_v<numerical_type>
+        static inline numerical_type
+#else
+        static inline typename std::enable_if<std::is_floating_point<numerical_type>::value, numerical_type>::type
+#endif
+        right_slice_lower_bound(numerical_type value)
+        {
+            return value;
         }
     };
 

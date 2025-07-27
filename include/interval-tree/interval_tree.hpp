@@ -255,7 +255,6 @@ namespace lib_interval_tree
             // low_ == other.low_ does not produce a left slice in any case.
             if (high_ > other.high_)
             {
-                // FIXME: think: is the max violating edge conditions?
                 auto slice = interval{std::max(interval_kind::right_slice_lower_bound(other.high_), low_), high_};
                 // >= comparison avoids overflows in case of unsigned integers
                 if (slice.high_ >= slice.low_ && slice.size() > 0)

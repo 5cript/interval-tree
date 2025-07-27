@@ -901,6 +901,17 @@ TEST_F(IntervalTests, CanFindDynamicIntervalUsingComparisonFunction)
     EXPECT_EQ(iter->right_border(), interval_border::closed);
 }
 
+TEST_F(IntervalTests, ClosedAdjacentSliceLeftOverlap)
+{
+    // [   this  ]
+    // [ls][param]
+    const auto result = i<closed_adjacent>(1, 8).slice(i<closed_adjacent>(5, 100));
+    ASSERT_TRUE(result.left_slice);
+    EXPECT_EQ(result.left_slice->low(), 1);
+    EXPECT_EQ(result.left_slice->high(), 4);
+    EXPECT_FALSE(result.right_slice);
+}
+
 TEST_F(IntervalTests, ClosedSliceLeftOverlap)
 {
     // [   this  ]
@@ -908,7 +919,7 @@ TEST_F(IntervalTests, ClosedSliceLeftOverlap)
     const auto result = i<closed>(1, 8).slice(i<closed>(5, 100));
     ASSERT_TRUE(result.left_slice);
     EXPECT_EQ(result.left_slice->low(), 1);
-    EXPECT_EQ(result.left_slice->high(), 4);
+    EXPECT_EQ(result.left_slice->high(), 5);
     EXPECT_FALSE(result.right_slice);
 }
 
@@ -924,13 +935,25 @@ TEST_F(IntervalTests, OpenSliceLeftOverlap)
     EXPECT_FALSE(result.right_slice);
 }
 
+TEST_F(IntervalTests, ClosedAdjacentRightRemains)
+{
+    // [   this  ]
+    // [param][rs]
+    const auto result = i<closed_adjacent>(8, 15).slice(i<closed_adjacent>(8, 12));
+    ASSERT_TRUE(result.right_slice);
+    EXPECT_EQ(result.right_slice->low(), 13);
+    EXPECT_EQ(result.right_slice->high(), 15);
+    EXPECT_FALSE(result.left_slice);
+}
+
 TEST_F(IntervalTests, ClosedRightRemains)
 {
     // [   this  ]
     // [param][rs]
+    using lib_interval_tree::closed;
     const auto result = i<closed>(8, 15).slice(i<closed>(8, 12));
     ASSERT_TRUE(result.right_slice);
-    EXPECT_EQ(result.right_slice->low(), 13);
+    EXPECT_EQ(result.right_slice->low(), 12);
     EXPECT_EQ(result.right_slice->high(), 15);
     EXPECT_FALSE(result.left_slice);
 }
@@ -947,11 +970,11 @@ TEST_F(IntervalTests, OpenRightRemains)
     EXPECT_FALSE(result.left_slice);
 }
 
-TEST_F(IntervalTests, ClosedMiddleExtrusion)
+TEST_F(IntervalTests, ClosedAdjacentMiddleExtrusion)
 {
     // [   this      ]
     // [ls][param][rs]
-    const auto result = i<closed>(0, 10).slice(i<closed>(5, 8));
+    const auto result = i<closed_adjacent>(0, 10).slice(i<closed_adjacent>(5, 8));
     ASSERT_TRUE(result.left_slice);
     EXPECT_EQ(result.left_slice->low(), 0);
     EXPECT_EQ(result.left_slice->high(), 4);
@@ -966,6 +989,20 @@ TEST_F(IntervalTests, OpenMiddleExtrusion)
     // [ls][param][rs]
     using lib_interval_tree::open;
     const auto result = i<open>(0, 10).slice(i<open>(5, 8));
+    ASSERT_TRUE(result.left_slice);
+    EXPECT_EQ(result.left_slice->low(), 0);
+    EXPECT_EQ(result.left_slice->high(), 5);
+    ASSERT_TRUE(result.right_slice);
+    EXPECT_EQ(result.right_slice->low(), 8);
+    EXPECT_EQ(result.right_slice->high(), 10);
+}
+
+TEST_F(IntervalTests, ClosedMiddleExtrusion)
+{
+    // [   this      ]
+    // [ls][param][rs]
+    using lib_interval_tree::closed;
+    const auto result = i<closed>(0, 10).slice(i<closed>(5, 8));
     ASSERT_TRUE(result.left_slice);
     EXPECT_EQ(result.left_slice->low(), 0);
     EXPECT_EQ(result.left_slice->high(), 5);

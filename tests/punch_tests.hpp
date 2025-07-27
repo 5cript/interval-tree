@@ -69,6 +69,28 @@ class PunchTests : public ::testing::Test
 
 TEST_F(PunchTests, PunchEmptyTree)
 {
+    using types = closed_adjacent<int>;
+
+    auto tree = types::tree_type{};
+    auto result = tree.punch(types::interval_type{0, 5});
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.begin()->low(), 0);
+    EXPECT_EQ(result.begin()->high(), 5);
+}
+
+TEST_F(PunchTests, PunchOpenEmptyTree)
+{
+    using types = open<int>;
+
+    auto tree = types::tree_type{};
+    auto result = tree.punch(types::interval_type{0, 5});
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.begin()->low(), 0);
+    EXPECT_EQ(result.begin()->high(), 5);
+}
+
+TEST_F(PunchTests, PunchClosedEmptyTree)
+{
     using types = closed<int>;
 
     auto tree = types::tree_type{};
@@ -79,6 +101,19 @@ TEST_F(PunchTests, PunchEmptyTree)
 }
 
 TEST_F(PunchTests, PunchFullyRightOfTree)
+{
+    using types = closed_adjacent<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{5, 10});
+    auto result = tree.punch(types::interval_type{20, 25});
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.begin()->low(), 20);
+    EXPECT_EQ(result.begin()->high(), 25);
+}
+
+TEST_F(PunchTests, PunchFullyRightOfTreeClosed)
 {
     using types = closed<int>;
 
@@ -91,7 +126,34 @@ TEST_F(PunchTests, PunchFullyRightOfTree)
     EXPECT_EQ(result.begin()->high(), 25);
 }
 
+TEST_F(PunchTests, PunchFullyRightOfTreeOpen)
+{
+    using types = open<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{5, 10});
+    auto result = tree.punch(types::interval_type{20, 25});
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.begin()->low(), 20);
+    EXPECT_EQ(result.begin()->high(), 25);
+}
+
 TEST_F(PunchTests, PunchFullyLeftOfTree)
+{
+    using types = closed_adjacent<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{5, 10});
+    auto result = tree.punch(types::interval_type{-10, -5});
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.begin()->low(), -10);
+    EXPECT_EQ(result.begin()->high(), -5);
+}
+
+TEST_F(PunchTests, PunchFullyLeftOfTreeClosed)
 {
     using types = closed<int>;
 
@@ -105,9 +167,23 @@ TEST_F(PunchTests, PunchFullyLeftOfTree)
     EXPECT_EQ(result.begin()->high(), -5);
 }
 
-TEST_F(PunchTests, PunchAjdacentLeftOfClosedTree)
+TEST_F(PunchTests, PunchFullyLeftOfTreeOpen)
 {
-    using types = closed<int>;
+    using types = open<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{5, 10});
+    auto result = tree.punch(types::interval_type{-10, -5});
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.begin()->low(), -10);
+    EXPECT_EQ(result.begin()->high(), -5);
+}
+
+TEST_F(PunchTests, PunchAdjacentLeftOfClosedAdjacentAdjacentTree)
+{
+    using types = closed_adjacent<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -122,6 +198,20 @@ TEST_F(PunchTests, PunchAjdacentLeftOfClosedTree)
 TEST_F(PunchTests, PunchAjdacentLeftOfOpenTree)
 {
     using types = open<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{5, 10});
+    auto result = tree.punch(types::interval_type{-10, 0});
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.begin()->low(), -10);
+    EXPECT_EQ(result.begin()->high(), 0);
+}
+
+TEST_F(PunchTests, PunchAjdacentLeftOfClosedTree)
+{
+    using types = closed<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -149,7 +239,7 @@ TEST_F(PunchTests, PunchAjdacentLeftOfLeftOpenTree)
 
 TEST_F(PunchTests, PunchAjdacentLeftOfRightOpenTree)
 {
-    using types = left_open<int>;
+    using types = right_open<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -163,7 +253,7 @@ TEST_F(PunchTests, PunchAjdacentLeftOfRightOpenTree)
 
 TEST_F(PunchTests, PunchOverlapsLeftOfTreeLeftHanging)
 {
-    using types = closed<int>;
+    using types = closed_adjacent<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -175,9 +265,37 @@ TEST_F(PunchTests, PunchOverlapsLeftOfTreeLeftHanging)
     EXPECT_EQ(result.begin()->high(), -1);
 }
 
-TEST_F(PunchTests, PunchOverlapsLeftOfTreeFullyExact)
+TEST_F(PunchTests, PunchOverlapsLeftOfTreeLeftHangingClosed)
 {
     using types = closed<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{5, 10});
+    auto result = tree.punch(types::interval_type{-10, 2});
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.begin()->low(), -10);
+    EXPECT_EQ(result.begin()->high(), 0);
+}
+
+TEST_F(PunchTests, PunchOverlapsLeftOfTreeLeftHangingOpen)
+{
+    using types = open<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{5, 10});
+    auto result = tree.punch(types::interval_type{-10, 2});
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.begin()->low(), -10);
+    EXPECT_EQ(result.begin()->high(), 0);
+}
+
+TEST_F(PunchTests, PunchOverlapsLeftOfTreeFullyExact)
+{
+    using types = closed_adjacent<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -189,9 +307,37 @@ TEST_F(PunchTests, PunchOverlapsLeftOfTreeFullyExact)
     EXPECT_EQ(result.begin()->high(), -1);
 }
 
-TEST_F(PunchTests, PunchOverlapsLeftOfTreeRightFullyOverNoGap)
+TEST_F(PunchTests, PunchOverlapsLeftOfTreeFullyExactClosed)
 {
     using types = closed<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{5, 10});
+    auto result = tree.punch(types::interval_type{-10, 5});
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.begin()->low(), -10);
+    EXPECT_EQ(result.begin()->high(), 0);
+}
+
+TEST_F(PunchTests, PunchOverlapsLeftOfTreeFullyExactOpen)
+{
+    using types = open<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{5, 10});
+    auto result = tree.punch(types::interval_type{-10, 5});
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.begin()->low(), -10);
+    EXPECT_EQ(result.begin()->high(), 0);
+}
+
+TEST_F(PunchTests, PunchOverlapsLeftOfTreeRightFullyOverNoGap)
+{
+    using types = closed_adjacent<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -207,7 +353,7 @@ TEST_F(PunchTests, PunchOverlapsLeftOfTreeRightFullyOverNoGap)
 
 TEST_F(PunchTests, PunchOverlapsLeftOfTreeRightFullyOver)
 {
-    using types = closed<int>;
+    using types = closed_adjacent<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -226,7 +372,7 @@ TEST_F(PunchTests, PunchOverlapsLeftOfTreeRightFullyOver)
 
 TEST_F(PunchTests, PunchOverlapsLeftOfTreeFullyInsideInterval)
 {
-    using types = closed<int>;
+    using types = closed_adjacent<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -238,7 +384,7 @@ TEST_F(PunchTests, PunchOverlapsLeftOfTreeFullyInsideInterval)
 
 TEST_F(PunchTests, PunchOverlapsMiddleOfTreeFullyInsideInterval)
 {
-    using types = closed<int>;
+    using types = closed_adjacent<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -251,7 +397,7 @@ TEST_F(PunchTests, PunchOverlapsMiddleOfTreeFullyInsideInterval)
 
 TEST_F(PunchTests, PunchOverlapsRightOfTreeFullyInsideInterval)
 {
-    using types = closed<int>;
+    using types = closed_adjacent<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -262,9 +408,9 @@ TEST_F(PunchTests, PunchOverlapsRightOfTreeFullyInsideInterval)
     EXPECT_TRUE(result.empty());
 }
 
-TEST_F(PunchTests, ClosedPunchOverhangsLastIntervalOnRight)
+TEST_F(PunchTests, ClosedAdjacentPunchOverhangsLastIntervalOnRight)
 {
-    using types = closed<int>;
+    using types = closed_adjacent<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -320,7 +466,7 @@ TEST_F(PunchTests, RightOpenPunchOverhangsLastIntervalOnRight)
 
 TEST_F(PunchTests, PunchSingleElementTreeEncompassing)
 {
-    using types = closed<int>;
+    using types = closed_adjacent<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -331,7 +477,7 @@ TEST_F(PunchTests, PunchSingleElementTreeEncompassing)
 
 TEST_F(PunchTests, PunchSingleElementTreeEncompassingWithRightOverlap)
 {
-    using types = closed<int>;
+    using types = closed_adjacent<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -344,7 +490,7 @@ TEST_F(PunchTests, PunchSingleElementTreeEncompassingWithRightOverlap)
 
 TEST_F(PunchTests, PunchSingleElementTreeEncompassingWithLeftOverlap)
 {
-    using types = closed<int>;
+    using types = closed_adjacent<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -479,7 +625,7 @@ TEST_F(PunchTests, DynamicPunchOverhangsFirstIntervalOnLeft)
 
 TEST_F(PunchTests, PunchEncompassesTree)
 {
-    using types = closed<int>;
+    using types = closed_adjacent<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -521,9 +667,65 @@ TEST_F(PunchTests, PunchEncompassesOpenTree)
     EXPECT_EQ(iter->high(), 30);
 }
 
-TEST_F(PunchTests, PunchEncompassesTreeWithOverlap)
+TEST_F(PunchTests, PunchEncompassesSmallGapOpenTree)
+{
+    using types = open<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{6, 10});
+    tree.insert(types::interval_type{11, 15});
+    tree.insert(types::interval_type{16, 20});
+    auto result = tree.punch();
+
+    EXPECT_TRUE(result.empty());
+}
+
+TEST_F(PunchTests, PunchEncompassesSmallGapClosedTree)
 {
     using types = closed<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{6, 10});
+    tree.insert(types::interval_type{11, 15});
+    tree.insert(types::interval_type{16, 20});
+    auto result = tree.punch();
+
+    ASSERT_EQ(result.size(), 3);
+    auto iter = result.begin();
+    EXPECT_EQ(iter->low(), 5);
+    EXPECT_EQ(iter->high(), 6);
+    EXPECT_EQ((++iter)->low(), 10);
+    EXPECT_EQ(iter->high(), 11);
+    EXPECT_EQ((++iter)->low(), 15);
+    EXPECT_EQ(iter->high(), 16);
+}
+
+TEST_F(PunchTests, PunchEncompassesClosedTree)
+{
+    using types = closed<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{10, 15});
+    tree.insert(types::interval_type{20, 25});
+    tree.insert(types::interval_type{30, 35});
+    auto result = tree.punch(types::interval_type{0, 35});
+
+    ASSERT_EQ(result.size(), 3);
+    auto iter = result.begin();
+    EXPECT_EQ(iter->low(), 5);
+    EXPECT_EQ(iter->high(), 10);
+    EXPECT_EQ((++iter)->low(), 15);
+    EXPECT_EQ(iter->high(), 20);
+    EXPECT_EQ((++iter)->low(), 25);
+    EXPECT_EQ(iter->high(), 30);
+}
+
+TEST_F(PunchTests, PunchEncompassesTreeWithOverlap)
+{
+    using types = closed_adjacent<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -579,9 +781,38 @@ TEST_F(PunchTests, PunchEncompassesOpenTreeWithOverlap)
     EXPECT_EQ(iter->high(), 40);
 }
 
+TEST_F(PunchTests, PunchEncompassesClosedTreeWithOverlap)
+{
+    using types = closed<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{10, 15});
+    tree.insert(types::interval_type{20, 25});
+    tree.insert(types::interval_type{30, 35});
+    auto result = tree.punch(types::interval_type{-5, 40});
+
+    ASSERT_EQ(result.size(), 5);
+    auto iter = result.begin();
+    EXPECT_EQ(iter->low(), -5);
+    EXPECT_EQ(iter->high(), 0);
+
+    EXPECT_EQ((++iter)->low(), 5);
+    EXPECT_EQ(iter->high(), 10);
+
+    EXPECT_EQ((++iter)->low(), 15);
+    EXPECT_EQ(iter->high(), 20);
+
+    EXPECT_EQ((++iter)->low(), 25);
+    EXPECT_EQ(iter->high(), 30);
+
+    EXPECT_EQ((++iter)->low(), 35);
+    EXPECT_EQ(iter->high(), 40);
+}
+
 TEST_F(PunchTests, UnsignedPunchHasNoProblemWithZero)
 {
-    using types = closed<unsigned int>;
+    using types = closed_adjacent<unsigned int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -604,9 +835,9 @@ TEST_F(PunchTests, UnsignedPunchHasNoProblemWithZero)
     EXPECT_EQ(iter->high(), 7);
 }
 
-TEST_F(PunchTests, PunchDoesNotInsertIntervalWhenClosedGapIsEmpty)
+TEST_F(PunchTests, PunchDoesNotInsertIntervalWhenClosedAdjacentGapIsEmpty)
 {
-    using types = closed<int>;
+    using types = closed_adjacent<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -619,7 +850,25 @@ TEST_F(PunchTests, PunchDoesNotInsertIntervalWhenClosedGapIsEmpty)
     EXPECT_EQ(result.begin()->high(), 12);
 }
 
-TEST_F(PunchTests, PunchDoesNotInsertIntervalWhenOpenGapIsEmpty)
+TEST_F(PunchTests, PunchDoesInsertIntervalWhenClosedGapIsSmallNotEmpty)
+{
+    using types = closed<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{6, 10});
+
+    auto result = tree.punch(types::interval_type{0, 12});
+
+    ASSERT_EQ(result.size(), 2);
+    auto iter = result.begin();
+    EXPECT_EQ(iter->low(), 5);
+    EXPECT_EQ(iter->high(), 6);
+    EXPECT_EQ((++iter)->low(), 10);
+    EXPECT_EQ(iter->high(), 12);
+}
+
+TEST_F(PunchTests, PunchDoesInsertIntervalWhenOpenGapIsEmpty)
 {
     using types = open<int>;
 
@@ -629,9 +878,12 @@ TEST_F(PunchTests, PunchDoesNotInsertIntervalWhenOpenGapIsEmpty)
 
     auto result = tree.punch(types::interval_type{0, 12});
 
+    // (5, 6) is the empty set on the whole number line.
+
     ASSERT_EQ(result.size(), 1);
-    EXPECT_EQ(result.begin()->low(), 10);
-    EXPECT_EQ(result.begin()->high(), 12);
+    auto iter = result.begin();
+    EXPECT_EQ(iter->low(), 10);
+    EXPECT_EQ(iter->high(), 12);
 }
 
 TEST_F(PunchTests, OpenFloatGap)
@@ -664,6 +916,24 @@ TEST_F(PunchTests, ClosedFloatGap)
     ASSERT_EQ(result.size(), 2);
 
     auto iter = result.begin();
+    EXPECT_FLOAT_EQ(iter->low(), 5.0f);
+    EXPECT_FLOAT_EQ(iter->high(), 6.0f);
+    EXPECT_FLOAT_EQ((++iter)->low(), 10.0f);
+    EXPECT_FLOAT_EQ(iter->high(), 12.0f);
+}
+
+TEST_F(PunchTests, ClosedAdjacentFloatGap)
+{
+    using types = closed_adjacent<float>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0.0f, 5.0f});
+    tree.insert(types::interval_type{6.0f, 10.0f});
+
+    auto result = tree.punch(types::interval_type{0.0f, 12.0f});
+    ASSERT_EQ(result.size(), 2);
+
+    auto iter = result.begin();
     EXPECT_NEAR(iter->low(), 5.0f, 0.001f);
     EXPECT_NEAR(iter->high(), 6.0f, 0.001f);
     EXPECT_NEAR((++iter)->low(), 10.0f, 0.001f);
@@ -672,7 +942,53 @@ TEST_F(PunchTests, ClosedFloatGap)
 
 TEST_F(PunchTests, PunchWithoutArgsEncompassesTree)
 {
+    using types = open<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{10, 15});
+    tree.insert(types::interval_type{20, 25});
+    tree.insert(types::interval_type{30, 35});
+    auto result = tree.punch();
+
+    ASSERT_EQ(result.size(), 3);
+    auto iter = result.begin();
+    EXPECT_EQ(iter->low(), 5);
+    EXPECT_EQ(iter->high(), 10);
+
+    EXPECT_EQ((++iter)->low(), 15);
+    EXPECT_EQ(iter->high(), 20);
+
+    EXPECT_EQ((++iter)->low(), 25);
+    EXPECT_EQ(iter->high(), 30);
+}
+
+TEST_F(PunchTests, PunchWithoutArgsEncompassesTreeClosed)
+{
     using types = closed<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{10, 15});
+    tree.insert(types::interval_type{20, 25});
+    tree.insert(types::interval_type{30, 35});
+    auto result = tree.punch();
+
+    ASSERT_EQ(result.size(), 3);
+    auto iter = result.begin();
+    EXPECT_EQ(iter->low(), 5);
+    EXPECT_EQ(iter->high(), 10);
+
+    EXPECT_EQ((++iter)->low(), 15);
+    EXPECT_EQ(iter->high(), 20);
+
+    EXPECT_EQ((++iter)->low(), 25);
+    EXPECT_EQ(iter->high(), 30);
+}
+
+TEST_F(PunchTests, PunchWithoutArgsEncompassesTreeClosedAdjacent)
+{
+    using types = closed_adjacent<int>;
 
     auto tree = types::tree_type{};
     tree.insert(types::interval_type{0, 5});
@@ -691,4 +1007,16 @@ TEST_F(PunchTests, PunchWithoutArgsEncompassesTree)
 
     EXPECT_EQ((++iter)->low(), 26);
     EXPECT_EQ(iter->high(), 29);
+}
+
+TEST_F(PunchTests, ClosedNoGap)
+{
+    using types = closed<int>;
+
+    auto tree = types::tree_type{};
+    tree.insert(types::interval_type{0, 5});
+    tree.insert(types::interval_type{5, 10});
+    auto result = tree.punch();
+
+    EXPECT_TRUE(result.empty());
 }

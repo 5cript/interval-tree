@@ -182,7 +182,7 @@ Options are:
     - [After deoverlap](#after-deoverlap)
     - [interval\_tree deoverlap\_copy()](#interval_tree-deoverlap_copy)
     - [interval\_tree punch(interval\_type const\& ival)](#interval_tree-punchinterval_type-const-ival)
-    - [Before punching (closed intervals)](#before-punching-closed-intervals)
+    - [Before punching (closed\_adjacent intervals)](#before-punching-closed_adjacent-intervals)
     - [After punching (with \[-10, 60\])](#after-punching-with--10-60)
     - [interval\_tree punch()](#interval_tree-punch)
     - [bool empty() const noexcept](#bool-empty-const-noexcept)
@@ -371,14 +371,15 @@ Same as deoverlap, but not inplace
 ### interval_tree punch(interval_type const& ival)
 Cuts the intervals of the tree out of the given interval. Like a cookie cutter cuts out of dough.
 This will return a new interval_tree containing the gaps between the intervals in the tree and the given interval.
-Closed (and closed adjacent) intervals are treated as exclusive on the borders. [0,5][6,10] will not produce another interval between 5 and 6 as they are considered within the intervals and nothing fits inbetween.
-Open intervals will not behave like this, so (0,5)(6,10) will produce a new interval (5,6).
+Closed adjacent intervals are treated as exclusive on the borders. [0,5]a[6,10]a will not produce another interval between 5 and 6 as they are considered within the intervals and nothing fits inbetween.
+Regular closed intervals will not behave like this, so [0,5][6,10] will produce a new interval [5,6].
+Open intervals with integral numbers will also not produce the gap (5, 6), because (5, 6) is empty for integers, not for floats.
 
 **IMPORTANT! The tree must be deoverlapped, or the result is undefined.**
 `ival` can be any subrange of the tree, including encompassing the whole tree.
 
 **Returns**: A new interval_tree containing the gaps.
-### Before punching (closed intervals)
+### Before punching (closed_adjacent intervals)
 ![BeforePunch](https://private-user-images.githubusercontent.com/6238896/471147224-5c631e00-dea4-4b75-a3bf-6fdd8ec1440b.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTM1NjI1MzQsIm5iZiI6MTc1MzU2MjIzNCwicGF0aCI6Ii82MjM4ODk2LzQ3MTE0NzIyNC01YzYzMWUwMC1kZWE0LTRiNzUtYTNiZi02ZmRkOGVjMTQ0MGIucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI1MDcyNiUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNTA3MjZUMjAzNzE0WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9ZDQ0NWIwMTcwMjZhNDA1YmUwNGI1YTIzNTBhZTQ5OTNhMWFiOTU5ZmU0N2E3NDI0NTQ0MzYwODA4N2E2MGFiZiZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.P5zLeXg0-9bd20Thj6pfq_WxriMn4GC_lDSLzzGKMbw)
 ### After punching (with [-10, 60])
 ![AfterPunch](https://private-user-images.githubusercontent.com/6238896/471147227-5c226d1d-d544-4a43-89a4-b3545145107d.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTM1NjI1MzQsIm5iZiI6MTc1MzU2MjIzNCwicGF0aCI6Ii82MjM4ODk2LzQ3MTE0NzIyNy01YzIyNmQxZC1kNTQ0LTRhNDMtODlhNC1iMzU0NTE0NTEwN2QucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI1MDcyNiUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNTA3MjZUMjAzNzE0WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9NmE2ZDUzMjU2ZTNjZWQ0Y2QzYjQ3ZGUyYjgyNWM2NDViYTAxMTdlY2RjYmQyMzg4OWFmZDlhMWU5YjY4NjlmZCZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.Infe9i281LDOEC5GeBFuLHVE6Xjqw7KvcUo-gv3hjpk)
