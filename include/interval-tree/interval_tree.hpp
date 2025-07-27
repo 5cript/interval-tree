@@ -4,6 +4,7 @@
 #include "interval_types.hpp"
 #include "tree_hooks.hpp"
 #include "feature_test.hpp"
+#include "optional.hpp"
 
 #include <string>
 #include <stdexcept>
@@ -19,6 +20,13 @@ namespace lib_interval_tree
         red,
         black,
         double_black
+    };
+    // ############################################################################################################
+    template <typename interval_type>
+    struct slice_type
+    {
+        optional<interval_type> left_slice{};
+        optional<interval_type> right_slice{};
     };
     // ############################################################################################################
     using default_interval_value_type = int;
@@ -201,6 +209,35 @@ namespace lib_interval_tree
         {
             return interval_kind::size(low_, high_);
         }
+
+        /**
+         * @brief Extrudes other from this interval returning what is remaining.
+         *
+         * @param other
+         * @return slice_type<interval>
+         */
+        slice_type<interval> extrude(interval const& other) const
+        {
+            slice_type<interval> slices{};
+            if (low_ < other.low_)
+            {
+                auto slice = interval{low_, std::min(interval_kind::left_slice_upper_bound(other.low_), high_)};
+                // >= comparison avoids overflows in case of unsigned integers
+                if (slice.high_ >= slice.low_ && slice.size() > 0)
+                    slices.left_slice = std::move(slice);
+            }
+            // low_ == other.low_ does not produce a left slice in any case.
+            if (high_ > other.high_)
+            {
+                // FIXME: think: is the max violating edge conditions?
+                auto slice = interval{std::max(interval_kind::right_slice_lower_bound(other.high_), low_), high_};
+                // >= comparison avoids overflows in case of unsigned integers
+                if (slice.high_ >= slice.low_ && slice.size() > 0)
+                    slices.right_slice = std::move(slice);
+            }
+            // high_ == other.high_ does not produce a right slice in any case.
+            return slices;
+        }
     };
 
     template <typename numerical_type>
@@ -321,6 +358,47 @@ namespace lib_interval_tree
         interval_border right_border() const
         {
             return right_border_;
+        }
+
+        /**
+         * @brief Extrudes other from this interval returning what is remaining.
+         *
+         * @param other
+         * @return slice_type<interval>
+         */
+        slice_type<interval> extrude(interval const& other) const
+        {
+            if (!overlaps(other))
+                return {};
+
+            slice_type<interval> slices{};
+            if (low_ < other.low_)
+            {
+                auto slice = interval{
+                    low_,
+                    std::min(other.low_, high_),
+                    left_border_,
+                    other.left_border() == interval_border::open ? interval_border::closed : interval_border::open
+                };
+                // >= comparison avoids overflows in case of unsigned integers
+                if (slice.high_ >= slice.low_ && slice.size() > 0)
+                    slices.left_slice = std::move(slice);
+            }
+            // low_ == other.low_ does not produce a left slice in any case.
+            if (high_ > other.high_)
+            {
+                auto slice = interval{
+                    std::max(other.high_, low_),
+                    high_,
+                    right_border_ == interval_border::open ? interval_border::closed : interval_border::open,
+                    other.right_border()
+                };
+                // >= comparison avoids overflows in case of unsigned integers
+                if (slice.high_ >= slice.low_ && slice.size() > 0)
+                    slices.right_slice = std::move(slice);
+            }
+            // high_ == other.high_ does not produce a right slice in any case.
+            return slices;
         }
 
       protected:
@@ -1343,33 +1421,159 @@ namespace lib_interval_tree
             return punch({min, max});
         }
 
+        // TODO: private
         /**
-         *  Only works with deoverlapped trees.
-         *  Removes all intervals from the given interval and produces a tree that contains the remaining intervals.
-         *  This is basically the other punch overload with ival = [tree_lowest, tree_highest]
+         * @brief Finds the interval that is right of the given value and does not contain it.
+         * Only works with deoverlapped trees.
+         *
+         * @param low
+         * @return node_type*
          */
-        interval_tree punch(interval_type const& ival) const
+        node_type* find_directly_right_of_i(value_type search_value) const
         {
             if (empty())
-                return {};
+                return nullptr;
 
-            interval_tree result;
-            auto i = std::begin(*this);
-            if (ival.low() < i->interval()->low())
-                result.insert({ival.low(), i->interval()->low()});
+            // There can be no interval strictly right of the value, if the value
+            // is larger than the max.
+            if (search_value > root_->max_)
+                return nullptr;
 
-            for (auto e = end(); i != e; ++i)
+            const auto is_interval_strictly_right_of_value = [search_value](node_type* node) {
+                return node->low() > search_value ||
+                    (node->low() == search_value && !node->interval()->within(search_value));
+            };
+
+            auto* node = root_;
+
+            // If the interval is not strictly right of the value, we can only go down right
+            // And dont have to check left.
+            while (!is_interval_strictly_right_of_value(node) && node->right_)
+                node = node->right_;
+
+            bool go_left = false;
+            bool go_right = false;
+            do
             {
-                auto next = i;
-                ++next;
-                if (next != e)
-                    result.insert({i->interval()->high(), next->interval()->low()});
-                else
-                    break;
+                go_left = node->left_ && is_interval_strictly_right_of_value(node->left_);
+                go_right = node->right_ && is_interval_strictly_right_of_value(node->right_);
+
+                if (go_left)
+                    node = node->left_;
+                else if (go_right)
+                    node = node->right_;
+            } while (go_left || go_right);
+
+            if (is_interval_strictly_right_of_value(node))
+                return node;
+
+            // We only end up here when node == root_, otherwise we never went down the tree to begin with.
+            return nullptr;
+        }
+
+        /**
+         * @brief Find the interval that is left of the given value or contains it.
+         * Only works in deoverlapped trees. Because a deoverlapped tree is indistinguishable
+         * from a regular binary search tree. The tree is then also sorted by the upper interval bound.
+         * Making this search possible in the first place.
+         *
+         * @param search_value
+         * @return node_type*
+         */
+        node_type* find_leftest_interval_of_value_i(value_type search_value) const
+        {
+            if (empty())
+                return nullptr;
+
+            auto* node = root_;
+
+            // low of a node is always lower than the lows of all nodes right of that node
+            // high of a node is always lower than the lows of all nodes right of that node
+
+            bool go_left = false;
+            bool go_right = false;
+
+            do
+            {
+                go_right = search_value > node->high();
+                if (go_right)
+                {
+                    go_right &= node->right_ != nullptr;
+                    if (go_right)
+                        node = node->right_;
+                    continue;
+                }
+
+                go_left = node->left_ != nullptr && search_value < node->low();
+                if (go_left)
+                    node = node->left_;
+            } while (go_left || go_right);
+
+            if (search_value < node->low())
+                return nullptr;
+
+            return node;
+        }
+
+        /**
+         * Only works with deoverlapped trees.
+         * Removes all intervals from the given interval and produces a tree that contains the remaining intervals.
+         * This is basically the other punch overload with ival = [tree_lowest, tree_highest]
+         *
+         * @param ival The range in which to punch out the gaps as a new tree
+         */
+        interval_tree punch(interval_type ival) const
+        {
+            interval_tree result;
+
+            if (empty())
+            {
+                // Nothing to punch, so return the whole interval
+                result.insert(ival);
+                return result;
             }
 
-            if (i != end() && i->interval()->high() < ival.high())
-                result.insert({i->interval()->high(), ival.high()});
+            auto* left_of_or_contains = find_leftest_interval_of_value_i(ival.low());
+
+            const_iterator iter{nullptr, this};
+            if (left_of_or_contains == nullptr)
+            {
+                iter = cbegin();
+                // not adjacent or overlapping?
+                if (ival.high() < iter->low())
+                {
+                    result.insert(ival);
+                    return result;
+                }
+            }
+            else
+            {
+                iter = const_iterator{left_of_or_contains, this};
+            }
+
+            slice_type<interval_type> ex;
+            bool insert_remaining = false;
+            for (; iter != cend(); ++iter)
+            {
+                ex = ival.extrude(*iter);
+                if (ex.left_slice)
+                    result.insert(*ex.left_slice);
+
+                if (ex.right_slice)
+                {
+                    ival = std::move(*ex.right_slice);
+                    // TODO: Can I avoid assigning this every loop? -> maybe by extracting the first iteration?
+                    insert_remaining = true;
+                }
+                else
+                {
+                    insert_remaining = false;
+                    break;
+                }
+            }
+
+            if (insert_remaining && ival.size() > 0)
+                result.insert(ival);
 
             return result;
         }

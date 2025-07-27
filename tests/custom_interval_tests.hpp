@@ -51,6 +51,22 @@ struct custom_interval : public lib_interval_tree::interval<numerical_type, inte
             return on_join(other);
         return {std::min(low_, other.low_), std::max(high_, other.high_)};
     }
+
+    /**
+     *  Returns whether the given value is in this.
+     */
+    bool within(value_type value) const
+    {
+        return interval_kind::within(low_, high_, value);
+    }
+
+    /**
+     *  Returns whether the given interval is in this.
+     */
+    bool within(custom_interval const& other) const
+    {
+        return within(other.low_) && within(other.high_);
+    }
 };
 
 struct minimal_custom_interval : public lib_interval_tree::interval<int, lib_interval_tree::closed>
