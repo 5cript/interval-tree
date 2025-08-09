@@ -16,7 +16,7 @@ struct Oracle
 template <typename numerical_type, typename interval_kind_ = lib_interval_tree::closed>
 class OracleInterval : public lib_interval_tree::interval<numerical_type, interval_kind_>
 {
-public:
+  public:
     using lib_interval_tree::interval<numerical_type, interval_kind_>::low_;
     using lib_interval_tree::interval<numerical_type, interval_kind_>::high_;
 
@@ -60,26 +60,27 @@ public:
     {
         return OracleInterval{oracle_, std::min(low_, other.low_), std::max(high_, other.high_)};
     }
-private:
+
+  private:
     Oracle* oracle_;
 };
 
 template <typename numerical_type, typename interval_kind_ = lib_interval_tree::closed>
-OracleInterval <numerical_type, interval_kind_> makeSafeOracleInterval(Oracle* oracle, numerical_type lhs, numerical_type rhs)
+OracleInterval<numerical_type, interval_kind_>
+makeSafeOracleInterval(Oracle* oracle, numerical_type lhs, numerical_type rhs)
 {
-    return OracleInterval <numerical_type, interval_kind_>{oracle, std::min(lhs, rhs), std::max(lhs, rhs)};
+    return OracleInterval<numerical_type, interval_kind_>{oracle, std::min(lhs, rhs), std::max(lhs, rhs)};
 }
 
-class EraseTests
-    : public ::testing::Test
+class EraseTests : public ::testing::Test
 {
-public:
+  public:
     using interval_type = OracleInterval<int>;
 
-public:
+  public:
     auto makeTree()
     {
-        lib_interval_tree::interval_tree_t <int> regularTree;
+        lib_interval_tree::interval_tree_t<int> regularTree;
         regularTree.insert({16, 21});
         regularTree.insert({8, 9});
         regularTree.insert({25, 30});
@@ -93,12 +94,12 @@ public:
         return regularTree;
     }
 
-protected:
+  protected:
     Oracle oracle;
-    lib_interval_tree::interval_tree <OracleInterval<int>> tree;
+    lib_interval_tree::interval_tree<OracleInterval<int>> tree;
     std::default_random_engine gen;
-    std::uniform_int_distribution <int> distSmall{-500, 500};
-    std::uniform_int_distribution <int> distLarge{-50000, 50000};
+    std::uniform_int_distribution<int> distSmall{-500, 500};
+    std::uniform_int_distribution<int> distLarge{-50000, 50000};
 };
 
 TEST_F(EraseTests, EraseSingleElement)
@@ -170,7 +171,7 @@ TEST_F(EraseTests, RandomEraseTest)
 
     for (int i = 0; i != deleteAmount; ++i)
     {
-        std::uniform_int_distribution <int> dist{0, amount - i - 1};
+        std::uniform_int_distribution<int> dist{0, amount - i - 1};
         auto end = dist(gen);
         auto iter = tree.begin();
         for (int j = 0; j != end; ++j)
@@ -183,8 +184,6 @@ TEST_F(EraseTests, RandomEraseTest)
     testTreeHeightHealth(tree);
 }
 
-
-
 TEST_F(EraseTests, MassiveDeleteEntireTreeWithEraseReturnIterator)
 {
     constexpr int amount = 1000;
@@ -192,7 +191,7 @@ TEST_F(EraseTests, MassiveDeleteEntireTreeWithEraseReturnIterator)
     for (int i = 0; i != amount; ++i)
         tree.insert(makeSafeOracleInterval(&oracle, distSmall(gen), distSmall(gen)));
 
-    for(auto iter = tree.begin(); !tree.empty();)
+    for (auto iter = tree.begin(); !tree.empty();)
     {
         iter = tree.erase(iter);
     }
@@ -255,11 +254,119 @@ TEST_F(EraseTests, CanEraseEntireTreeUsingReturnedIterator)
 
 TEST_F(EraseTests, FromNuiTest)
 {
-    lib_interval_tree::interval_tree_t <int> tree;
+    lib_interval_tree::interval_tree_t<int> tree;
     tree.insert({0, 0});
     tree.insert({4, 4});
     tree.insert({13, 13});
 
     auto iter = tree.erase(tree.find({4, 4}));
     EXPECT_EQ(*iter, (decltype(tree)::interval_type{13, 13})) << *iter;
+}
+
+TEST_F(EraseTests, EraseRangeOnEmptyTreeDoesNothing)
+{
+    lib_interval_tree::interval_tree_t<int> tree;
+    ASSERT_NO_FATAL_FAILURE(tree.erase_range({0, 10}, false));
+    EXPECT_TRUE(tree.empty());
+}
+
+TEST_F(EraseTests, EraseRangeOnIntervalInsideRangeIsRemoved)
+{
+    lib_interval_tree::interval_tree_t<int> tree;
+    tree.insert({0, 10});
+
+    tree.erase_range({-10, 20}, false);
+    EXPECT_TRUE(tree.empty());
+}
+
+TEST_F(EraseTests, EraseRangeOnIntervalEncompassingRangeIsRemoved)
+{
+    lib_interval_tree::interval_tree_t<int> tree;
+    tree.insert({0, 10});
+
+    tree.erase_range({3, 5}, false);
+    EXPECT_TRUE(tree.empty());
+}
+
+TEST_F(EraseTests, NonOverlappingIntervalIsNotRemoved)
+{
+    lib_interval_tree::interval_tree_t<int> tree;
+    tree.insert({0, 10});
+
+    tree.erase_range({20, 30}, false);
+    EXPECT_EQ(tree.size(), 1);
+    EXPECT_EQ(*tree.begin(), (decltype(tree)::interval_type{0, 10}));
+}
+
+TEST_F(EraseTests, NonOverlappingIntervalIsNotRemoved2)
+{
+    lib_interval_tree::interval_tree_t<int> tree;
+    tree.insert({0, 10});
+    tree.insert({25, 35});
+
+    tree.erase_range({20, 30}, false);
+    EXPECT_EQ(tree.size(), 1);
+    EXPECT_EQ(*tree.begin(), (decltype(tree)::interval_type{0, 10}));
+}
+
+TEST_F(EraseTests, EraseRangeOnIntervalWithLeftSlice)
+{
+    lib_interval_tree::interval_tree_t<int> tree;
+    tree.insert({0, 10});
+
+    tree.erase_range({-5, 5}, true);
+    EXPECT_EQ(tree.size(), 1);
+    EXPECT_EQ(*tree.begin(), (decltype(tree)::interval_type{5, 10}));
+}
+
+TEST_F(EraseTests, EraseRangeOnIntervalWithRightSlice)
+{
+    lib_interval_tree::interval_tree_t<int> tree;
+    tree.insert({0, 10});
+
+    tree.erase_range({5, 15}, true);
+    EXPECT_EQ(tree.size(), 1);
+    EXPECT_EQ(*tree.begin(), (decltype(tree)::interval_type{0, 5}));
+}
+
+TEST_F(EraseTests, EraseRangeMiddleCutOut)
+{
+    lib_interval_tree::interval_tree_t<int> tree;
+    tree.insert({0, 10});
+
+    tree.erase_range({3, 5}, true);
+    EXPECT_EQ(tree.size(), 2);
+    EXPECT_EQ(*tree.begin(), (decltype(tree)::interval_type{0, 3}));
+    EXPECT_EQ(*(++tree.begin()), (decltype(tree)::interval_type{5, 10}));
+}
+
+TEST_F(EraseTests, EraseRangeLeftSliceIsNotReinsertedIfParamIsFalse)
+{
+    lib_interval_tree::interval_tree_t<int> tree;
+    tree.insert({0, 10});
+
+    tree.erase_range({-5, 5}, false);
+    EXPECT_TRUE(tree.empty());
+}
+
+TEST_F(EraseTests, EraseRangeRightSliceIsNotReinsertedIfParamIsFalse)
+{
+    lib_interval_tree::interval_tree_t<int> tree;
+    tree.insert({0, 10});
+
+    tree.erase_range({5, 15}, false);
+    EXPECT_TRUE(tree.empty());
+}
+
+TEST_F(EraseTests, SlicesAreReinsertedWithMultioverlap)
+{
+    lib_interval_tree::interval_tree_t<int> tree;
+    tree.insert({0, 10});
+    tree.insert({5, 15});
+    tree.insert({10, 20});
+
+    tree.erase_range({3, 12}, true);
+    EXPECT_EQ(tree.size(), 2);
+    EXPECT_EQ(*tree.begin(), (decltype(tree)::interval_type{0, 3}));
+    EXPECT_EQ(*(++tree.begin()), (decltype(tree)::interval_type{12, 20}));
 }
