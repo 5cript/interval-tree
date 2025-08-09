@@ -19,17 +19,25 @@ file(GLOB sources "*.cpp")
 # Add Executable
 add_executable(tree-tests ${sources})
 
-target_link_libraries(tree-tests PRIVATE gtest gmock interval-tree)
+find_package(GTest REQUIRED)
+
+target_link_libraries(tree-tests PRIVATE interval-tree GTest::gtest GTest::gmock GTest::gmock_main)
 
 # Compiler Options
 set(DEBUG_OPTIONS -fexceptions -g -Wall -pedantic-errors -pedantic)
 target_compile_options(tree-tests PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_OPTIONS}>")
 
-set(RELEASE_OPTIONS -fexceptions -O3 -Wall -pedantic)
+if (${MSVC})
+    set(WARNING_FLAGS -W4)
+else()
+    set(WARNING_FLAGS -Wall)
+    list(APPEND WARNING_FLAGS -Wextra)
+endif()
+set(RELEASE_OPTIONS -fexceptions -O3 ${WARNING_FLAGS} -pedantic)
 target_compile_options(tree-tests PUBLIC "$<$<CONFIG:RELEASE>:${RELEASE_OPTIONS}>")
 
 if (INT_TREE_DRAW_EXAMPLES)
-    target_link_libraries(tree-tests PRIVATE cairo cairo-wrap)
+    target_link_libraries(tree-tests PRIVATE cairo-wrap cairo)
 endif()
 
 # If msys2, copy dynamic libraries to executable directory, visual studio does this automatically.

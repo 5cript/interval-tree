@@ -48,7 +48,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: CMake Configure
-        run: cmake -B ${{github.workspace}}/build -G"Ninja" -DINT_TREE_BUILD_EXAMPLES=on -DINT_TREE_ENABLE_TESTS=on -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_CXX_STANDARD=${{ matrix.cxx_standard }}
+        run: cmake -B ${{github.workspace}}/build -G"Ninja" -DINT_TREE_USE_OPTIONAL_POLYFILL=on -DINT_TREE_BUILD_EXAMPLES=on -DINT_TREE_ENABLE_TESTS=on -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_CXX_STANDARD=${{ matrix.cxx_standard }}
 
       - name: Build
         run: cmake --build ${{github.workspace}}/build
@@ -56,3 +56,32 @@ jobs:
       - name: Test
         working-directory: ${{github.workspace}}/build
         run: ./tests/tree-tests
+
+  msvc:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup MSVC
+        uses: microsoft/setup-msbuild@v1.0.2
+
+      - name: Install vcpkg and gtest
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          .\vcpkg\bootstrap-vcpkg.bat
+          .\vcpkg\vcpkg.exe install gtest
+        shell: pwsh
+        env:
+          VCPKG_DEFAULT_TRIPLET: x64-windows
+
+      - name: CMake Configure
+        run: cmake -B ${{github.workspace}}/build -G"Visual Studio 17 2022" -A x64 -DCMAKE_TOOLCHAIN_FILE=${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_CXX_STANDARD=20 -DINT_TREE_USE_OPTIONAL_POLYFILL=on -DINT_TREE_BUILD_EXAMPLES=on -DINT_TREE_ENABLE_TESTS=on -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+      - name: Test
+        working-directory: ${{github.workspace}}/build
+        run: .\tests\Release\tree-tests.exe
+        shell: cmd
