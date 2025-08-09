@@ -1126,6 +1126,7 @@ namespace lib_interval_tree
          *  inserted with more overlap searches? If the result is a single interval shall it insert_overlap or insert?
          *  Be careful to not produce overlapping merge sets when doing recursive insertion, or it will recurse
          *  endlessly.
+         *  @return An iterator to the inserted or merged interval.
          */
         iterator insert_overlap(interval_type const& ival, bool exclusive = false, bool recursive = true)
         {
