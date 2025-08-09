@@ -99,7 +99,7 @@ TEST_F(HookTests, OnBeforeInsertFixupIsCalled)
 {
     bool called = false;
     tree_type<TestHook> tree;
-    tree.on_before_insert_fixup = [&called](void* tree, auto node) {
+    tree.on_before_insert_fixup = [&called](void*, auto) {
         called = true;
     };
 
@@ -112,7 +112,7 @@ TEST_F(HookTests, OnAfterInsertFixupIsCalled)
 {
     bool called = false;
     tree_type<TestHook> tree;
-    tree.on_after_insert_fixup = [&called](void* tree, auto node) {
+    tree.on_after_insert_fixup = [&called](void*, auto) {
         called = true;
     };
 
@@ -125,7 +125,7 @@ TEST_F(HookTests, OnBeforeEraseFixupIsCalled)
 {
     bool called = false;
     tree_type<TestHook> tree;
-    tree.on_before_erase_fixup = [&called](void* tree, auto node, auto node_parent, bool other_is_left_child) {
+    tree.on_before_erase_fixup = [&called](void*, auto, auto, bool) {
         called = true;
     };
 
@@ -149,7 +149,7 @@ TEST_F(HookTests, OnAfterEraseFixupIsCalled)
 {
     bool called = false;
     tree_type<TestHook> tree;
-    tree.on_after_erase_fixup = [&called](void* tree, auto node, auto node_parent, bool other_is_left_child) {
+    tree.on_after_erase_fixup = [&called](void*, auto, auto, bool) {
         called = true;
     };
 
@@ -173,7 +173,7 @@ TEST_F(HookTests, OnBeforeRecalculateMaxIsCalled)
 {
     bool called = false;
     tree_type<TestHook> tree;
-    tree.on_before_recalculate_max = [&called](void* tree, auto node) {
+    tree.on_before_recalculate_max = [&called](void*, auto) {
         called = true;
     };
 
@@ -186,7 +186,7 @@ TEST_F(HookTests, OnAfterRecalculateMaxIsCalled)
 {
     bool called = false;
     tree_type<TestHook> tree;
-    tree.on_after_recalculate_max = [&called](void* tree, auto node) {
+    tree.on_after_recalculate_max = [&called](void*, auto) {
         called = true;
     };
 
