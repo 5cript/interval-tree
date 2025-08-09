@@ -18,3 +18,5 @@ tests/*.cbp
 tests/*.depend
 tests/*build_log.html
 tests/cairo-wrap
+
+CMakeSettings.json
