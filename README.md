@@ -512,8 +512,10 @@ Joins 2 intervals and whatever is inbetween.
 Removes other from this interval returning what is remaining.
 The range of other going beyond the range of this is ignored.
 Returns a struct with 2 members: left_slice and right_slice.
+```
 [   this interval  ]
 [left][other][right]
+```
 
-When the intervals are closed, adjacent results are differenty by 1.
+When the intervals are closed_adjacent, adjacent results are differenty by 1.
 [0, 9].slice([5, 19]) => left: [0, 4], right: nullopt
