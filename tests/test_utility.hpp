@@ -1,5 +1,9 @@
 #pragma once
 
+#include <interval-tree/interval_tree.hpp>
+
+#include <gtest/gtest.h>
+
 #include <functional>
 #include <list>
 #include <cmath>
@@ -38,12 +42,10 @@ void testRedBlackPropertyViolation(TreeT const& tree)
         }
     }
 
-    auto leafCollector = [&](typename TreeT::const_iterator root)
-    {
-        std::list <typename TreeT::const_iterator> leaves{};
-        std::function <void(typename std::list <typename TreeT::const_iterator>::iterator)> recursiveLeafFinder;
-        recursiveLeafFinder = [&](typename std::list <typename TreeT::const_iterator>::iterator self)
-        {
+    auto leafCollector = [&](typename TreeT::const_iterator root) {
+        std::list<typename TreeT::const_iterator> leaves{};
+        std::function<void(typename std::list<typename TreeT::const_iterator>::iterator)> recursiveLeafFinder;
+        recursiveLeafFinder = [&](typename std::list<typename TreeT::const_iterator>::iterator self) {
             if (self->left() != std::end(tree))
             {
                 recursiveLeafFinder(leaves.insert(self, self->left()));
@@ -104,11 +106,12 @@ void testMaxProperty(TreeT const& tree)
 template <typename TreeT>
 void testTreeHeightHealth(TreeT const& tree)
 {
-    int treeSize = tree.size();
+    const auto treeSize = tree.size();
 
     auto maxHeight{0};
     for (auto i = std::begin(tree); i != std::end(tree); ++i)
         maxHeight = std::max(maxHeight, i.node()->height());
 
-    EXPECT_LE(maxHeight, 2 * std::log2(treeSize + 1));
+    const auto calc = 2 * std::log2(static_cast<int>(treeSize) + 1);
+    EXPECT_LE(maxHeight, calc);
 }

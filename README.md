@@ -182,7 +182,7 @@ Options are:
     - [After deoverlap](#after-deoverlap)
     - [interval\_tree deoverlap\_copy()](#interval_tree-deoverlap_copy)
     - [interval\_tree punch(interval\_type const\& ival)](#interval_tree-punchinterval_type-const-ival)
-    - [Before punching (closed\_adjacent intervals)](#before-punching-closed_adjacent-intervals)
+    - [Before punching (closed intervals)](#before-punching-closed-intervals)
     - [After punching (with \[-10, 60\])](#after-punching-with--10-60)
     - [interval\_tree punch()](#interval_tree-punch)
     - [bool empty() const noexcept](#bool-empty-const-noexcept)
@@ -194,6 +194,8 @@ Options are:
     - [reverse\_iterator rend()](#reverse_iterator-rend)
     - [reverse\_iterator crbegin()](#reverse_iterator-crbegin)
     - [reverse\_iterator crend()](#reverse_iterator-crend)
+    - [void erase\_range(interval\_type const\& ival)](#void-erase_rangeinterval_type-const-ival)
+    - [void erase\_range(interval\_type const\& ival, bool retainSlices)](#void-erase_rangeinterval_type-const-ival-bool-retainslices)
   - [Members of Interval](#members-of-interval)
     - [using value\_type](#using-value_type)
     - [using interval\_kind](#using-interval_kind)
@@ -201,7 +203,7 @@ Options are:
     - [friend bool operator!=(interval const\& lhs, interval const\& other)](#friend-bool-operatorinterval-const-lhs-interval-const-other-1)
     - [value\_type low() const](#value_type-low-const)
     - [value\_type high() const](#value_type-high-const)
-    - [\[\[deprecated\]\] bool overlaps(value\_type l, value\_type h) const](#deprecated-bool-overlapsvalue_type-l-value_type-h-const)
+    - [DEPRECATED bool overlaps(value\_type l, value\_type h) const](#deprecated-bool-overlapsvalue_type-l-value_type-h-const)
     - [bool overlaps\_exclusive(value\_type l, value\_type h) const](#bool-overlaps_exclusivevalue_type-l-value_type-h-const)
     - [bool overlaps(interval const\& other) const](#bool-overlapsinterval-const-other-const)
     - [bool overlaps\_exclusive(interval const\& other) const](#bool-overlaps_exclusiveinterval-const-other-const)
@@ -379,10 +381,10 @@ Open intervals with integral numbers will also not produce the gap (5, 6), becau
 `ival` can be any subrange of the tree, including encompassing the whole tree.
 
 **Returns**: A new interval_tree containing the gaps.
-### Before punching (closed_adjacent intervals)
-![BeforePunch](https://private-user-images.githubusercontent.com/6238896/471147224-5c631e00-dea4-4b75-a3bf-6fdd8ec1440b.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTM1NjI1MzQsIm5iZiI6MTc1MzU2MjIzNCwicGF0aCI6Ii82MjM4ODk2LzQ3MTE0NzIyNC01YzYzMWUwMC1kZWE0LTRiNzUtYTNiZi02ZmRkOGVjMTQ0MGIucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI1MDcyNiUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNTA3MjZUMjAzNzE0WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9ZDQ0NWIwMTcwMjZhNDA1YmUwNGI1YTIzNTBhZTQ5OTNhMWFiOTU5ZmU0N2E3NDI0NTQ0MzYwODA4N2E2MGFiZiZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.P5zLeXg0-9bd20Thj6pfq_WxriMn4GC_lDSLzzGKMbw)
+### Before punching (closed intervals)
+![BeforePunch](https://5cript.github.io/readme-images/interval-tree/punch_source.png)
 ### After punching (with [-10, 60])
-![AfterPunch](https://private-user-images.githubusercontent.com/6238896/471147227-5c226d1d-d544-4a43-89a4-b3545145107d.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTM1NjI1MzQsIm5iZiI6MTc1MzU2MjIzNCwicGF0aCI6Ii82MjM4ODk2LzQ3MTE0NzIyNy01YzIyNmQxZC1kNTQ0LTRhNDMtODlhNC1iMzU0NTE0NTEwN2QucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI1MDcyNiUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNTA3MjZUMjAzNzE0WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9NmE2ZDUzMjU2ZTNjZWQ0Y2QzYjQ3ZGUyYjgyNWM2NDViYTAxMTdlY2RjYmQyMzg4OWFmZDlhMWU5YjY4NjlmZCZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.Infe9i281LDOEC5GeBFuLHVE6Xjqw7KvcUo-gv3hjpk)
+![AfterPunch](https://5cript.github.io/readme-images/interval-tree/punch_result.png)
 
 ---
 ### interval_tree punch()
@@ -444,6 +446,12 @@ Returns a past the end const_iterator in reverse.
 
 **Returns**: past the end const_iterator.
 
+### void erase_range(interval_type const& ival)
+Removes all intervals overlapping ival from the tree
+
+### void erase_range(interval_type const& ival, bool retainSlices)
+Removes all intervals overlapping ival from the tree, but retains the overlap beyond the erase interval.
+
 ## Members of Interval
 ___You can implement your own interval if you provide the same functions, except (slice, operator-, size, operator!=).___
 
@@ -465,7 +473,7 @@ Which can be picked with the second template parameter of interval:
     - [friend bool operator!=(interval const& lhs, interval const& other)](#friend-bool-operatorinterval-const-lhs-interval-const-other-1)
     - [value_type low() const](#value_type-low-const)
     - [value_type high() const](#value_type-high-const)
-    - [\[\[deprecated\]\] bool overlaps(value_type l, value_type h) const](#bool-overlapsvalue_type-l-value_type-h-const)
+    - [DEPRECATED bool overlaps(value_type l, value_type h) const](#bool-overlapsvalue_type-l-value_type-h-const)
     - [bool overlaps_exclusive(value_type l, value_type h) const](#bool-overlaps_exclusivevalue_type-l-value_type-h-const)
     - [bool overlaps(interval const& other) const](#bool-overlapsinterval-const-other-const)
     - [bool overlaps_exclusive(interval const& other) const](#bool-overlaps_exclusiveinterval-const-other-const)
@@ -474,6 +482,7 @@ Which can be picked with the second template parameter of interval:
     - [value_type operator-(interval const& other) const](#value_type-operator-interval-const-other-const)
     - [value_type size() const](#value_type-size-const)
     - [interval join(interval const& other) const](#interval-joininterval-const-other-const)
+    - [slice\_type slice(interval const\& other) const](#slice_type-sliceinterval-const-other-const)
 
 ### using value_type
 The underlying interval numerical type
@@ -487,7 +496,7 @@ Comparison operator.
 Lower bound.
 ### value_type high() const
 Upper bound.
-### \[\[deprecated\]\] bool overlaps(value_type l, value_type h) const
+### DEPRECATED bool overlaps(value_type l, value_type h) const
 Overlap these bounds with this interval?
 Is deprecated because the overlapping does not work with the dynamic interval type.
 ### bool overlaps_exclusive(value_type l, value_type h) const
@@ -507,12 +516,14 @@ Overlapping intervals have 0 distance.
 Returns The amount of elements in the interval when integral, or the distance between the 2 bounds when floating point.
 ### interval join(interval const& other) const
 Joins 2 intervals and whatever is inbetween.
-### slice_type<interval> slice(interval const& other) const
+### slice_type slice(interval const& other) const
 Removes other from this interval returning what is remaining.
 The range of other going beyond the range of this is ignored.
 Returns a struct with 2 members: left_slice and right_slice.
+```
 [   this interval  ]
 [left][other][right]
+```
 
-When the intervals are closed, adjacent results are differenty by 1.
+When the intervals are closed_adjacent, adjacent results are differenty by 1.
 [0, 9].slice([5, 19]) => left: [0, 4], right: nullopt

@@ -87,7 +87,7 @@ namespace lib_interval_tree
         template < \
             typename U, \
             typename... Args, \
-            std::enable_if_t<std::is_constructible<T, std::initializer_list<U>&, Args&&...>::value, int>...> \
+            std::enable_if_t<std::is_constructible<T, std::initializer_list<U>&, Args&&...>::value, int> = 0> \
         constexpr explicit optional_base(in_place_t, std::initializer_list<U> il, Args&&... args) \
             : value_(il, std::forward<Args>(args)...) \
             , engaged_{true} \
