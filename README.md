@@ -194,6 +194,8 @@ Options are:
     - [reverse\_iterator rend()](#reverse_iterator-rend)
     - [reverse\_iterator crbegin()](#reverse_iterator-crbegin)
     - [reverse\_iterator crend()](#reverse_iterator-crend)
+    - [void erase\_range(interval\_type const\& ival)](#void-erase_rangeinterval_type-const-ival)
+    - [void erase\_range(interval\_type const\& ival, bool retainSlices)](#void-erase_rangeinterval_type-const-ival-bool-retainslices)
   - [Members of Interval](#members-of-interval)
     - [using value\_type](#using-value_type)
     - [using interval\_kind](#using-interval_kind)
@@ -443,6 +445,12 @@ Returns the const_iterator of the interval with the highest lower_bound.
 Returns a past the end const_iterator in reverse.
 
 **Returns**: past the end const_iterator.
+
+### void erase_range(interval_type const& ival)
+Removes all intervals overlapping ival from the tree
+
+### void erase_range(interval_type const& ival, bool retainSlices)
+Removes all intervals overlapping ival from the tree, but retains the overlap beyond the erase interval.
 
 ## Members of Interval
 ___You can implement your own interval if you provide the same functions, except (slice, operator-, size, operator!=).___
