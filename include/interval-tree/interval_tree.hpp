@@ -1227,7 +1227,7 @@ namespace lib_interval_tree
 #else
         typename std::enable_if<detail::has_slice<interval_t>, void>::type
 #endif
-        erase_range(interval_t const& ival, bool retainSlices = false)
+        erase_range(interval_t const& ival, bool retainSlices)
         {
             const auto iter = insert_overlap(ival, false, true);
             if (!retainSlices)
@@ -1242,6 +1242,11 @@ namespace lib_interval_tree
                 insert(slices.left_slice.value());
             if (slices.right_slice)
                 insert(slices.right_slice.value());
+        }
+
+        void erase_range(interval_type const& ival)
+        {
+            erase(insert_overlap(ival, false, true));
         }
 
         /**
