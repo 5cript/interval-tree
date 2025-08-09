@@ -14,6 +14,10 @@ endif()
 
 target_include_directories(interval-tree INTERFACE ./include)
 
+if(${MSVC})
+    target_compile_options(interval-tree INTERFACE /Zc:__cplusplus)
+endif()
+
 if(INT_TREE_DRAW_EXAMPLES)
     add_subdirectory(cairo-wrap)
     add_subdirectory(drawings)
