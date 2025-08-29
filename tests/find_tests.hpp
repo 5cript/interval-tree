@@ -4,15 +4,15 @@
 #include <random>
 #include <cmath>
 
-class FindTests
-    : public ::testing::Test
+class FindTests : public ::testing::Test
 {
-public:
-    using types = IntervalTypes <int>;
-protected:
-    IntervalTypes <int>::tree_type tree;
+  public:
+    using types = IntervalTypes<int>;
+
+  protected:
+    IntervalTypes<int>::tree_type tree;
     std::default_random_engine gen;
-    std::uniform_int_distribution <int> distLarge{-50000, 50000};
+    std::uniform_int_distribution<int> distLarge{-50000, 50000};
 };
 
 TEST_F(FindTests, WillReturnEndIfTreeIsEmpty)
@@ -35,8 +35,7 @@ TEST_F(FindTests, WillFindRoot)
 TEST_F(FindTests, WillFindRootOnConstTree)
 {
     tree.insert({0, 1});
-    [](auto const& tree)
-    {
+    [](auto const& tree) {
         EXPECT_EQ(tree.find({0, 1}), std::begin(tree));
     }(tree);
 }
@@ -68,7 +67,7 @@ TEST_F(FindTests, WillFindAllInTreeWithDuplicates)
     tree.insert({5, 8});
     tree.insert({5, 8});
     int findCount = 0;
-    tree.find_all({5, 8}, [&findCount](decltype(tree)::iterator iter){
+    tree.find_all({5, 8}, [&findCount](decltype(tree)::iterator iter) {
         ++findCount;
         EXPECT_EQ(*iter, (decltype(tree)::interval_type{5, 8}));
         return true;
@@ -85,7 +84,7 @@ TEST_F(FindTests, WillFindAllCanExitPreemptively)
     tree.insert({5, 8});
     tree.insert({5, 8});
     int findCount = 0;
-    tree.find_all({5, 8}, [&findCount](decltype(tree)::iterator iter){
+    tree.find_all({5, 8}, [&findCount](decltype(tree)::iterator iter) {
         ++findCount;
         EXPECT_EQ(*iter, (decltype(tree)::interval_type{5, 8}));
         return findCount < 3;
@@ -97,7 +96,7 @@ TEST_F(FindTests, CanFindAllElementsBack)
 {
     constexpr int amount = 10'000;
 
-    std::vector <decltype(tree)::interval_type> intervals;
+    std::vector<decltype(tree)::interval_type> intervals;
     intervals.reserve(amount);
     for (int i = 0; i != amount; ++i)
     {
@@ -115,11 +114,11 @@ TEST_F(FindTests, CanFindAllElementsBackInStrictlyAscendingNonOverlappingInterva
 {
     constexpr int amount = 10'000;
 
-    std::vector <decltype(tree)::interval_type> intervals;
+    std::vector<decltype(tree)::interval_type> intervals;
     intervals.reserve(amount);
     for (int i = 0; i != amount; ++i)
     {
-        const auto interval = lib_interval_tree::make_safe_interval(i * 2,  i * 2 + 1);
+        const auto interval = lib_interval_tree::make_safe_interval(i * 2, i * 2 + 1);
         intervals.emplace_back(interval);
         tree.insert(interval);
     }
@@ -133,11 +132,11 @@ TEST_F(FindTests, CanFindAllElementsBackInStrictlyAscendingOverlappingIntervals)
 {
     constexpr int amount = 10'000;
 
-    std::vector <decltype(tree)::interval_type> intervals;
+    std::vector<decltype(tree)::interval_type> intervals;
     intervals.reserve(amount);
     for (int i = 0; i != amount; ++i)
     {
-        const auto interval = lib_interval_tree::make_safe_interval(i - 1,  i + 1);
+        const auto interval = lib_interval_tree::make_safe_interval(i - 1, i + 1);
         intervals.emplace_back(interval);
         tree.insert(interval);
     }
@@ -153,9 +152,8 @@ TEST_F(FindTests, CanFindAllOnConstTree)
     tree.insert(targetInterval);
     tree.insert({8, 9});
     tree.insert({25, 30});
-    std::vector <decltype(tree)::interval_type> intervals;
-    auto findWithConstTree = [&intervals, &targetInterval](auto const& tree)
-    {
+    std::vector<decltype(tree)::interval_type> intervals;
+    auto findWithConstTree = [&intervals, &targetInterval](auto const& tree) {
         tree.find_all(targetInterval, [&intervals](auto const& iter) {
             intervals.emplace_back(*iter);
             return true;
@@ -165,4 +163,40 @@ TEST_F(FindTests, CanFindAllOnConstTree)
 
     ASSERT_EQ(intervals.size(), 1);
     EXPECT_EQ(intervals[0], targetInterval);
+}
+
+TEST_F(FindTests, FuzzyFindAllInTree)
+{
+    std::mt19937 gen{0};
+    std::uniform_int_distribution<int> distSmall{-500, 500};
+
+    for (int i = 0; i < 200; ++i)
+    {
+        const auto generated = distSmall(gen);
+        tree.insert(lib_interval_tree::make_safe_interval(generated, generated + 20));
+    }
+    const auto searchInterval = decltype(tree)::interval_type{20, 50};
+    tree.insert(searchInterval);
+    tree.insert(searchInterval);
+    tree.insert(searchInterval);
+
+    int findCount = 0;
+    bool findIsConsistent = true;
+    std::vector<decltype(tree)::interval_type> foundIntervals;
+    tree.find_all(
+        searchInterval,
+        [&findIsConsistent, &searchInterval, &findCount, &foundIntervals](decltype(tree)::iterator iter) {
+            ++findCount;
+            if (*iter != searchInterval)
+            {
+                findIsConsistent = false;
+                return false;
+            }
+            foundIntervals.emplace_back(*iter);
+            return true;
+        }
+    );
+
+    EXPECT_EQ(findCount, 3);
+    ASSERT_TRUE(findIsConsistent);
 }

@@ -2,13 +2,15 @@
 
 #include "test_utility.hpp"
 
-class OverlapFindTests
-    : public ::testing::Test
+#include <random>
+
+class OverlapFindTests : public ::testing::Test
 {
-public:
-    using types = IntervalTypes <int>;
-protected:
-    IntervalTypes <int>::tree_type tree;
+  public:
+    using types = IntervalTypes<int>;
+
+  protected:
+    IntervalTypes<int>::tree_type tree;
 };
 
 TEST_F(OverlapFindTests, WillReturnEndIfTreeIsEmpty)
@@ -73,19 +75,21 @@ TEST_F(OverlapFindTests, WillFindMultipleOverlaps)
     tree.insert({10, 15});
     tree.insert({15, 20});
 
-    std::vector <decltype(tree)::interval_type> intervals;
+    std::vector<decltype(tree)::interval_type> intervals;
     tree.overlap_find_all({5, 5}, [&intervals](auto iter) {
         intervals.push_back(*iter);
         return true;
     });
     using ::testing::UnorderedElementsAre;
-    ASSERT_THAT(intervals, UnorderedElementsAre(decltype(tree)::interval_type{0, 5}, decltype(tree)::interval_type{5, 10}));
+    ASSERT_THAT(
+        intervals, UnorderedElementsAre(decltype(tree)::interval_type{0, 5}, decltype(tree)::interval_type{5, 10})
+    );
 }
 
 TEST_F(OverlapFindTests, FindAllWillFindNothingIfEmpty)
 {
     int findCount = 0;
-    tree.overlap_find_all({2, 7}, [&findCount](auto){
+    tree.overlap_find_all({2, 7}, [&findCount](auto) {
         ++findCount;
         return true;
     });
@@ -100,7 +104,7 @@ TEST_F(OverlapFindTests, FindAllWillFindNothingIfNothingOverlaps)
     tree.insert({5, 8});
     tree.insert({15, 23});
     int findCount = 0;
-    tree.overlap_find_all({1000, 2000}, [&findCount](auto){
+    tree.overlap_find_all({1000, 2000}, [&findCount](auto) {
         ++findCount;
         return true;
     });
@@ -116,7 +120,7 @@ TEST_F(OverlapFindTests, FindAllWillFindAllWithLotsOfDuplicates)
     tree.insert({0, 5});
 
     int findCount = 0;
-    tree.overlap_find_all({2, 3}, [&findCount](decltype(tree)::iterator iter){
+    tree.overlap_find_all({2, 3}, [&findCount](decltype(tree)::iterator iter) {
         ++findCount;
         EXPECT_EQ(*iter, (decltype(tree)::interval_type{0, 5}));
         return true;
@@ -133,7 +137,7 @@ TEST_F(OverlapFindTests, CanExitPreemptivelyByReturningFalse)
     tree.insert({0, 5});
 
     int findCount = 0;
-    tree.overlap_find_all({2, 3}, [&findCount](decltype(tree)::iterator iter){
+    tree.overlap_find_all({2, 3}, [&findCount](decltype(tree)::iterator iter) {
         ++findCount;
         EXPECT_EQ(*iter, (decltype(tree)::interval_type{0, 5}));
         return findCount < 3;
@@ -159,15 +163,14 @@ TEST_F(OverlapFindTests, WillFindSingleOverlapInBiggerTree)
     EXPECT_EQ(iter->high(), 2000);
 }
 
-TEST_F(FindTests, CanOverlapFindAllOnConstTree)
+TEST_F(OverlapFindTests, CanOverlapFindAllOnConstTree)
 {
     const auto targetInterval = lib_interval_tree::make_safe_interval(16, 21);
     tree.insert(targetInterval);
     tree.insert({8, 9});
     tree.insert({25, 30});
-    std::vector <decltype(tree)::interval_type> intervals;
-    auto findWithConstTree = [&intervals, &targetInterval](auto const& tree)
-    {
+    std::vector<decltype(tree)::interval_type> intervals;
+    auto findWithConstTree = [&intervals, &targetInterval](auto const& tree) {
         tree.overlap_find_all(targetInterval, [&intervals](auto const& iter) {
             intervals.emplace_back(*iter);
             return true;
@@ -177,4 +180,46 @@ TEST_F(FindTests, CanOverlapFindAllOnConstTree)
 
     ASSERT_EQ(intervals.size(), 1);
     EXPECT_EQ(intervals[0], targetInterval);
+}
+
+TEST_F(OverlapFindTests, FuzzyOverlapFindAllInTree)
+{
+    std::mt19937 gen{0};
+    std::uniform_int_distribution<int> distSmall{-500, 500};
+
+    for (int i = 0; i < 200; ++i)
+    {
+        const auto generated = distSmall(gen);
+        tree.insert(lib_interval_tree::make_safe_interval(generated, generated + 20));
+    }
+
+    int findCount = 0;
+    bool findIsConsistent = true;
+    const auto searchInterval = decltype(tree)::interval_type{20, 50};
+    std::vector<decltype(tree)::interval_type> foundIntervals;
+    tree.overlap_find_all(
+        searchInterval,
+        [&findIsConsistent, &searchInterval, &findCount, &foundIntervals](decltype(tree)::iterator iter) {
+            ++findCount;
+            if (!iter->overlaps(searchInterval))
+            {
+                findIsConsistent = false;
+                return false;
+            }
+            foundIntervals.emplace_back(*iter);
+            return true;
+        }
+    );
+
+    EXPECT_GT(findCount, 0); // Just make sure the test has at least one interval found, or its useless.
+    ASSERT_TRUE(findIsConsistent);
+
+    // now check that all other intervals should not have been found
+    for (auto const& ival : tree)
+    {
+        if (ival.overlaps(searchInterval))
+        {
+            EXPECT_TRUE(std::find(foundIntervals.begin(), foundIntervals.end(), ival) != foundIntervals.end());
+        }
+    }
 }
