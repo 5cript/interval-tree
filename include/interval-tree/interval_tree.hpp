@@ -1773,20 +1773,12 @@ namespace lib_interval_tree
             }
             if (ptr->left_ && ival.high() <= ptr->left_->max())
             {
-                // no right? can only continue left
-                if (!ptr->right_ || ival.low() > ptr->right_->max())
-                    return find_all_i<ThisType, IteratorT>(self, ptr->left_, ival, on_find, compare);
-
                 if (!find_all_i<ThisType, IteratorT>(self, ptr->left_, ival, on_find, compare))
                     return false;
             }
             if (ptr->right_ && ival.high() <= ptr->right_->max())
             {
-                if (!ptr->left_ || ival.low() > ptr->left_->max())
-                    return find_all_i<ThisType, IteratorT>(self, ptr->right_, ival, on_find, compare);
-
-                if (!find_all_i<ThisType, IteratorT>(self, ptr->right_, ival, on_find, compare))
-                    return false;
+                return find_all_i<ThisType, IteratorT>(self, ptr->right_, ival, on_find, compare);
             }
             return true;
         }
@@ -1807,22 +1799,13 @@ namespace lib_interval_tree
         {
             if (ptr->left_ && ival.high() <= ptr->left_->max())
             {
-                // no right? can only continue left
-                if (!ptr->right_ || ival.low() > ptr->right_->max())
-                    return find_i(ptr->left_, ival, compare);
-
                 auto* res = find_i(ptr->left_, ival, compare);
                 if (res != nullptr)
                     return res;
             }
             if (ptr->right_ && ival.high() <= ptr->right_->max())
             {
-                if (!ptr->left_ || ival.low() > ptr->left_->max())
-                    return find_i(ptr->right_, ival, compare);
-
-                auto* res = find_i(ptr->right_, ival, compare);
-                if (res != nullptr)
-                    return res;
+                return find_i(ptr->right_, ival, compare);
             }
             return nullptr;
         }
@@ -1884,21 +1867,12 @@ namespace lib_interval_tree
             }
             if (ptr->left_ && ptr->left_->max() >= ival.low())
             {
-                // no right? can only continue left
-                // or interval low is bigger than max of right branch.
-                if (!ptr->right_ || ival.low() > ptr->right_->max())
-                    return overlap_find_all_i<ThisType, Exclusive, IteratorT>(self, ptr->left_, ival, on_find);
-
                 if (!overlap_find_all_i<ThisType, Exclusive, IteratorT>(self, ptr->left_, ival, on_find))
                     return false;
             }
             if (ptr->right_ && ptr->right_->max() >= ival.low())
             {
-                if (!ptr->left_ || ival.low() > ptr->right_->max())
-                    return overlap_find_all_i<ThisType, Exclusive, IteratorT>(self, ptr->right_, ival, on_find);
-
-                if (!overlap_find_all_i<ThisType, Exclusive, IteratorT>(self, ptr->right_, ival, on_find))
-                    return false;
+                return overlap_find_all_i<ThisType, Exclusive, IteratorT>(self, ptr->right_, ival, on_find);
             }
             return true;
         }
@@ -1909,23 +1883,13 @@ namespace lib_interval_tree
         {
             if (ptr->left_ && ptr->left_->max() >= ival.low())
             {
-                // no right? can only continue left
-                // or upper bounds higher than what is contained right? continue left.
-                if (!ptr->right_ || ival.low() > ptr->right_->max())
-                    return overlap_find_i<Exclusive>(ptr->left_, ival);
-
                 auto* res = overlap_find_i<Exclusive>(ptr->left_, ival);
                 if (res != nullptr)
                     return res;
             }
             if (ptr->right_ && ptr->right_->max() >= ival.low())
             {
-                if (!ptr->left_ || ival.low() > ptr->left_->max())
-                    return overlap_find_i<Exclusive>(ptr->right_, ival);
-
-                auto* res = overlap_find_i<Exclusive>(ptr->right_, ival);
-                if (res != nullptr)
-                    return res;
+                return overlap_find_i<Exclusive>(ptr->right_, ival);
             }
             return nullptr;
         }
