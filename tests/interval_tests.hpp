@@ -324,6 +324,27 @@ TEST_F(OverlapTests, LimitOverlapTests)
     EXPECT_TRUE(i<left_open>(0, MAX).overlaps({3, MAX}));
     EXPECT_TRUE(i<right_open>(0, MAX).overlaps({3, MAX}));
     EXPECT_TRUE(i<closed_adjacent>(0, MAX).overlaps({3, MAX}));
+
+    // min-max overlap
+    EXPECT_TRUE(i<closed>(0, MAX).overlaps({MIN, 3}));
+    EXPECT_TRUE(i<open>(0, MAX).overlaps({MIN, 3}));
+    EXPECT_TRUE(i<left_open>(0, MAX).overlaps({MIN, 3}));
+    EXPECT_TRUE(i<right_open>(0, MAX).overlaps({MIN, 3}));
+    EXPECT_TRUE(i<closed_adjacent>(0, MAX).overlaps({MIN, 3}));
+
+    // min-max closed overlap
+    EXPECT_TRUE(i<closed>(0, MAX).overlaps({MIN, 0}));
+    EXPECT_FALSE(i<open>(0, MAX).overlaps({MIN, 0}));
+    EXPECT_FALSE(i<left_open>(0, MAX).overlaps({MIN, 0}));
+    EXPECT_FALSE(i<right_open>(0, MAX).overlaps({MIN, 0}));
+    EXPECT_TRUE(i<closed_adjacent>(0, MAX).overlaps({MIN, 0}));
+
+    // min-max touching
+    EXPECT_FALSE(i<closed>(1, MAX).overlaps({MIN, 0}));
+    EXPECT_FALSE(i<open>(1, MAX).overlaps({MIN, 0}));
+    EXPECT_FALSE(i<left_open>(1, MAX).overlaps({MIN, 0}));
+    EXPECT_FALSE(i<right_open>(1, MAX).overlaps({MIN, 0}));
+    EXPECT_TRUE(i<closed_adjacent>(1, MAX).overlaps({MIN, 0}));
 }
 
 TEST_F(OverlapTests, ShallEncompassCompletely)
