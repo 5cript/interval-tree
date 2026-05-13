@@ -291,6 +291,41 @@ TEST_F(OverlapTests, LeftOverlapTests)
     EXPECT_FALSE(i<closed_adjacent>(0, 5).overlaps({-6, -2}));
 }
 
+TEST_F(OverlapTests, LimitOverlapTests)
+{
+    using lib_interval_tree::open;
+    const MIN = std::numeric_limits<int>::min();
+    const MAX = std::numeric_limits<int>::max();
+
+    // one min
+    EXPECT_TRUE(i<closed>(MIN, 5).overlaps({3, 16}));
+    EXPECT_TRUE(i<open>(MIN, 5).overlaps({3, 16}));
+    EXPECT_TRUE(i<left_open>(MIN, 5).overlaps({3, 16}));
+    EXPECT_TRUE(i<right_open>(MIN, 5).overlaps({3, 16}));
+    EXPECT_TRUE(i<closed_adjacent>(MIN, 5).overlaps({3, 16}));
+
+    // one max
+    EXPECT_TRUE(i<closed>(0, 5).overlaps({3, MAX}));
+    EXPECT_TRUE(i<open>(0, 5).overlaps({3, MAX}));
+    EXPECT_TRUE(i<left_open>(0, 5).overlaps({3, MAX}));
+    EXPECT_TRUE(i<right_open>(0, 5).overlaps({3, MAX}));
+    EXPECT_TRUE(i<closed_adjacent>(0, 5).overlaps({3, MAX}));
+
+    // both min
+    EXPECT_TRUE(i<closed>(MIN, 5).overlaps({MIN, 16}));
+    EXPECT_TRUE(i<open>(MIN, 5).overlaps({MIN, 16}));
+    EXPECT_TRUE(i<left_open>(MIN, 5).overlaps({MIN, 16}));
+    EXPECT_TRUE(i<right_open>(MIN, 5).overlaps({MIN, 16}));
+    EXPECT_TRUE(i<closed_adjacent>(MIN, 5).overlaps({MIN, 16}));
+
+    // both max
+    EXPECT_TRUE(i<closed>(0, MAX).overlaps({3, MAX}));
+    EXPECT_TRUE(i<open>(0, MAX).overlaps({3, MAX}));
+    EXPECT_TRUE(i<left_open>(0, MAX).overlaps({3, MAX}));
+    EXPECT_TRUE(i<right_open>(0, MAX).overlaps({3, MAX}));
+    EXPECT_TRUE(i<closed_adjacent>(0, MAX).overlaps({3, MAX}));
+}
+
 TEST_F(OverlapTests, ShallEncompassCompletely)
 {
     using lib_interval_tree::open;

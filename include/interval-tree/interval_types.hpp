@@ -414,13 +414,15 @@ namespace lib_interval_tree
                 closed::overlaps(closedEquiv1.low(), closedEquiv1.high(), closedEquiv2.low(), closedEquiv2.high());
             if (!closedOverlap)
             {
-                if (closedEquiv1.high() + 1 == closedEquiv2.low() &&
+                if (/*closedEquiv1.high() != std::numeric_limits<interval_type::value_type>::max() && */
+                    closedEquiv1.high() + 1 == closedEquiv2.low() &&
                     (ival1.right_border() == interval_border::closed_adjacent ||
                      ival2.left_border() == interval_border::closed_adjacent))
                 {
                     return true;
                 }
-                if (closedEquiv2.high() + 1 == closedEquiv1.low() &&
+                if (/*closedEquiv2.high() != std::numeric_limits<interval_type::value_type>::max() && */
+                    closedEquiv2.high() + 1 == closedEquiv1.low() &&
                     (ival2.right_border() == interval_border::closed_adjacent ||
                      ival1.left_border() == interval_border::closed_adjacent))
                 {
