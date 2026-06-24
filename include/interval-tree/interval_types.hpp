@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <utility>
 #include <type_traits>
+#include <limits>
 
 namespace lib_interval_tree
 {
