@@ -56,9 +56,15 @@ int main()
 ```
 
 ## Compile & Run Testing
-Having googletest (find here on github) installed / built is a requirement to run the tests.
 Create a build folder, navigate there, run cmake and build the tree-tests target.
-You might have to adapt the linker line for gtest, if you built it yourself and didn't install it into your system.
+
+```bash
+mkdir build
+cd build
+cmake --build .
+./tests/tree-tests
+```
+
 If you want to generate the pretty drawings, install cairo, pull the submodule and pass INT_TREE_DRAW_EXAMPLES=on to the cmake command line to generate a drawings/make_drawings executeable.
 
 Some features of this library require the presence of an optional type.

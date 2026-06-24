@@ -291,62 +291,6 @@ TEST_F(OverlapTests, LeftOverlapTests)
     EXPECT_FALSE(i<closed_adjacent>(0, 5).overlaps({-6, -2}));
 }
 
-TEST_F(OverlapTests, LimitOverlapTests)
-{
-    using lib_interval_tree::open;
-    const MIN = std::numeric_limits<int>::min();
-    const MAX = std::numeric_limits<int>::max();
-
-    // one min
-    EXPECT_TRUE(i<closed>(MIN, 5).overlaps({3, 16}));
-    EXPECT_TRUE(i<open>(MIN, 5).overlaps({3, 16}));
-    EXPECT_TRUE(i<left_open>(MIN, 5).overlaps({3, 16}));
-    EXPECT_TRUE(i<right_open>(MIN, 5).overlaps({3, 16}));
-    EXPECT_TRUE(i<closed_adjacent>(MIN, 5).overlaps({3, 16}));
-
-    // one max
-    EXPECT_TRUE(i<closed>(0, 5).overlaps({3, MAX}));
-    EXPECT_TRUE(i<open>(0, 5).overlaps({3, MAX}));
-    EXPECT_TRUE(i<left_open>(0, 5).overlaps({3, MAX}));
-    EXPECT_TRUE(i<right_open>(0, 5).overlaps({3, MAX}));
-    EXPECT_TRUE(i<closed_adjacent>(0, 5).overlaps({3, MAX}));
-
-    // both min
-    EXPECT_TRUE(i<closed>(MIN, 5).overlaps({MIN, 16}));
-    EXPECT_TRUE(i<open>(MIN, 5).overlaps({MIN, 16}));
-    EXPECT_TRUE(i<left_open>(MIN, 5).overlaps({MIN, 16}));
-    EXPECT_TRUE(i<right_open>(MIN, 5).overlaps({MIN, 16}));
-    EXPECT_TRUE(i<closed_adjacent>(MIN, 5).overlaps({MIN, 16}));
-
-    // both max
-    EXPECT_TRUE(i<closed>(0, MAX).overlaps({3, MAX}));
-    EXPECT_TRUE(i<open>(0, MAX).overlaps({3, MAX}));
-    EXPECT_TRUE(i<left_open>(0, MAX).overlaps({3, MAX}));
-    EXPECT_TRUE(i<right_open>(0, MAX).overlaps({3, MAX}));
-    EXPECT_TRUE(i<closed_adjacent>(0, MAX).overlaps({3, MAX}));
-
-    // min-max overlap
-    EXPECT_TRUE(i<closed>(0, MAX).overlaps({MIN, 3}));
-    EXPECT_TRUE(i<open>(0, MAX).overlaps({MIN, 3}));
-    EXPECT_TRUE(i<left_open>(0, MAX).overlaps({MIN, 3}));
-    EXPECT_TRUE(i<right_open>(0, MAX).overlaps({MIN, 3}));
-    EXPECT_TRUE(i<closed_adjacent>(0, MAX).overlaps({MIN, 3}));
-
-    // min-max closed overlap
-    EXPECT_TRUE(i<closed>(0, MAX).overlaps({MIN, 0}));
-    EXPECT_FALSE(i<open>(0, MAX).overlaps({MIN, 0}));
-    EXPECT_FALSE(i<left_open>(0, MAX).overlaps({MIN, 0}));
-    EXPECT_FALSE(i<right_open>(0, MAX).overlaps({MIN, 0}));
-    EXPECT_TRUE(i<closed_adjacent>(0, MAX).overlaps({MIN, 0}));
-
-    // min-max touching
-    EXPECT_FALSE(i<closed>(1, MAX).overlaps({MIN, 0}));
-    EXPECT_FALSE(i<open>(1, MAX).overlaps({MIN, 0}));
-    EXPECT_FALSE(i<left_open>(1, MAX).overlaps({MIN, 0}));
-    EXPECT_FALSE(i<right_open>(1, MAX).overlaps({MIN, 0}));
-    EXPECT_TRUE(i<closed_adjacent>(1, MAX).overlaps({MIN, 0}));
-}
-
 TEST_F(OverlapTests, ShallEncompassCompletely)
 {
     using lib_interval_tree::open;
@@ -694,6 +638,70 @@ TEST_F(OverlapTests, DynamicBorderTests)
     EXPECT_FALSE(i<dynamic>(5, 10, o, o).overlaps(i<dynamic>(0, 6, o, o)));
 
     // one side open or closed follows from other tests
+}
+
+TEST_F(OverlapTests, DynamicBorderTestsLimits)
+{
+    const auto MIN = std::numeric_limits<int>::min();
+    const auto MAX = std::numeric_limits<int>::max();
+
+    constexpr auto c = interval_border::closed;
+    constexpr auto o = interval_border::open;
+    constexpr auto ca = interval_border::closed_adjacent;
+
+    // one min
+    EXPECT_TRUE(i<dynamic>(MIN, 5, c, c).overlaps({3, 16, c, c}));
+    EXPECT_TRUE(i<dynamic>(MIN, 5, o, c).overlaps({3, 16, c, c}));
+    EXPECT_TRUE(i<dynamic>(MIN, 5, ca, c).overlaps({3, 16, c, c}));
+
+    // one max
+    EXPECT_TRUE(i<dynamic>(0, 5, c, c).overlaps({3, MAX, c, c}));
+    EXPECT_TRUE(i<dynamic>(0, 5, c, c).overlaps({3, MAX, c, o}));
+    EXPECT_TRUE(i<dynamic>(0, 5, c, c).overlaps({3, MAX, c, ca}));
+
+    // both min
+    EXPECT_TRUE(i<dynamic>(MIN, 5, c, c).overlaps({MIN, 16, c, c}));
+    EXPECT_TRUE(i<dynamic>(MIN, 5, o, c).overlaps({MIN, 16, c, c}));
+    EXPECT_TRUE(i<dynamic>(MIN, 5, ca, c).overlaps({MIN, 16, c, c}));
+    EXPECT_TRUE(i<dynamic>(MIN, 5, c, c).overlaps({MIN, 16, o, c}));
+    EXPECT_TRUE(i<dynamic>(MIN, 5, o, c).overlaps({MIN, 16, o, c}));
+    EXPECT_TRUE(i<dynamic>(MIN, 5, ca, c).overlaps({MIN, 16, o, c}));
+    EXPECT_TRUE(i<dynamic>(MIN, 5, c, c).overlaps({MIN, 16, ca, c}));
+    EXPECT_TRUE(i<dynamic>(MIN, 5, o, c).overlaps({MIN, 16, ca, c}));
+    EXPECT_TRUE(i<dynamic>(MIN, 5, ca, c).overlaps({MIN, 16, ca, c}));
+
+    // both max
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, c).overlaps({3, MAX, c, c}));
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, o).overlaps({3, MAX, c, c}));
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, ca).overlaps({3, MAX, c, c}));
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, c).overlaps({3, MAX, c, o}));
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, c).overlaps({3, MAX, c, c}));
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, c).overlaps({3, MAX, c, ca}));
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, ca).overlaps({3, MAX, c, c}));
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, ca).overlaps({3, MAX, c, o}));
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, ca).overlaps({3, MAX, c, ca}));
+
+    // min-max overlap
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, c).overlaps({MIN, 3, c, c}));
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, o).overlaps({MIN, 3, c, c}));
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, ca).overlaps({MIN, 3, c, c}));
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, c).overlaps({MIN, 3, o, c}));
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, o).overlaps({MIN, 3, o, c}));
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, ca).overlaps({MIN, 3, o, c}));
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, c).overlaps({MIN, 3, ca, c}));
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, o).overlaps({MIN, 3, ca, c}));
+    EXPECT_TRUE(i<dynamic>(0, MAX, c, ca).overlaps({MIN, 3, ca, c}));
+
+    // min-max not overlap
+    EXPECT_FALSE(i<dynamic>(1, MAX, c, c).overlaps({MIN, 0, c, c}));
+    EXPECT_FALSE(i<dynamic>(1, MAX, c, o).overlaps({MIN, 0, c, c}));
+    EXPECT_FALSE(i<dynamic>(1, MAX, c, ca).overlaps({MIN, 0, c, c}));
+    EXPECT_FALSE(i<dynamic>(1, MAX, c, c).overlaps({MIN, 0, o, c}));
+    EXPECT_FALSE(i<dynamic>(1, MAX, c, o).overlaps({MIN, 0, o, c}));
+    EXPECT_FALSE(i<dynamic>(1, MAX, c, ca).overlaps({MIN, 0, o, c}));
+    EXPECT_FALSE(i<dynamic>(1, MAX, c, c).overlaps({MIN, 0, ca, c}));
+    EXPECT_FALSE(i<dynamic>(1, MAX, c, o).overlaps({MIN, 0, ca, c}));
+    EXPECT_FALSE(i<dynamic>(1, MAX, c, ca).overlaps({MIN, 0, ca, c}));
 }
 
 TEST_F(IntervalTests, DynamicWithinTest)
