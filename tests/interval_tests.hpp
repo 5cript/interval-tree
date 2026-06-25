@@ -702,6 +702,30 @@ TEST_F(OverlapTests, DynamicBorderTestsLimits)
     EXPECT_FALSE(i<dynamic>(1, MAX, c, c).overlaps({MIN, 0, ca, c}));
     EXPECT_FALSE(i<dynamic>(1, MAX, c, o).overlaps({MIN, 0, ca, c}));
     EXPECT_FALSE(i<dynamic>(1, MAX, c, ca).overlaps({MIN, 0, ca, c}));
+
+    EXPECT_FALSE(i<dynamic>(MIN, -1, c, c).overlaps({MAX, MAX, c, c}));
+    EXPECT_FALSE(i<dynamic>(MIN, -1, c, ca).overlaps({MAX, MAX, c, c}));
+    EXPECT_FALSE(i<dynamic>(MIN, -1, c, c).overlaps({MAX, MAX, ca, c}));
+    EXPECT_FALSE(i<dynamic>(MAX, MAX, c, c).overlaps({MIN, -1, c, c}));
+    EXPECT_FALSE(i<dynamic>(MAX, MAX, ca, c).overlaps({MIN, -1, c, c}));
+    EXPECT_FALSE(i<dynamic>(MAX, MAX, c, c).overlaps({MIN, -1, c, ca}));
+}
+
+TEST_F(OverlapTests, ClosedAdjacentOverlapLimits)
+{
+    const auto MIN = std::numeric_limits<int>::min();
+    const auto MAX = std::numeric_limits<int>::max();
+
+    EXPECT_TRUE(i<closed_adjacent>(0, 5).overlaps({3, MAX}));
+    EXPECT_TRUE(i<closed_adjacent>(0, MAX).overlaps({3, 16}));
+    EXPECT_TRUE(i<closed_adjacent>(0, MAX).overlaps({3, MAX}));
+
+    EXPECT_TRUE(i<closed_adjacent>(0, MAX - 1).overlaps({MAX, MAX}));
+    EXPECT_TRUE(i<closed_adjacent>(MAX, MAX).overlaps({0, MAX - 1}));
+
+    EXPECT_FALSE(i<closed_adjacent>(0, 5).overlaps({MAX, MAX}));
+    EXPECT_FALSE(i<closed_adjacent>(MIN, -1).overlaps({MAX, MAX}));
+    EXPECT_FALSE(i<closed_adjacent>(MAX, MAX).overlaps({MIN, -1}));
 }
 
 TEST_F(IntervalTests, DynamicWithinTest)
