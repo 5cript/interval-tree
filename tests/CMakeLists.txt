@@ -19,7 +19,14 @@ file(GLOB sources "*.cpp")
 # Add Executable
 add_executable(tree-tests ${sources})
 
-find_package(GTest REQUIRED)
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG        v1.15.2
+)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
 
 target_link_libraries(tree-tests PRIVATE interval-tree GTest::gtest GTest::gmock GTest::gmock_main)
 
@@ -47,4 +54,9 @@ if (DEFINED ENV{MSYSTEM})
         COMMAND bash -c "ldd $<TARGET_FILE:tree-tests>" | "grep" "clang" | awk "NF == 4 { system(\"${CMAKE_COMMAND} -E copy \" \$3 \" $<TARGET_FILE_DIR:tree-tests>\") }"
         VERBATIM
     )
+endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(tree-tests PRIVATE -fsanitize=signed-integer-overflow -fno-sanitize-recover=all)
+    target_link_options(tree-tests PRIVATE -fsanitize=signed-integer-overflow -fno-sanitize-recover=all)
 endif()

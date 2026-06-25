@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <utility>
 #include <type_traits>
+#include <limits>
 
 namespace lib_interval_tree
 {
@@ -220,7 +221,8 @@ namespace lib_interval_tree
 #endif
         overlaps(numerical_type l1, numerical_type h1, numerical_type l2, numerical_type h2)
         {
-            return (l1 <= (h2 + 1)) && (l2 <= (h1 + 1));
+            return (h2 == std::numeric_limits<numerical_type>::max() || l1 <= (h2 + 1)) &&
+                (h1 == std::numeric_limits<numerical_type>::max() || l2 <= (h1 + 1));
         }
 
         template <typename numerical_type>
@@ -412,23 +414,25 @@ namespace lib_interval_tree
 
             auto closedOverlap =
                 closed::overlaps(closedEquiv1.low(), closedEquiv1.high(), closedEquiv2.low(), closedEquiv2.high());
-            if (!closedOverlap)
+            if (closedOverlap)
             {
-                if (closedEquiv1.high() + 1 == closedEquiv2.low() &&
-                    (ival1.right_border() == interval_border::closed_adjacent ||
-                     ival2.left_border() == interval_border::closed_adjacent))
-                {
-                    return true;
-                }
-                if (closedEquiv2.high() + 1 == closedEquiv1.low() &&
-                    (ival2.right_border() == interval_border::closed_adjacent ||
-                     ival1.left_border() == interval_border::closed_adjacent))
-                {
-                    return true;
-                }
-                return false;
+                return true;
             }
-            return true;
+            if (closedEquiv1.high() != std::numeric_limits<typename interval_type::value_type>::max() &&
+                closedEquiv1.high() + 1 == closedEquiv2.low() &&
+                (ival1.right_border() == interval_border::closed_adjacent ||
+                 ival2.left_border() == interval_border::closed_adjacent))
+            {
+                return true;
+            }
+            if (closedEquiv2.high() != std::numeric_limits<typename interval_type::value_type>::max() &&
+                closedEquiv2.high() + 1 == closedEquiv1.low() &&
+                (ival2.right_border() == interval_border::closed_adjacent ||
+                 ival1.left_border() == interval_border::closed_adjacent))
+            {
+                return true;
+            }
+            return false;
         }
 
         template <typename interval_type>
