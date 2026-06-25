@@ -221,7 +221,7 @@ namespace lib_interval_tree
 #endif
         overlaps(numerical_type l1, numerical_type h1, numerical_type l2, numerical_type h2)
         {
-            return (h2 == std::numeric_limits<numerical_type>::max() || l1 <= (h2 + 1)) && 
+            return (h2 == std::numeric_limits<numerical_type>::max() || l1 <= (h2 + 1)) &&
                 (h1 == std::numeric_limits<numerical_type>::max() || l2 <= (h1 + 1));
         }
 
@@ -418,17 +418,17 @@ namespace lib_interval_tree
             {
                 return true;
             }
-            if (closedEquiv2.low() > closedEquiv1.high() &&
-                closedEquiv2.low() - closedEquiv1.high() == 1 &&
+            if (closedEquiv1.high() != std::numeric_limits<typename interval_type::value_type>::max() &&
+                closedEquiv1.high() + 1 == closedEquiv2.low() &&
                 (ival1.right_border() == interval_border::closed_adjacent ||
-                    ival2.left_border() == interval_border::closed_adjacent))
+                 ival2.left_border() == interval_border::closed_adjacent))
             {
                 return true;
             }
-            if (closedEquiv1.low() > closedEquiv2.high() &&
-                closedEquiv1.low() - closedEquiv2.high() == 1 &&
+            if (closedEquiv2.high() != std::numeric_limits<typename interval_type::value_type>::max() &&
+                closedEquiv2.high() + 1 == closedEquiv1.low() &&
                 (ival2.right_border() == interval_border::closed_adjacent ||
-                    ival1.left_border() == interval_border::closed_adjacent))
+                 ival1.left_border() == interval_border::closed_adjacent))
             {
                 return true;
             }
