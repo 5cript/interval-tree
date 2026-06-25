@@ -61,6 +61,7 @@ Create a build folder, navigate there, run cmake and build the tree-tests target
 ```bash
 mkdir build
 cd build
+cmake .. -DINT_TREE_ENABLE_TESTS=on
 cmake --build .
 ./tests/tree-tests
 ```
