@@ -57,6 +57,6 @@ if (DEFINED ENV{MSYSTEM})
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
-    target_compile_options(tree-tests PRIVATE -fsanitize=signed-integer-overflow)
-    target_link_options(tree-tests PRIVATE -fsanitize=signed-integer-overflow)
+    target_compile_options(tree-tests PRIVATE -fsanitize=signed-integer-overflow -fno-sanitize-recover=all)
+    target_link_options(tree-tests PRIVATE -fsanitize=signed-integer-overflow -fno-sanitize-recover=all)
 endif()
