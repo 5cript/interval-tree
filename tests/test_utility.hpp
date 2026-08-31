@@ -5,96 +5,51 @@
 #include <gtest/gtest.h>
 
 #include <functional>
-#include <list>
 #include <cmath>
 
 /**
- *  Warning this function is very expensive.
+ *  This function has linear complexity.
  */
 template <typename TreeT>
 void testRedBlackPropertyViolation(TreeT const& tree)
 {
     using namespace lib_interval_tree;
 
-    // root is always black.
+    // empty tree is always correct
+    if (tree.root() == std::cend(tree))
+        return;
+
+    // root must be black
     EXPECT_EQ(tree.root().color(), rb_color::black);
 
-    // check that all nodes have red or black coloring. (seems obvious, but is not on bug)
-    for (auto i = std::begin(tree); i != std::end(tree); ++i)
-    {
-        EXPECT_EQ(true, i.color() == rb_color::black || i.color() == rb_color::red);
-    }
-
-    // check for (red children = black) property:
-    for (auto i = std::begin(tree); i != std::end(tree); ++i)
-    {
-        auto nodeColor = i.color();
-        if (nodeColor == rb_color::red)
-        {
-            if (i.left() != std::end(tree))
-            {
-                EXPECT_EQ(i.left().color(), rb_color::black);
-            }
-            if (i.right() != std::end(tree))
-            {
-                EXPECT_EQ(i.right().color(), rb_color::black);
-            }
-        }
-    }
-
-    auto leafCollector = [&](typename TreeT::const_iterator root) {
-        std::list<typename TreeT::const_iterator> leaves{};
-        std::function<void(typename std::list<typename TreeT::const_iterator>::iterator)> recursiveLeafFinder;
-        recursiveLeafFinder = [&](typename std::list<typename TreeT::const_iterator>::iterator self) {
-            if (self->left() != std::end(tree))
-            {
-                recursiveLeafFinder(leaves.insert(self, self->left()));
-            }
-            if (self->right() != std::end(tree))
-            {
-                *self = self->right();
-                recursiveLeafFinder(self);
-            }
-        };
-        leaves.push_back(root);
-        recursiveLeafFinder(leaves.begin());
-        return leaves;
-    };
-
-    // Test that all paths from a node down to its null descendants contain the same number of black nodes.
-    std::function<int(typename TreeT::const_iterator)> blackHeight = [&](typename TreeT::const_iterator node) -> int {
+    std::function<int(typename TreeT::const_iterator)> verify = [&](typename TreeT::const_iterator node) -> int {
         if (node == std::cend(tree))
             return 1;
-        const auto leftHeight = blackHeight(node.left());
-        const auto rightHeight = blackHeight(node.right());
+
+        // check that all nodes have red or black coloring. (seems obvious, but is not on bug)
+        EXPECT_TRUE(node.color() == rb_color::black || node.color() == rb_color::red);
+
+        // check for (red children = black) property:
+        if (node.color() == rb_color::red)
+        {
+            if (node.left() != std::cend(tree))
+            {
+                EXPECT_EQ(node.left().color(), rb_color::black);
+            }
+            if (node.right() != std::cend(tree))
+            {
+                EXPECT_EQ(node.right().color(), rb_color::black);
+            }
+        }
+
+        // Test that all paths from a node down to its null descendants contain the same number of black nodes.
+        const auto leftHeight = verify(node.left());
+        const auto rightHeight = verify(node.right());
         EXPECT_EQ(leftHeight, rightHeight);
         return leftHeight + (node.color() == rb_color::black ? 1 : 0);
     };
-    blackHeight(tree.root());
 
-    // Test that for every node, on the path to its leaves, has the same number of black nodes.
-    for (auto i = std::cbegin(tree); i != std::cend(tree); ++i)
-    {
-        auto leaves = leafCollector(i);
-        int comparisonCounter{0};
-        for (auto const& leaf : leaves)
-        {
-            auto p = leaf;
-            int counter{0};
-            do
-            {
-                if (p.color() == rb_color::black)
-                    ++counter;
-                p = p.parent();
-            } while (p != i && p != std::end(tree));
-            if (comparisonCounter == 0)
-                comparisonCounter = counter;
-            else
-            {
-                EXPECT_EQ(comparisonCounter, counter);
-            }
-        }
-    }
+    verify(tree.root());
 }
 
 template <typename TreeT>
