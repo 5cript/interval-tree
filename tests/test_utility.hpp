@@ -15,7 +15,11 @@ void testRedBlackPropertyViolation(TreeT const& tree)
 {
     using namespace lib_interval_tree;
 
-    // root is always black.
+    // empty tree is always correct
+    if (tree.root() == std::cend(tree))
+        return;
+
+    // root must be black
     EXPECT_EQ(tree.root().color(), rb_color::black);
 
     std::function<int(typename TreeT::const_iterator)> verify = [&](typename TreeT::const_iterator node) -> int {
@@ -23,16 +27,16 @@ void testRedBlackPropertyViolation(TreeT const& tree)
             return 1;
 
         // check that all nodes have red or black coloring. (seems obvious, but is not on bug)
-        EXPECT_EQ(true, node.color() == rb_color::black || node.color() == rb_color::red);
+        EXPECT_TRUE(node.color() == rb_color::black || node.color() == rb_color::red);
 
         // check for (red children = black) property:
         if (node.color() == rb_color::red)
         {
-            if (node.left() != std::end(tree))
+            if (node.left() != std::cend(tree))
             {
                 EXPECT_EQ(node.left().color(), rb_color::black);
             }
-            if (node.right() != std::end(tree))
+            if (node.right() != std::cend(tree))
             {
                 EXPECT_EQ(node.right().color(), rb_color::black);
             }
