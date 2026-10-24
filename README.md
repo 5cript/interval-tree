@@ -267,6 +267,7 @@ Finds the first interval in the interval tree that has an exact match.
 ### (const)iterator find(interval_type const& ival, CompareFunctionT const& compare)
 Finds the first interval in the interval tree that has the following statement evaluate to true: compare(interval_in_tree, ival);
 Allows for propper float comparisons.
+compare must not return true for an interval whose high is below ival.high(): the search skips subtrees whose highest high is below ival.high(). For a float tolerance, lower the high of ival by the tolerance.
 #### Parameters
 * `ival` The interval to find.
 * `compare` The compare function to compare intervals with. Function is called like so: compare(interval_in_tree, ival).
@@ -296,6 +297,7 @@ tree.find_all({3, 7}, [](auto iter) /* iter will be const_iterator if tree is co
 ---
 ### (const)iterator find_all(interval_type const& ival, OnFindFunctionT const& on_find, CompareFunctionT const& compare)
 Find all intervals in the tree that the compare function returns true for.
+compare must not return true for an interval whose high is below ival.high(): the search skips subtrees whose highest high is below ival.high().
 #### Parameters
 * `ival` The interval to find.
 * `compare` The compare function to compare intervals with. Function is called like so: compare(interval_in_tree, ival).
@@ -316,8 +318,9 @@ You cannot find all matches this way, use find_all for that.
 
 ---
 ### (const)iterator find_next_in_subtree(iterator from, interval_type const& ival, CompareFunctionT const& compare)
-Finds the next exact match EXCLUDING from in the subtree originating from "from".
+Finds the next interval EXCLUDING from in the subtree originating from "from" that the compare function returns true for.
 You cannot find all matches this way, use find_all for that.
+compare must not return true for an interval whose high is below ival.high(): the search skips subtrees whose highest high is below ival.high().
 #### Parameters
 * `from` The iterator to start from (including this iterator!)
 * `ival` The interval to find.

@@ -3,6 +3,7 @@
 #include <ctime>
 #include <random>
 #include <cmath>
+#include <algorithm>
 
 class FindTests : public ::testing::Test
 {
@@ -264,4 +265,170 @@ TEST_F(FindTests, FuzzyFindAllInTree)
 
     EXPECT_EQ(findCount, 3);
     ASSERT_TRUE(findIsConsistent);
+}
+
+TEST_F(FindTests, FindAndFindAllWithCompareAgreeWithLinearScan)
+{
+    std::mt19937 gen{0};
+    std::uniform_int_distribution<int> distLow{0, 20};
+    std::uniform_int_distribution<int> distLength{0, 30};
+    for (int i = 0; i < 500; ++i)
+    {
+        const auto low = distLow(gen);
+        tree.insert({low, low + distLength(gen)});
+    }
+
+    // Never accepts a high below the searched high, as the comparator overloads require.
+    const auto compare = [](auto const& lhs, auto const& rhs) {
+        return lhs.low() == rhs.low() && lhs.high() >= rhs.high();
+    };
+    auto const& constTree = tree;
+    for (int low = 0; low <= 20; ++low)
+    {
+        const auto searchInterval = decltype(tree)::interval_type{low, low + 15};
+
+        int expected = 0;
+        for (auto const& ival : tree)
+        {
+            if (compare(ival, searchInterval))
+                ++expected;
+        }
+        ASSERT_GT(expected, 1);
+
+        int found = 0;
+        tree.find_all(
+            searchInterval,
+            [&found, &searchInterval, &compare](decltype(tree)::iterator iter) {
+                EXPECT_TRUE(compare(*iter, searchInterval));
+                ++found;
+                return true;
+            },
+            compare
+        );
+        EXPECT_EQ(found, expected) << "low = " << low;
+
+        int foundConst = 0;
+        constTree.find_all(
+            searchInterval,
+            [&foundConst](decltype(tree)::const_iterator) {
+                ++foundConst;
+                return true;
+            },
+            compare
+        );
+        EXPECT_EQ(foundConst, expected) << "low = " << low;
+
+        const auto first = tree.find(searchInterval, compare);
+        ASSERT_NE(first, std::end(tree)) << "low = " << low;
+        EXPECT_TRUE(compare(*first, searchInterval));
+
+        // There are at least two matches, so one lies below the root.
+        const auto next = tree.find_next_in_subtree(tree.root(), searchInterval, compare);
+        ASSERT_NE(next, std::end(tree)) << "low = " << low;
+        EXPECT_TRUE(compare(*next, searchInterval));
+    }
+}
+
+TEST_F(FindTests, WillFindWithFloatToleranceWhenSearchedHighIsLoweredByIt)
+{
+    constexpr double tolerance = 1e-6;
+    IntervalTypes<double>::tree_type floatTree;
+    floatTree.insert({5.0, 5.0});
+    floatTree.insert({0.0, 1.0});
+
+    // The stored high is slightly below the high searched for, so the search starts the tolerance lower.
+    const double searchedHigh = 1.0 + 1e-9;
+    const auto found = floatTree.find({0.0, searchedHigh - tolerance}, [](auto const& lhs, auto const& rhs) {
+        return std::abs(lhs.low() - rhs.low()) < tolerance && lhs.high() >= rhs.high() &&
+            lhs.high() - rhs.high() < 2 * tolerance;
+    });
+    ASSERT_NE(found, std::end(floatTree));
+    EXPECT_EQ(found->low(), 0.0);
+    EXPECT_EQ(found->high(), 1.0);
+}
+
+TEST_F(FindTests, ExactFindAndFindAllAgreeWithLinearScan)
+{
+    std::mt19937 gen{0};
+    std::uniform_int_distribution<int> distLow{0, 20};
+    std::uniform_int_distribution<int> distLength{0, 5};
+    std::vector<decltype(tree)::interval_type> intervals;
+    for (int i = 0; i < 500; ++i)
+    {
+        const auto low = distLow(gen);
+        intervals.emplace_back(low, low + distLength(gen));
+        tree.insert(intervals.back());
+    }
+
+    for (auto const& searchInterval : intervals)
+    {
+        const auto expected = std::count(std::begin(intervals), std::end(intervals), searchInterval);
+
+        int found = 0;
+        tree.find_all(searchInterval, [&found, &searchInterval](decltype(tree)::iterator iter) {
+            EXPECT_EQ(*iter, searchInterval);
+            ++found;
+            return true;
+        });
+        EXPECT_EQ(found, expected);
+
+        const auto first = tree.find(searchInterval);
+        ASSERT_NE(first, std::end(tree));
+        EXPECT_EQ(*first, searchInterval);
+    }
+    EXPECT_EQ(tree.find({21, 21}), std::end(tree));
+}
+
+struct FindVisitCountingHook : public lib_interval_tree::hooks::regular
+{
+    struct hook_state
+    {
+        mutable int find_visits = 0;
+        mutable int find_all_visits = 0;
+    };
+
+    template <typename tree_type, typename compare_function_type>
+    static inline void on_find(
+        tree_type const& tree,
+        typename tree_type::node_type*,
+        typename tree_type::interval_type const&,
+        compare_function_type
+    ) noexcept
+    {
+        ++tree.find_visits;
+    }
+
+    template <typename tree_type, typename compare_function_type>
+    static inline void on_find_all(
+        tree_type const& tree,
+        typename tree_type::node_type*,
+        typename tree_type::interval_type const&,
+        compare_function_type
+    ) noexcept
+    {
+        ++tree.find_all_visits;
+    }
+};
+
+TEST_F(FindTests, ExactFindAndFindAllPruneByMax)
+{
+    constexpr int amount = 1'000;
+
+    lib_interval_tree::interval_tree<decltype(tree)::interval_type, FindVisitCountingHook> countingTree;
+    for (int i = 0; i != amount; ++i)
+        countingTree.insert({i * 2, i * 2 + 1});
+
+    // Only the path to the last interval has a max at or above its high.
+    const auto lastInterval = decltype(tree)::interval_type{amount * 2 - 2, amount * 2 - 1};
+
+    ASSERT_NE(countingTree.find(lastInterval), std::end(countingTree));
+    EXPECT_LT(countingTree.find_visits, amount / 10);
+
+    int found = 0;
+    countingTree.find_all(lastInterval, [&found](auto) {
+        ++found;
+        return true;
+    });
+    EXPECT_EQ(found, 1);
+    EXPECT_LT(countingTree.find_all_visits, amount / 10);
 }

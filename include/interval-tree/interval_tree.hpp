@@ -1263,10 +1263,11 @@ namespace lib_interval_tree
         }
 
         /**
-         *  Finds the first exact match.
+         *  Finds the first interval for which compare(interval, ival) is true.
          *
-         *  @param ival The interval to find an exact match for within the tree.
-         *  @param compare A comparison function to use.
+         *  @param ival The interval to compare the intervals in the tree with.
+         *  @param compare A comparison function to use. Must not return true for an interval whose high is below
+         *  ival.high(), because subtrees whose max is below ival.high() are skipped.
          */
         template <typename CompareFunctionT>
         iterator find(interval_type const& ival, CompareFunctionT const& compare)
@@ -1277,10 +1278,11 @@ namespace lib_interval_tree
         }
 
         /**
-         *  Finds the first exact match.
+         *  Finds the first interval for which compare(interval, ival) is true.
          *
-         *  @param ival The interval to find an exact match for within the tree.
-         *  @param compare A comparison function to use.
+         *  @param ival The interval to compare the intervals in the tree with.
+         *  @param compare A comparison function to use. Must not return true for an interval whose high is below
+         *  ival.high(), because subtrees whose max is below ival.high() are skipped.
          */
         template <typename CompareFunctionT>
         const_iterator find(interval_type const& ival, CompareFunctionT const& compare) const
@@ -1314,7 +1316,12 @@ namespace lib_interval_tree
         }
 
         /**
-         *  Finds all exact matches and returns the amount of intervals found.
+         *  Finds all intervals for which compare(interval, ival) is true.
+         *
+         *  @param ival The interval to compare the intervals in the tree with.
+         *  @param on_find Called with each found interval. Return false to stop the search.
+         *  @param compare A comparison function to use. Must not return true for an interval whose high is below
+         *  ival.high(), because subtrees whose max is below ival.high() are skipped.
          */
         template <typename FunctionT, typename CompareFunctionT>
         void find_all(interval_type const& ival, FunctionT const& on_find, CompareFunctionT const& compare)
@@ -1347,11 +1354,12 @@ namespace lib_interval_tree
         }
 
         /**
-         *  Finds the next exact match EXCLUDING from.
+         *  Finds the next interval EXCLUDING from for which compare(interval, ival) is true.
          *
          *  @param from The iterator to search from EXCLUSIVE!
-         *  @param ival The interval to find an exact match for within the tree.
-         *  @param compare A comparison function to use.
+         *  @param ival The interval to compare the intervals in the tree with.
+         *  @param compare A comparison function to use. Must not return true for an interval whose high is below
+         *  ival.high(), because subtrees whose max is below ival.high() are skipped.
          */
         template <typename CompareFunctionT>
         iterator find_next_in_subtree(iterator from, interval_type const& ival, CompareFunctionT const& compare)
